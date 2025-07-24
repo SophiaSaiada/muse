@@ -11,21 +11,12 @@ export function MIDIPlayer() {
   var nextStepTime = 0;
   var nextPositionTime = 0;
   var loadedsong = null;
-  function go() {
-    document.getElementById("tmr").innerHTML = "starting...";
-    try {
-      startPlay(loadedsong);
-      document.getElementById("tmr").innerHTML = "playing...";
-    } catch (expt) {
-      document.getElementById("tmr").innerHTML = "error " + expt;
-    }
-  }
-  function startPlay(song) {
+  function startPlay() {
     currentSongTime = 0;
     songStart = audioContext.currentTime;
     nextStepTime = audioContext.currentTime;
     var stepDuration = 44 / 1000;
-    tick(song, stepDuration);
+    tick(loadedsong, stepDuration);
   }
   function tick(song, stepDuration) {
     if (audioContext.currentTime > nextStepTime - stepDuration) {
@@ -112,7 +103,7 @@ export function MIDIPlayer() {
       }
     }
   }
-  function startLoad(song) {
+  function startLoad(song, onSongLoad) {
     console.log(song);
     var AudioContextFunc = window.AudioContext || window.webkitAudioContext;
     audioContext = new AudioContextFunc();
@@ -142,7 +133,10 @@ export function MIDIPlayer() {
     player.loader.waitLoad(function () {
       // console.log("buildControls");
       // buildControls(song);
+      audioContext.resume();
+      loadedsong = song;
       resetEqlualizer();
+      onSongLoad(song);
     });
   }
   function resetEqlualizer() {
@@ -158,7 +152,6 @@ export function MIDIPlayer() {
     equalizer.band16k.gain.setTargetAtTime(2, 0, 0.0001);
   }
   function buildControls(song) {
-    audioContext.resume();
     var o = document.getElementById("cntls");
     var html = '<h2 id="wrng">Refresh browser page to load another song</h2>';
     html = html + '<p id="tmr"><button onclick="go();">Play</button></p>';
@@ -210,7 +203,6 @@ export function MIDIPlayer() {
     for (var i = 0; i < song.beats.length; i++) {
       setDrVolAction(i, song);
     }
-    loadedsong = song;
   }
   function setVolumeAction(i, song) {
     var vlm = document.getElementById("channel" + i);
@@ -300,7 +292,7 @@ export function MIDIPlayer() {
     html = html + "</select>";
     return html;
   }
-  function handleFileSelect(event) {
+  function handleFileSelect(event, onSongLoad) {
     console.log(event);
     var file = event.target.files[0];
     console.log(file);
@@ -311,12 +303,11 @@ export function MIDIPlayer() {
       console.log(arrayBuffer);
       var midiFile = new MIDIFile(arrayBuffer);
       var song = midiFile.parseSong();
-      startLoad(song);
-      startPlay(song);
+      startLoad(song, onSongLoad);
     };
     fileReader.readAsArrayBuffer(file);
   }
-  function handleExample(path) {
+  function handleExample(path, onSongLoad) {
     console.log(path);
     var xmlHttpRequest = new XMLHttpRequest();
     xmlHttpRequest.open("GET", path, true);
@@ -325,10 +316,10 @@ export function MIDIPlayer() {
       var arrayBuffer = xmlHttpRequest.response;
       var midiFile = new MIDIFile(arrayBuffer);
       var song = midiFile.parseSong();
-      startLoad(song);
+      startLoad(song, onSongLoad);
     };
     xmlHttpRequest.send(null);
   }
 
-  return { handleFileSelect };
+  return { handleFileSelect, handleExample, startPlay };
 }
