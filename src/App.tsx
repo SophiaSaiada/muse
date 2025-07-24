@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+// @ts-expect-error TODO: migrate file to TS
 import { MIDIPlayer } from "./midi-player/core";
 import { type Note } from "./path";
 import { Viz } from "./Viz";
