@@ -6,16 +6,16 @@ export type Step = {
   note: Note;
   x: number;
   y: number;
-  directionOnHit: { x: number; y: number };
-  blockLocation: { x: number; y: number };
+  directionOnHit: Direction;
+  newDirection: Direction;
 };
 
-export const calculatePath = (notes: Note[], blockSize: number) =>
-  notes.reduce<{
+export const calculatePath = (notes: Note[], speed: number) => {
+  const straightPath = notes.reduce<{
     path: Step[];
     direction: Direction;
   }>(
-    (acc, note, index) => {
+    (acc, note) => {
       const previousPoint = acc.path.at(-1);
       if (previousPoint?.note.when === note.when) {
         return acc;
@@ -30,6 +30,7 @@ export const calculatePath = (notes: Note[], blockSize: number) =>
               y: 0,
               directionOnHit: acc.direction,
               blockLocation: { x: 0, y: 0 },
+              newDirection: acc.direction,
             },
           ],
           direction: acc.direction,
@@ -40,7 +41,10 @@ export const calculatePath = (notes: Note[], blockSize: number) =>
       const x = previousPoint.x + acc.direction.x * duration;
       const y = previousPoint.y + acc.direction.y * duration;
 
-      const shouldChangeXDirection = index % 40 < 20 || Math.random() <= 0.01; // TODO: eliminate repetitive direction, improve sparsity
+      const newDirection = {
+        x: acc.direction.x,
+        y: acc.direction.y * -1,
+      };
 
       return {
         path: [
@@ -48,24 +52,87 @@ export const calculatePath = (notes: Note[], blockSize: number) =>
           {
             note,
             directionOnHit: acc.direction,
-            blockLocation: !shouldChangeXDirection
-              ? {
-                  x,
-                  y: y + blockSize * (acc.direction.y < 0 ? -1 : 1),
-                }
-              : {
-                  x: x + blockSize * (acc.direction.x < 0 ? -1 : 1),
-                  y,
-                },
             x,
             y,
+            newDirection,
           },
         ],
-        direction: {
-          x: shouldChangeXDirection ? acc.direction.x * -1 : acc.direction.x,
-          y: shouldChangeXDirection ? acc.direction.y : acc.direction.y * -1,
-        },
+        direction: newDirection,
       };
     },
-    { path: [], direction: { x: 353, y: 337 } } // Hypothesis: prime numbers are good to prevent collisions
+    { path: [], direction: { x: speed, y: speed } }
   ).path;
+
+  const bendPoints = [
+    { index: 5, counterClockwise: true },
+    { index: 10, counterClockwise: false },
+    { index: 20, counterClockwise: true },
+    { index: 35, counterClockwise: false },
+    { index: 55, counterClockwise: true },
+    { index: 75, counterClockwise: false },
+    { index: 100, counterClockwise: true },
+    { index: 135, counterClockwise: false },
+    { index: 155, counterClockwise: true },
+    { index: 210, counterClockwise: false },
+  ];
+
+  return bendPoints.reduce(
+    (acc, { index, counterClockwise }) =>
+      bendPath(acc, index, counterClockwise),
+    straightPath
+  );
+};
+
+const bendPath = (
+  path: Step[],
+  index: number,
+  counterClockwise: boolean = false
+) => {
+  const bendStep = path[index];
+
+  return path.map((step, i) => {
+    if (i < index) {
+      return step;
+    }
+
+    const rotatedX = bendStep.x + (step.y - bendStep.y);
+    const rotatedY =
+      bendStep.y -
+      (counterClockwise ? bendStep.x - step.x : step.x - bendStep.x);
+
+    const flippedHorizontallyX = 2 * bendStep.x - rotatedX;
+
+    return {
+      ...step,
+      x: counterClockwise ? rotatedX : flippedHorizontallyX,
+      y: rotatedY,
+      directionOnHit:
+        i === index
+          ? step.directionOnHit
+          : getRotatedFlippedDirection(step.directionOnHit, counterClockwise),
+      newDirection: getRotatedFlippedDirection(
+        step.newDirection,
+        counterClockwise
+      ),
+    };
+  });
+};
+
+const getRotatedFlippedDirection = (
+  direction: Direction,
+  counterClockwise: boolean
+) => {
+  const rotatedDirection = {
+    x: direction.y,
+    y: direction.x,
+  };
+
+  const flippedDirection = counterClockwise
+    ? rotatedDirection
+    : {
+        x: -rotatedDirection.x,
+        y: -rotatedDirection.y,
+      };
+
+  return flippedDirection;
+};
