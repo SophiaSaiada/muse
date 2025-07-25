@@ -1,9 +1,11 @@
-import { Layer, Rect, Stage, Group, Circle } from "react-konva";
+import { Layer, Rect, Stage, Group, Circle, Path } from "react-konva";
 import { calculatePath, type Note, type Step } from "./path";
 import { useEffect, useRef } from "react";
 import Konva from "konva";
 import { useWindowSize } from "react-use";
 
+const SHOW_PATH = false;
+const SPEED = 100;
 const SCALE = 5;
 const BOUNCE_ANIMATION_HALF_TIME = 0.05;
 const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
@@ -11,7 +13,7 @@ const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
 export const Viz = ({ notes }: { notes: Note[] }) => {
   const { width, height } = useWindowSize();
 
-  const path = calculatePath(notes, SCALE);
+  const path = calculatePath(notes, SPEED);
 
   const layerRef = useRef<Konva.Group>(null);
 
@@ -67,11 +69,25 @@ export const Viz = ({ notes }: { notes: Note[] }) => {
     <Stage width={width} height={height}>
       <Layer>
         <Group x={0} y={0} ref={layerRef}>
-          {path.map(({ note, blockLocation: { x, y } }) => (
+          {path.map(({ note, x, y, directionOnHit, newDirection }) => (
             <Rect
               key={note.when}
-              x={x}
-              y={y}
+              x={
+                x +
+                (newDirection.x === directionOnHit.x
+                  ? 0
+                  : directionOnHit.x > 0
+                  ? SCALE * 0.5
+                  : SCALE * -0.5)
+              }
+              y={
+                y +
+                (newDirection.y === directionOnHit.y
+                  ? 0
+                  : directionOnHit.y > 0
+                  ? SCALE * 0.5
+                  : SCALE * -0.5)
+              }
               width={SCALE}
               height={SCALE}
               offsetX={SCALE / 2}
@@ -79,6 +95,14 @@ export const Viz = ({ notes }: { notes: Note[] }) => {
               fill="#4d4d4d"
             />
           ))}
+          {SHOW_PATH && (
+            <Path
+              data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
+              stroke="#E5438A"
+              opacity={0.25}
+              strokeWidth={1}
+            />
+          )}
         </Group>
 
         <Group ref={circleGroupRef} x={width / 2} y={height / 2}>
