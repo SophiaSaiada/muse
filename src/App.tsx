@@ -6,6 +6,7 @@ import { Viz } from "./Viz";
 
 const MIDI_FILE_NAME = "We Don't Talk About Bruno (Piano Cover).mid";
 const MIDI_FILE_PATH = `/midi/${MIDI_FILE_NAME}`;
+const INCLUDE_BEATS = true;
 
 function App() {
   const [player] = useState<MIDIPlayer>(MIDIPlayer());
@@ -15,8 +16,15 @@ function App() {
   useEffect(() => {
     player.handleExample(
       MIDI_FILE_PATH,
-      (song: { tracks: { notes: { when: number }[] }[] }) => {
-        const notes = song.tracks.flatMap((track) => track.notes);
+      (song: {
+        tracks: { notes: { when: number }[] }[];
+        beats: { notes: { when: number }[] }[];
+      }) => {
+        const notes = [
+          ...song.tracks.flatMap((track) => track.notes),
+          ...(INCLUDE_BEATS ? song.beats.flatMap((track) => track.notes) : []),
+        ];
+        notes.sort((a, b) => a.when - b.when);
         setNotes(notes);
       }
     );
