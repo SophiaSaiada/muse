@@ -8,6 +8,7 @@ import {
   SHOW_PATH,
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
+  SHOW_BLOCKS,
 } from "../constants";
 
 export const Viz = ({ path }: { path: Step[] }) => {
@@ -78,32 +79,33 @@ export const Viz = ({ path }: { path: Step[] }) => {
             fill="#0a0a0a"
           />
 
-          {path.map(({ note, x, y, directionOnHit, newDirection }) => (
-            <Rect
-              key={note.when}
-              x={
-                x +
-                (newDirection.x === directionOnHit.x
-                  ? 0
-                  : directionOnHit.x > 0
-                  ? SCALE * 0.5
-                  : SCALE * -0.5)
-              }
-              y={
-                y +
-                (newDirection.y === directionOnHit.y
-                  ? 0
-                  : directionOnHit.y > 0
-                  ? SCALE * 0.5
-                  : SCALE * -0.5)
-              }
-              width={SCALE}
-              height={SCALE}
-              offsetX={SCALE / 2}
-              offsetY={SCALE / 2}
-              fill="#4d4d4d"
-            />
-          ))}
+          {SHOW_BLOCKS &&
+            path.map(({ note, x, y, directionOnHit, newDirection }) => (
+              <Rect
+                key={note.when}
+                x={
+                  x +
+                  (newDirection.x === directionOnHit.x
+                    ? 0
+                    : directionOnHit.x > 0
+                    ? SCALE * 0.5
+                    : SCALE * -0.5)
+                }
+                y={
+                  y +
+                  (newDirection.y === directionOnHit.y
+                    ? 0
+                    : directionOnHit.y > 0
+                    ? SCALE * 0.5
+                    : SCALE * -0.5)
+                }
+                width={SCALE}
+                height={SCALE}
+                offsetX={SCALE / 2}
+                offsetY={SCALE / 2}
+                fill="red"
+              />
+            ))}
           {SHOW_PATH && (
             <Path
               data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}

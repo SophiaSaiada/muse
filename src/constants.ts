@@ -30,6 +30,7 @@ export const MIDI_FILES = [
 ] as const;
 
 export const SHOW_PATH = false;
+export const SHOW_BLOCKS = false;
 export const SCALE = 5;
 export const BOUNCE_ANIMATION_HALF_TIME = 0.05;
 export const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
