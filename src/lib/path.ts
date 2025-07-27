@@ -2,13 +2,8 @@ import {
   INCLUDE_BEATS,
   LOOKAHEAD_FOR_COLLISION,
   MIN_INTERVAL_BETWEEN_NOTES,
-} from "./constants";
-
-export type Song = {
-  tracks: { notes: { when: number }[] }[];
-  beats: { notes: { when: number }[] }[];
-};
-export type Note = { when: number };
+} from "../constants";
+import type { Note } from "../types";
 
 type Direction = { x: number; y: number };
 
