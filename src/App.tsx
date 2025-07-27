@@ -32,12 +32,6 @@ function App() {
         player.current.startLoad(song, resolve)
       );
 
-      const notes = [
-        ...song.tracks.flatMap((track) => track.notes),
-        ...(INCLUDE_BEATS ? song.beats.flatMap((track) => track.notes) : []),
-      ];
-      notes.sort((a, b) => a.when - b.when);
-
       const path = calculatePath(song, SPEED); // TODO: calculate on a service worker
 
       await loadingSongIntoPlayerPromise;

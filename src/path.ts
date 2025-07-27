@@ -1,4 +1,8 @@
-import { INCLUDE_BEATS, LOOKAHEAD_FOR_COLLISION } from "./constants";
+import {
+  INCLUDE_BEATS,
+  LOOKAHEAD_FOR_COLLISION,
+  MIN_INTERVAL_BETWEEN_NOTES,
+} from "./constants";
 
 export type Song = {
   tracks: { notes: { when: number }[] }[];
@@ -24,10 +28,6 @@ const generateStraightPath = (notes: Note[], speed: number) =>
   }>(
     (acc, note) => {
       const previousPoint = acc.path.at(-1);
-      if (previousPoint?.note.when === note.when) {
-        return acc;
-      }
-
       if (!previousPoint) {
         return {
           path: [
@@ -175,5 +175,16 @@ const getNotes = (song: Song) => {
     ...(INCLUDE_BEATS ? song.beats.flatMap((track) => track.notes) : []),
   ];
   notes.sort((a, b) => a.when - b.when);
-  return notes;
+
+  return notes.reduce<Note[]>((acc, note) => {
+    const previousNote = acc.at(-1);
+    if (
+      previousNote &&
+      note.when - previousNote.when < MIN_INTERVAL_BETWEEN_NOTES
+    ) {
+      return acc;
+    }
+
+    return [...acc, note];
+  }, []);
 };

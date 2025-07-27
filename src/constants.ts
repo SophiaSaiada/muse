@@ -36,3 +36,4 @@ export const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
 export const INCLUDE_BEATS = true;
 export const SPEED = 100;
 export const LOOKAHEAD_FOR_COLLISION = 14;
+export const MIN_INTERVAL_BETWEEN_NOTES = 0.025;
