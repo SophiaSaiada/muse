@@ -97,7 +97,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
             <Path
               data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
               stroke="#E5438A"
-              opacity={0.25}
+              opacity={0.75}
               strokeWidth={1}
             />
           )}
