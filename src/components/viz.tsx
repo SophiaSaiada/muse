@@ -9,6 +9,7 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   SHOW_BLOCKS,
+  BLOCK_SCALE,
 } from "../constants";
 import { calculateTunnelPoints } from "../lib/tunnel";
 
@@ -100,10 +101,11 @@ export const Viz = ({ path }: { path: Step[] }) => {
                     ? SCALE * 0.5
                     : SCALE * -0.5)
                 }
-                width={SCALE}
-                height={SCALE}
-                offsetX={SCALE / 2}
-                offsetY={SCALE / 2}
+                width={BLOCK_SCALE}
+                height={BLOCK_SCALE}
+                offsetX={BLOCK_SCALE / 2}
+                offsetY={BLOCK_SCALE / 2}
+                opacity={0.5}
                 fill="red"
               />
             ))}

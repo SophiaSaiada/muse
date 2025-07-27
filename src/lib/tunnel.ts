@@ -1,9 +1,10 @@
+import { BLOCK_SCALE } from "../constants";
 import type { Step } from "./path";
 
 export const calculateTunnelPoints = (
   path: Step[]
 ): { x: number; y: number }[] => {
-  const result = [];
+  const result: { x: number; y: number }[] = [];
   const alreadyAddedIndexes = new Set<number>();
 
   for (let i = 0; i < path.length; ) {
@@ -21,7 +22,8 @@ export const calculateTunnelPoints = (
       nextNextStep.newDirection.x === -1 * step.newDirection.x &&
       nextNextStep.newDirection.y === -1 * step.newDirection.y;
 
-    result.push(step);
+    addStepPointsToResult(step, result);
+
     alreadyAddedIndexes.add(i);
 
     if (isOneStepBeforeBendPoint) {
@@ -43,7 +45,8 @@ export const calculateTunnelPoints = (
     if (alreadyAddedIndexes.has(i)) {
       continue;
     }
-    result.push(step);
+    addStepPointsToResult(step, result, true);
+
     alreadyAddedIndexes.add(i);
   }
 
@@ -65,3 +68,57 @@ const getComplementaryEndStep = (lastStep: Step, previousStep: Step) => {
   }
   return { x: lastStep.x, y: previousStep.y };
 };
+
+function addStepPointsToResult(
+  step: Step,
+  result: { x: number; y: number }[],
+  reversed: boolean = false
+) {
+  if (step.newDirection.x === step.directionOnHit.x) {
+    if (
+      (!reversed && step.directionOnHit.x > 0) ||
+      (reversed && step.directionOnHit.x < 0)
+    ) {
+      result.push({
+        x: step.x - BLOCK_SCALE * 0.5,
+        y: step.y,
+      });
+      result.push({
+        x: step.x + BLOCK_SCALE * 0.5,
+        y: step.y,
+      });
+    } else {
+      result.push({
+        x: step.x + BLOCK_SCALE * 0.5,
+        y: step.y,
+      });
+      result.push({
+        x: step.x - BLOCK_SCALE * 0.5,
+        y: step.y,
+      });
+    }
+  } else {
+    if (
+      (!reversed && step.directionOnHit.y > 0) ||
+      (reversed && step.directionOnHit.y < 0)
+    ) {
+      result.push({
+        x: step.x,
+        y: step.y - BLOCK_SCALE * 0.5,
+      });
+      result.push({
+        x: step.x,
+        y: step.y + BLOCK_SCALE * 0.5,
+      });
+    } else {
+      result.push({
+        x: step.x,
+        y: step.y + BLOCK_SCALE * 0.5,
+      });
+      result.push({
+        x: step.x,
+        y: step.y - BLOCK_SCALE * 0.5,
+      });
+    }
+  }
+}
