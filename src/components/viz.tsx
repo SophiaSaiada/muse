@@ -14,7 +14,7 @@ import {
 import { calculateTunnelPoints } from "../lib/tunnel";
 
 export const Viz = ({ path }: { path: Step[] }) => {
-  const { width, height } = useWindowSize();
+  const { width, height } = useWindowSize(); // TODO: fix mobile height issue
 
   const layerRef = useRef<Konva.Group>(null);
 
