@@ -307,19 +307,6 @@ export function MIDIPlayer() {
     };
     fileReader.readAsArrayBuffer(file);
   }
-  function handleExample(path, onSongLoad) {
-    console.log(path);
-    var xmlHttpRequest = new XMLHttpRequest();
-    xmlHttpRequest.open("GET", path, true);
-    xmlHttpRequest.responseType = "arraybuffer";
-    xmlHttpRequest.onload = function (e) {
-      var arrayBuffer = xmlHttpRequest.response;
-      var midiFile = new MIDIFile(arrayBuffer);
-      var song = midiFile.parseSong();
-      startLoad(song, onSongLoad);
-    };
-    xmlHttpRequest.send(null);
-  }
 
-  return { handleFileSelect, handleExample, startPlay };
+  return { handleFileSelect, startLoad, startPlay };
 }

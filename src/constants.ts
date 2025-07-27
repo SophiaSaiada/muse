@@ -1,8 +1,38 @@
+export const MIDI_FILES = [
+  {
+    fileName: "7 Rings - Ariana Grande (Piano Cover) - MIDI.mid",
+    displayName: "7 Rings - Ariana Grande",
+  },
+  {
+    fileName: "Chappell Roan - Pink Pony Club.mid",
+    displayName: "Chappell Roan - Pink Pony Club",
+  },
+  { fileName: "Frozen - Let it Go.mid", displayName: "Frozen - Let it Go" },
+  { fileName: "Gravity Falls.mid", displayName: "Gravity Falls" },
+  { fileName: "HOW FAR I'LL GO.mid", displayName: "Moana - How Far I'll Go" },
+  //   {
+  //     // It's a big file (~2000 notes), so it's currently not supported
+  //     fileName: "Imagine Dragons - Whatever It Takes.mid",
+  //     displayName: "Imagine Dragons - Whatever It Takes",
+  //   },
+  {
+    fileName: "Take Me To Church.mid",
+    displayName: "Hozier - Take Me To Church",
+  },
+  {
+    fileName: "The Beatles - Come Together.mid",
+    displayName: "The Beatles - Come Together",
+  },
+  {
+    fileName: "We Don't Talk About Bruno (Piano Cover).mid",
+    displayName: "Encanto - We Don't Talk About Bruno",
+  },
+] as const;
+
 export const SHOW_PATH = false;
 export const SCALE = 5;
 export const BOUNCE_ANIMATION_HALF_TIME = 0.05;
 export const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
-export const MIDI_FILE_NAME = "We Don't Talk About Bruno (Piano Cover).mid";
 export const INCLUDE_BEATS = true;
 export const SPEED = 100;
 export const LOOKAHEAD_FOR_COLLISION = 14;
