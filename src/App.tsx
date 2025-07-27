@@ -58,7 +58,7 @@ function App() {
           {MIDI_FILES.map((file) => (
             <button
               key={file.fileName}
-              onClick={() => setSelectedFile(file)}
+              onClick={selectedFile ? undefined : () => setSelectedFile(file)}
               disabled={isLoading}
               className={cn(
                 "rounded-md flex items-center gap-2 group transition font-body",
