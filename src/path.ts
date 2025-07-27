@@ -1,5 +1,9 @@
-import { LOOKAHEAD_FOR_COLLISION } from "./constants";
+import { INCLUDE_BEATS, LOOKAHEAD_FOR_COLLISION } from "./constants";
 
+export type Song = {
+  tracks: { notes: { when: number }[] }[];
+  beats: { notes: { when: number }[] }[];
+};
 export type Note = { when: number };
 
 type Direction = { x: number; y: number };
@@ -67,7 +71,9 @@ const generateStraightPath = (notes: Note[], speed: number) =>
     { path: [], direction: { x: speed, y: speed } }
   ).path;
 
-export const calculatePath = (notes: Note[], speed: number) => {
+export const calculatePath = (song: Song, speed: number) => {
+  const notes = getNotes(song);
+
   let result = generateStraightPath(notes, speed);
 
   let lastBendIndex: number | null = null;
@@ -161,4 +167,13 @@ const bendPoint = (step: Step, previousStep: Step): Step => {
     directionOnHit,
     newDirection,
   };
+};
+
+const getNotes = (song: Song) => {
+  const notes = [
+    ...song.tracks.flatMap((track) => track.notes),
+    ...(INCLUDE_BEATS ? song.beats.flatMap((track) => track.notes) : []),
+  ];
+  notes.sort((a, b) => a.when - b.when);
+  return notes;
 };
