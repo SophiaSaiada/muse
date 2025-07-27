@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
 // @ts-expect-error TODO: migrate file to TS
 import { MIDIPlayer } from "./midi-player/core";
-import { type Note } from "./path";
+import { calculatePath, type Note, type Step } from "./path";
 import { Viz } from "./Viz";
+import { MIDI_FILE_NAME, INCLUDE_BEATS, SPEED } from "./constants";
 
-const MIDI_FILE_NAME = "We Don't Talk About Bruno (Piano Cover).mid";
 const MIDI_FILE_PATH = `/midi/${MIDI_FILE_NAME}`;
-const INCLUDE_BEATS = true;
 
 function App() {
   const [player] = useState<MIDIPlayer>(MIDIPlayer());
   const [notes, setNotes] = useState<Note[] | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [path, setPath] = useState<Step[] | null>(null);
 
   useEffect(() => {
     player.handleExample(
@@ -32,18 +31,18 @@ function App() {
 
   return (
     <div>
-      {player && !isPlaying && (
+      {player && notes && !path && (
         <button
           autoFocus
           onClick={() => {
-            setIsPlaying(true);
+            setPath(calculatePath(notes!, SPEED));
             player.startPlay();
           }}
         >
           ▶️
         </button>
       )}
-      {notes && isPlaying && <Viz notes={notes} />}
+      {path && <Viz path={path} />}
     </div>
   );
 }

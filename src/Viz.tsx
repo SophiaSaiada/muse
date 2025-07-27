@@ -1,19 +1,17 @@
 import { Layer, Rect, Stage, Group, Circle, Path } from "react-konva";
-import { calculatePath, type Note, type Step } from "./path";
+import { type Step } from "./path";
 import { useEffect, useRef } from "react";
 import Konva from "konva";
 import { useWindowSize } from "react-use";
+import {
+  SCALE,
+  SHOW_PATH,
+  BOUNCE_ANIMATION_HALF_TIME,
+  BOUNCE_ANIMATION_SCALE_FACTOR,
+} from "./constants";
 
-const SHOW_PATH = false;
-const SPEED = 100;
-const SCALE = 5;
-const BOUNCE_ANIMATION_HALF_TIME = 0.05;
-const BOUNCE_ANIMATION_SCALE_FACTOR = 0.75;
-
-export const Viz = ({ notes }: { notes: Note[] }) => {
+export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize();
-
-  const path = calculatePath(notes, SPEED);
 
   const layerRef = useRef<Konva.Group>(null);
 
