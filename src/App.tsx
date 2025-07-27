@@ -35,7 +35,7 @@ function App() {
         <button
           autoFocus
           onClick={() => {
-            setPath(calculatePath(notes!, SPEED));
+            setPath(calculatePath(notes!, SPEED)); // TODO: calculate on a service worker
             player.startPlay();
           }}
         >

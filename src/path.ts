@@ -1,3 +1,5 @@
+import { LOOKAHEAD_FOR_COLLISION } from "./constants";
+
 export type Note = { when: number };
 
 type Direction = { x: number; y: number };
@@ -66,24 +68,66 @@ const generateStraightPath = (notes: Note[], speed: number) =>
   ).path;
 
 export const calculatePath = (notes: Note[], speed: number) => {
-  const straightPath = generateStraightPath(notes, speed);
+  let result = generateStraightPath(notes, speed);
 
-  const bendPoints = [
-    { index: 20 },
-    { index: 51 },
-    { index: 100 },
-    { index: 151 },
-    { index: 240 },
-    { index: 331 },
-    { index: 450 },
-    { index: 601 },
-  ];
+  let lastBendIndex: number | null = null;
 
-  return bendPoints.reduce(
-    (acc, { index }) => bendPath(acc, index),
-    straightPath
-  );
+  for (
+    let index = result.length - 1 - LOOKAHEAD_FOR_COLLISION;
+    LOOKAHEAD_FOR_COLLISION <= index;
+    index--
+  ) {
+    if (lastBendIndex && index > lastBendIndex - LOOKAHEAD_FOR_COLLISION) {
+      continue;
+    }
+
+    const straightPathBounds = calculateBounds(
+      result.slice(index - LOOKAHEAD_FOR_COLLISION, index)
+    );
+
+    const spiralBounds = calculateBounds(result.slice(index));
+    const predictedToCollide = doesBoundIntersect(
+      straightPathBounds,
+      spiralBounds
+    );
+
+    const spiralBoundsAfterBending = calculateBounds(
+      bendPath(result.slice(index - 1), 1).slice(1)
+    );
+    const wontCollideAfterBending = !doesBoundIntersect(
+      straightPathBounds,
+      spiralBoundsAfterBending
+    );
+
+    if (predictedToCollide || wontCollideAfterBending) {
+      result = bendPath(result, index);
+      lastBendIndex = index;
+    }
+  }
+
+  return result;
 };
+
+const calculateBounds = (path: Step[]) => {
+  const xs = path.map(({ x }) => x);
+  const ys = path.map(({ y }) => y);
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+};
+
+const doesBoundIntersect = (
+  spiral: { minX: number; maxX: number; minY: number; maxY: number },
+  newlyBent: { minX: number; maxX: number; minY: number; maxY: number }
+) =>
+  spiral.minX <= newlyBent.maxX &&
+  spiral.maxX >= newlyBent.minX &&
+  spiral.minY <= newlyBent.maxY &&
+  spiral.maxY >= newlyBent.minY;
 
 const bendPath = (path: Step[], index: number) =>
   path.reduce((acc, step, i) => {
