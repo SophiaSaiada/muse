@@ -5,13 +5,14 @@ type Direction = { x: number; y: number };
 export type Step = {
   note: Note;
   x: number;
+  duration: number;
   y: number;
   directionOnHit: Direction;
   newDirection: Direction;
 };
 
-export const calculatePath = (notes: Note[], speed: number) => {
-  const straightPath = notes.reduce<{
+const generateStraightPath = (notes: Note[], speed: number) =>
+  notes.reduce<{
     path: Step[];
     direction: Direction;
   }>(
@@ -29,8 +30,8 @@ export const calculatePath = (notes: Note[], speed: number) => {
               x: 0,
               y: 0,
               directionOnHit: acc.direction,
-              blockLocation: { x: 0, y: 0 },
               newDirection: acc.direction,
+              duration: note.when,
             },
           ],
           direction: acc.direction,
@@ -54,6 +55,7 @@ export const calculatePath = (notes: Note[], speed: number) => {
             directionOnHit: acc.direction,
             x,
             y,
+            duration,
             newDirection,
           },
         ],
@@ -63,76 +65,56 @@ export const calculatePath = (notes: Note[], speed: number) => {
     { path: [], direction: { x: speed, y: speed } }
   ).path;
 
+export const calculatePath = (notes: Note[], speed: number) => {
+  const straightPath = generateStraightPath(notes, speed);
+
   const bendPoints = [
-    { index: 5, counterClockwise: true },
-    { index: 10, counterClockwise: false },
-    { index: 20, counterClockwise: true },
-    { index: 35, counterClockwise: false },
-    { index: 55, counterClockwise: true },
-    { index: 75, counterClockwise: false },
-    { index: 100, counterClockwise: true },
-    { index: 135, counterClockwise: false },
-    { index: 155, counterClockwise: true },
-    { index: 210, counterClockwise: false },
+    { index: 20 },
+    { index: 51 },
+    { index: 100 },
+    { index: 151 },
+    { index: 240 },
+    { index: 331 },
+    { index: 450 },
+    { index: 601 },
   ];
 
   return bendPoints.reduce(
-    (acc, { index, counterClockwise }) =>
-      bendPath(acc, index, counterClockwise),
+    (acc, { index }) => bendPath(acc, index),
     straightPath
   );
 };
 
-const bendPath = (
-  path: Step[],
-  index: number,
-  counterClockwise: boolean = false
-) => {
-  const bendStep = path[index];
-
-  return path.map((step, i) => {
+const bendPath = (path: Step[], index: number) =>
+  path.reduce((acc, step, i) => {
     if (i < index) {
-      return step;
+      return [...acc, step];
     }
 
-    const rotatedX = bendStep.x + (step.y - bendStep.y);
-    const rotatedY =
-      bendStep.y -
-      (counterClockwise ? bendStep.x - step.x : step.x - bendStep.x);
+    return [...acc, bendPoint(step, acc.at(-1)!)];
+  }, [] as Step[]);
 
-    const flippedHorizontallyX = 2 * bendStep.x - rotatedX;
+const bendPoint = (step: Step, previousStep: Step): Step => {
+  const directionOnHit = previousStep.newDirection;
 
-    return {
-      ...step,
-      x: counterClockwise ? rotatedX : flippedHorizontallyX,
-      y: rotatedY,
-      directionOnHit:
-        i === index
-          ? step.directionOnHit
-          : getRotatedFlippedDirection(step.directionOnHit, counterClockwise),
-      newDirection: getRotatedFlippedDirection(
-        step.newDirection,
-        counterClockwise
-      ),
-    };
-  });
-};
+  const changeWasFormerlyOnXAxis =
+    step.directionOnHit.x !== step.newDirection.x;
 
-const getRotatedFlippedDirection = (
-  direction: Direction,
-  counterClockwise: boolean
-) => {
-  const rotatedDirection = {
-    x: direction.y,
-    y: direction.x,
-  };
-
-  const flippedDirection = counterClockwise
-    ? rotatedDirection
+  const newDirection = changeWasFormerlyOnXAxis
+    ? {
+        x: directionOnHit.x,
+        y: -directionOnHit.y,
+      }
     : {
-        x: -rotatedDirection.x,
-        y: -rotatedDirection.y,
+        x: -directionOnHit.x,
+        y: directionOnHit.y,
       };
 
-  return flippedDirection;
+  return {
+    ...step,
+    x: previousStep.x + directionOnHit.x * step.duration,
+    y: previousStep.y + directionOnHit.y * step.duration,
+    directionOnHit,
+    newDirection,
+  };
 };
