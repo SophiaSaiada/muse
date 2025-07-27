@@ -1,5 +1,5 @@
 import { Layer, Rect, Stage, Group, Circle, Path } from "react-konva";
-import { type Step } from "./path";
+import { type Step } from "../path";
 import { useEffect, useRef } from "react";
 import Konva from "konva";
 import { useWindowSize } from "react-use";
@@ -8,7 +8,7 @@ import {
   SHOW_PATH,
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
-} from "./constants";
+} from "../constants";
 
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize();
