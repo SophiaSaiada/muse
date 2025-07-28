@@ -22,6 +22,11 @@ const generateStraightPath = (notes: Note[], speed: number) =>
     direction: Direction;
   }>(
     (acc, note) => {
+      const newDirection = {
+        x: acc.direction.x,
+        y: acc.direction.y * -1,
+      };
+
       const previousPoint = acc.path.at(-1);
       if (!previousPoint) {
         return {
@@ -31,7 +36,7 @@ const generateStraightPath = (notes: Note[], speed: number) =>
               x: 0,
               y: 0,
               directionOnHit: acc.direction,
-              newDirection: acc.direction,
+              newDirection,
               duration: note.when,
             },
           ],
@@ -42,11 +47,6 @@ const generateStraightPath = (notes: Note[], speed: number) =>
       const duration = note.when - previousPoint.note.when;
       const x = previousPoint.x + acc.direction.x * duration;
       const y = previousPoint.y + acc.direction.y * duration;
-
-      const newDirection = {
-        x: acc.direction.x,
-        y: acc.direction.y * -1,
-      };
 
       return {
         path: [
