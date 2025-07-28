@@ -1,4 +1,4 @@
-import { BLOCK_SCALE } from "../constants";
+import { BLOCK_SCALE, SCALE } from "../constants";
 import type { Step } from "./path";
 
 export const calculateTunnelPoints = (
@@ -81,20 +81,20 @@ function addStepPointsToResult(
     ) {
       result.push({
         x: step.x - BLOCK_SCALE * 0.5,
-        y: step.y,
+        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
       });
       result.push({
         x: step.x + BLOCK_SCALE * 0.5,
-        y: step.y,
+        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
       });
     } else {
       result.push({
         x: step.x + BLOCK_SCALE * 0.5,
-        y: step.y,
+        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
       });
       result.push({
         x: step.x - BLOCK_SCALE * 0.5,
-        y: step.y,
+        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
       });
     }
   } else {
@@ -103,20 +103,20 @@ function addStepPointsToResult(
       (reversed && step.directionOnHit.y < 0)
     ) {
       result.push({
-        x: step.x,
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
         y: step.y - BLOCK_SCALE * 0.5,
       });
       result.push({
-        x: step.x,
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
         y: step.y + BLOCK_SCALE * 0.5,
       });
     } else {
       result.push({
-        x: step.x,
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
         y: step.y + BLOCK_SCALE * 0.5,
       });
       result.push({
-        x: step.x,
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
         y: step.y - BLOCK_SCALE * 0.5,
       });
     }
