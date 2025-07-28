@@ -29,6 +29,7 @@ export const MIDI_FILES = [
   },
 ] as const;
 
+export const MUTE = false;
 export const SHOW_PATH = false;
 export const SHOW_BLOCKS = false;
 export const SCALE = 10;
