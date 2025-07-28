@@ -18,7 +18,7 @@ export const SearchBox = ({
     <div className="flex flex-row group mt-1 mb-2 w-full">
       <input
         type="text"
-        className="border border-tinted-text rounded-l-md px-2 py-1 outline-0 focus:border-white transition grow"
+        className="border border-tinted-text rounded-l-md px-2 py-1 outline-0 focus:border-white transition grow font-body"
         readOnly={isLoading}
         onChange={(e) => setSearch(e.target.value)}
       />
