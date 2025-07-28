@@ -23,6 +23,19 @@ export const Block = ({
 }) => {
   const rectRef = useRef<Konva.Rect>(null);
 
+  const height = newDirection.x === directionOnHit.x ? SCALE : BLOCK_SCALE;
+  const width = newDirection.y === directionOnHit.y ? SCALE : BLOCK_SCALE;
+
+  const hue =
+    Math.round(
+      (index /
+        (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+        360 +
+        BLOCK_START_HUE
+    ) % 360;
+
   useEffect(() => {
     if (currentNoteIndex !== index) {
       return;
@@ -50,28 +63,19 @@ export const Block = ({
       x={
         newDirection.x === directionOnHit.x
           ? x
-          : getXOfStepInYAxis({ directionOnHit, x }, BLOCK_SCALE + SCALE)
+          : getXOfStepInYAxis({ directionOnHit, x }, SCALE * 2)
       }
       y={
         newDirection.y === directionOnHit.y
           ? y
-          : getYOfStepInXAxis({ directionOnHit, y }, BLOCK_SCALE + SCALE)
+          : getYOfStepInXAxis({ directionOnHit, y }, SCALE * 2)
       }
-      width={BLOCK_SCALE}
-      height={BLOCK_SCALE}
-      offsetX={BLOCK_SCALE / 2}
-      offsetY={BLOCK_SCALE / 2}
+      width={width}
+      height={height}
+      offsetX={width / 2}
+      offsetY={height / 2}
       opacity={index < currentNoteIndex ? 1 : 0}
-      fill={`hsl(${
-        Math.round(
-          (index /
-            (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-              ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-              : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-            360 +
-            BLOCK_START_HUE
-        ) % 360
-      }, 100%, 60%)`}
+      fill={`hsl(${hue}, 100%, 60%)`}
     />
   );
 };
