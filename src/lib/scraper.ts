@@ -47,10 +47,19 @@ const findMidiDownloadUrl = async (filePageUrl: string) => {
   const midiFileLinkMatch = filePageText.match(
     /<a href="(https:\/\/www.mididb.com\/midi-download\/[^.]+\.mid)"/
   );
-  if (!midiFileLinkMatch) {
-    throw new Error("No midi file link matches");
+  if (midiFileLinkMatch) {
+    const downloadUrl = midiFileLinkMatch[1];
+    return downloadUrl;
   }
 
-  const downloadUrl = midiFileLinkMatch[1];
-  return downloadUrl;
+  const zipFileLinkMatch = filePageText.match(
+    /<a href="https:\/\/www.mididb.com\/downloadzip.asp\?ccode=([^"]+)"/
+  );
+  if (zipFileLinkMatch) {
+    const fileCode = zipFileLinkMatch[1];
+    console.log("No midi file link found, using zip file link", fileCode);
+    return `https://www.mididb.com/midi-download/AUD_${fileCode}.mid}`;
+  }
+
+  throw new Error("No midi file link or zip file link matches");
 };
