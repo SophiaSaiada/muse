@@ -1,4 +1,4 @@
-import { BLOCK_SCALE, SCALE } from "../constants";
+import { BLOCK_WIDTH, SCALE } from "../constants";
 import type { Step } from "./path";
 
 export const calculateTunnelPoints = (
@@ -87,8 +87,8 @@ const getComplementaryEndStep = (firstStep: Step, secondStep: Step) => {
 function getStepPointsToResult(step: Step, reversed: boolean = false) {
   if (step.newDirection.x === step.directionOnHit.x) {
     const y = getYOfStepInXAxis(step, SCALE);
-    const firstPoint = { x: step.x - BLOCK_SCALE * 0.5, y };
-    const secondPoint = { x: step.x + BLOCK_SCALE * 0.5, y };
+    const firstPoint = { x: step.x - BLOCK_WIDTH * 0.5, y };
+    const secondPoint = { x: step.x + BLOCK_WIDTH * 0.5, y };
 
     if (
       (!reversed && step.directionOnHit.x > 0) ||
@@ -101,8 +101,8 @@ function getStepPointsToResult(step: Step, reversed: boolean = false) {
   }
 
   const x = getXOfStepInYAxis(step, SCALE);
-  const firstPoint = { x, y: step.y - BLOCK_SCALE * 0.5 };
-  const secondPoint = { x, y: step.y + BLOCK_SCALE * 0.5 };
+  const firstPoint = { x, y: step.y - BLOCK_WIDTH * 0.5 };
+  const secondPoint = { x, y: step.y + BLOCK_WIDTH * 0.5 };
 
   if (
     (!reversed && step.directionOnHit.y > 0) ||
