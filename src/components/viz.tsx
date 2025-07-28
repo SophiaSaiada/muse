@@ -17,9 +17,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
   const layerRef = useRef<Konva.Group>(null);
 
-  const circleGroupRef = useRef<Konva.Group>(null);
-
-  // TODO: Make trail more realistic
+  const circleRef = useRef<Konva.Circle>(null);
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
 
@@ -39,25 +37,30 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
       setCurrentNoteIndex(nextStepIndex - 1);
 
-      updateObstaclesLayerPosition({
-        currentStep,
-        nextStep,
-        time,
-        layer: layerRef.current,
-        width,
-        height,
-      });
-
       updateTrailPosition({
         nearPartOfTrail: nearPartOfTrailRef.current,
         farPartOfTrail: farPartOfTrailRef.current,
+        circle: circleRef.current,
+      });
+
+      updateCirclePosition({
+        currentStep,
         nextStep,
+        time,
+        circle: circleRef.current,
+      });
+
+      updateObstaclesLayerPosition({
+        layer: layerRef.current,
+        width,
+        height,
+        circle: circleRef.current,
       });
 
       updateCircleScale({
         currentStep,
         time,
-        circleGroup: circleGroupRef.current,
+        circle: circleRef.current,
       });
     }, layerRef.current?.getLayer());
 
@@ -93,9 +96,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
               strokeWidth={1}
             />
           )}
-        </Group>
 
-        <Group ref={circleGroupRef} x={width / 2} y={height / 2}>
           <Circle
             ref={farPartOfTrailRef}
             width={SCALE}
@@ -116,7 +117,14 @@ export const Viz = ({ path }: { path: Step[] }) => {
             opacity={0.66}
           />
 
-          <Circle x={0} y={0} width={SCALE} height={SCALE} fill="#E5438A" />
+          <Circle
+            x={0}
+            y={0}
+            ref={circleRef}
+            width={SCALE}
+            height={SCALE}
+            fill="#E5438A"
+          />
         </Group>
       </Layer>
     </Stage>
@@ -158,76 +166,68 @@ function getCircleScale({
 function updateCircleScale({
   currentStep,
   time,
-  circleGroup,
+  circle,
 }: {
   currentStep: Step;
   time: number;
-  circleGroup: Konva.Group | null;
+  circle: Konva.Circle | null;
 }) {
   const scale = getCircleScale({ currentStep, time });
-  circleGroup?.scale({ x: scale, y: scale });
+  circle?.scale({ x: scale, y: scale });
 }
 
 function updateTrailPosition({
   nearPartOfTrail,
   farPartOfTrail,
-  nextStep,
+  circle,
 }: {
   nearPartOfTrail: Konva.Circle | null;
   farPartOfTrail: Konva.Circle | null;
-  nextStep: Step;
+  circle: Konva.Circle | null;
 }) {
-  const NEAR_PART_OF_TRAIL_OFFSET = 0.25;
+  farPartOfTrail?.x(nearPartOfTrail?.x());
+  farPartOfTrail?.y(nearPartOfTrail?.y());
 
-  nearPartOfTrail?.x(
-    (nextStep.directionOnHit.x > 0
-      ? -1 * NEAR_PART_OF_TRAIL_OFFSET
-      : NEAR_PART_OF_TRAIL_OFFSET) * SCALE
-  );
-  nearPartOfTrail?.y(
-    (nextStep.directionOnHit.y > 0
-      ? -1 * NEAR_PART_OF_TRAIL_OFFSET
-      : NEAR_PART_OF_TRAIL_OFFSET) * SCALE
-  );
-
-  const FAR_PART_OF_TRAIL_OFFSET = 0.5;
-  farPartOfTrail?.x(
-    (nextStep.directionOnHit.x > 0
-      ? -1 * FAR_PART_OF_TRAIL_OFFSET
-      : FAR_PART_OF_TRAIL_OFFSET) * SCALE
-  );
-  farPartOfTrail?.y(
-    (nextStep.directionOnHit.y > 0
-      ? -1 * FAR_PART_OF_TRAIL_OFFSET
-      : FAR_PART_OF_TRAIL_OFFSET) * SCALE
-  );
+  nearPartOfTrail?.x(circle?.x());
+  nearPartOfTrail?.y(circle?.y());
 }
 
-function updateObstaclesLayerPosition({
+function updateCirclePosition({
   currentStep,
   nextStep,
   time,
-  layer,
-  width,
-  height,
+  circle,
 }: {
   currentStep: Step;
   nextStep: Step;
   time: number;
-  layer: Konva.Group | null;
-  width: number;
-  height: number;
+  circle: Konva.Circle | null;
 }) {
   const offset =
     (time - currentStep.note.when) /
     (currentStep.note.when - nextStep.note.when);
 
-  const containerXCenter = width / 2;
-  const containerYCenter = height / 2;
-
   const x = currentStep.x + (currentStep.x - nextStep.x) * offset;
   const y = currentStep.y + (currentStep.y - nextStep.y) * offset;
 
-  layer?.x(containerXCenter - x);
-  layer?.y(containerYCenter - y);
+  circle?.x(x);
+  circle?.y(y);
+}
+
+function updateObstaclesLayerPosition({
+  layer,
+  circle,
+  width,
+  height,
+}: {
+  layer: Konva.Group | null;
+  circle: Konva.Circle | null;
+  width: number;
+  height: number;
+}) {
+  const containerXCenter = width / 2;
+  const containerYCenter = height / 2;
+
+  layer?.x(containerXCenter - (circle?.x() ?? 0));
+  layer?.y(containerYCenter - (circle?.y() ?? 0));
 }
