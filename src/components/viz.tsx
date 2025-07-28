@@ -1,6 +1,6 @@
-import { Layer, Rect, Stage, Group, Circle, Path } from "react-konva";
+import { Layer, Stage, Group, Circle, Path } from "react-konva";
 import { type Step } from "../lib/path";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import { useWindowSize } from "react-use";
 import {
@@ -8,10 +8,9 @@ import {
   SHOW_PATH,
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
-  SHOW_BLOCKS,
-  BLOCK_SCALE,
 } from "../constants";
 import { Tunnel } from "./tunnel";
+import { Block } from "./block";
 
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize(); // TODO: fix mobile height issue
@@ -24,6 +23,8 @@ export const Viz = ({ path }: { path: Step[] }) => {
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
 
+  const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
+
   useEffect(() => {
     const animation = new Konva.Animation((frame) => {
       const time = (frame?.time ?? 0) / 1000;
@@ -35,6 +36,8 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
       const nextStep = path[nextStepIndex];
       const currentStep = path[nextStepIndex - 1];
+
+      setCurrentNoteIndex(nextStepIndex - 1);
 
       updateObstaclesLayerPosition({
         currentStep,
@@ -74,34 +77,14 @@ export const Viz = ({ path }: { path: Step[] }) => {
         <Group x={0} y={0} ref={layerRef}>
           <Tunnel path={path} />
 
-          {SHOW_BLOCKS &&
-            path.map(({ note, x, y, directionOnHit, newDirection }) => (
-              <Rect
-                key={note.when}
-                x={
-                  x +
-                  (newDirection.x === directionOnHit.x
-                    ? 0
-                    : directionOnHit.x > 0
-                    ? SCALE * 0.5
-                    : SCALE * -0.5)
-                }
-                y={
-                  y +
-                  (newDirection.y === directionOnHit.y
-                    ? 0
-                    : directionOnHit.y > 0
-                    ? SCALE * 0.5
-                    : SCALE * -0.5)
-                }
-                width={BLOCK_SCALE}
-                height={BLOCK_SCALE}
-                offsetX={BLOCK_SCALE / 2}
-                offsetY={BLOCK_SCALE / 2}
-                opacity={0.5}
-                fill="red"
-              />
-            ))}
+          {path.map((step, index) => (
+            <Block
+              key={step.note.when}
+              step={step}
+              index={index}
+              currentNoteIndex={currentNoteIndex}
+            />
+          ))}
           {SHOW_PATH && (
             <Path
               data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}

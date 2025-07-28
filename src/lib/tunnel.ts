@@ -86,7 +86,7 @@ const getComplementaryEndStep = (firstStep: Step, secondStep: Step) => {
 // TODO: bezier curve
 function getStepPointsToResult(step: Step, reversed: boolean = false) {
   if (step.newDirection.x === step.directionOnHit.x) {
-    const y = step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5);
+    const y = getYOfStepInXAxis(step, SCALE);
     const firstPoint = { x: step.x - BLOCK_SCALE * 0.5, y };
     const secondPoint = { x: step.x + BLOCK_SCALE * 0.5, y };
 
@@ -100,7 +100,7 @@ function getStepPointsToResult(step: Step, reversed: boolean = false) {
     return [secondPoint, firstPoint];
   }
 
-  const x = step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5);
+  const x = getXOfStepInYAxis(step, SCALE);
   const firstPoint = { x, y: step.y - BLOCK_SCALE * 0.5 };
   const secondPoint = { x, y: step.y + BLOCK_SCALE * 0.5 };
 
@@ -113,3 +113,13 @@ function getStepPointsToResult(step: Step, reversed: boolean = false) {
 
   return [secondPoint, firstPoint];
 }
+
+export const getYOfStepInXAxis = (
+  { directionOnHit, y }: Pick<Step, "directionOnHit" | "y">,
+  pointScale: number
+) => y + pointScale * (directionOnHit.y > 0 ? 0.5 : -0.5);
+
+export const getXOfStepInYAxis = (
+  { directionOnHit, x }: Pick<Step, "directionOnHit" | "x">,
+  pointScale: number
+) => x + pointScale * (directionOnHit.x > 0 ? 0.5 : -0.5);
