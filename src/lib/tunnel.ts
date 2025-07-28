@@ -1,4 +1,4 @@
-import { BLOCK_WIDTH, SCALE } from "../constants";
+import { BLOCK_HEIGHT, BLOCK_WIDTH } from "../constants";
 import type { Step } from "./path";
 
 export const calculateTunnelPoints = (
@@ -86,7 +86,7 @@ const getComplementaryEndStep = (firstStep: Step, secondStep: Step) => {
 // TODO: bezier curve
 function getStepPointsToResult(step: Step, reversed: boolean = false) {
   if (step.newDirection.x === step.directionOnHit.x) {
-    const y = getYOfStepInXAxis(step, SCALE);
+    const y = getYOfStepInXAxis(step, BLOCK_HEIGHT);
     const firstPoint = { x: step.x - BLOCK_WIDTH * 0.5, y };
     const secondPoint = { x: step.x + BLOCK_WIDTH * 0.5, y };
 
@@ -100,7 +100,7 @@ function getStepPointsToResult(step: Step, reversed: boolean = false) {
     return [secondPoint, firstPoint];
   }
 
-  const x = getXOfStepInYAxis(step, SCALE);
+  const x = getXOfStepInYAxis(step, BLOCK_HEIGHT);
   const firstPoint = { x, y: step.y - BLOCK_WIDTH * 0.5 };
   const secondPoint = { x, y: step.y + BLOCK_WIDTH * 0.5 };
 
