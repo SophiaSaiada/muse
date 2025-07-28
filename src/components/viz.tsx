@@ -76,7 +76,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
   return (
     <Stage width={width} height={height} style={{ backgroundColor: "#202020" }}>
-      <Layer ref={layerRef}>
+      <Layer ref={layerRef} x={width / 2} y={height / 2}>
         <Tunnel path={path} />
 
         {path
