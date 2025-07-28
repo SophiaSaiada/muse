@@ -9,6 +9,7 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
+  MAX_BLOCKS,
 } from "../constants";
 import { Tunnel } from "./tunnel";
 import { Block } from "./block";
@@ -73,21 +74,24 @@ export const Viz = ({ path }: { path: Step[] }) => {
     };
   }, [height, path, width]);
 
-  // TODO: render only visible rectangles
-
   return (
     <Stage width={width} height={height} style={{ backgroundColor: "#202020" }}>
       <Layer ref={layerRef}>
         <Tunnel path={path} />
 
-        {path.map((step, index) => (
-          <Block
-            key={step.note.when}
-            step={step}
-            index={index}
-            currentNoteIndex={currentNoteIndex}
-          />
-        ))}
+        {path
+          .slice(
+            Math.max(0, currentNoteIndex - MAX_BLOCKS),
+            currentNoteIndex + 1
+          )
+          .map((step, index) => (
+            <Block
+              key={step.note.when}
+              step={step}
+              index={index + Math.max(0, currentNoteIndex - MAX_BLOCKS)}
+              currentNoteIndex={currentNoteIndex}
+            />
+          ))}
         {SHOW_PATH && (
           <Path
             data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
