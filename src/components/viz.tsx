@@ -76,7 +76,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
   // TODO: render only visible rectangles
 
   return (
-    <Stage width={width} height={height} style={{ backgroundColor: "#4d4d4d" }}>
+    <Stage width={width} height={height} style={{ backgroundColor: "#202020" }}>
       <Layer ref={layerRef}>
         <Tunnel path={path} />
 
