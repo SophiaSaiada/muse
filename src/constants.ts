@@ -40,3 +40,7 @@ export const INCLUDE_BEATS = true;
 export const SPEED = 150;
 export const LOOKAHEAD_FOR_COLLISION = 14;
 export const MIN_INTERVAL_BETWEEN_NOTES = 0.05;
+export const BLOCK_FADE_IN_DURATION = 100;
+export const BLOCK_START_HUE = 334;
+export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
+export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 10;

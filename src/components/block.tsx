@@ -1,5 +1,12 @@
 import { Rect } from "react-konva";
-import { BLOCK_SCALE, SCALE } from "../constants";
+import {
+  BLOCK_FADE_IN_DURATION,
+  BLOCK_HUE_CHANGE_INDEX_INTERVAL,
+  BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL,
+  BLOCK_SCALE,
+  BLOCK_START_HUE,
+  SCALE,
+} from "../constants";
 import type { Step } from "../lib/path";
 import Konva from "konva";
 import { useEffect, useRef } from "react";
@@ -24,7 +31,9 @@ export const Block = ({
     const animation = new Konva.Animation((frame) => {
       const time = frame?.time ?? 0;
 
-      rectRef.current?.opacity(1 - (200 - time) / 200);
+      rectRef.current?.opacity(
+        1 - (BLOCK_FADE_IN_DURATION - time) / BLOCK_FADE_IN_DURATION
+      );
     }, rectRef.current?.getLayer());
 
     animation.start();
@@ -53,7 +62,16 @@ export const Block = ({
       offsetX={BLOCK_SCALE / 2}
       offsetY={BLOCK_SCALE / 2}
       opacity={index < currentNoteIndex ? 1 : 0}
-      fill={"yellow"}
+      fill={`hsl(${
+        Math.round(
+          (index /
+            (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+              ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+              : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+            360 +
+            BLOCK_START_HUE
+        ) % 360
+      }, 100%, 60%)`}
     />
   );
 };
