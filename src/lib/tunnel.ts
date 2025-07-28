@@ -35,6 +35,7 @@ export const calculateTunnelPoints = (
     }
   }
 
+  // TODO: adapt to addStepPointsToResult
   result.push(
     getComplementaryMiddleStep(path[path.length - 1], path[path.length - 2])
   );
@@ -50,6 +51,7 @@ export const calculateTunnelPoints = (
     alreadyAddedIndexes.add(i);
   }
 
+  // TODO: adapt to addStepPointsToResult
   result.push(getComplementaryEndStep(path[0], path[1]));
 
   return result;
@@ -69,6 +71,7 @@ const getComplementaryEndStep = (lastStep: Step, previousStep: Step) => {
   return { x: lastStep.x, y: previousStep.y };
 };
 
+// TODO: bezier curve
 function addStepPointsToResult(
   step: Step,
   result: { x: number; y: number }[],

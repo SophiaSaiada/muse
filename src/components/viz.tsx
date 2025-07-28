@@ -20,6 +20,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
   const circleGroupRef = useRef<Konva.Group>(null);
 
+  // TODO: Make trail more realistic
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
 
@@ -64,6 +65,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
     };
   }, [height, path, width]);
 
+  // TODO: smooth camera movement
   // TODO: render only visible rectangles
 
   return (
