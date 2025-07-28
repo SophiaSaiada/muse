@@ -40,7 +40,7 @@ const generateStraightPath = (notes: Note[], speed: number) =>
               duration: note.when,
             },
           ],
-          direction: acc.direction,
+          direction: newDirection,
         };
       }
 
@@ -63,7 +63,7 @@ const generateStraightPath = (notes: Note[], speed: number) =>
         direction: newDirection,
       };
     },
-    { path: [], direction: { x: speed, y: speed } }
+    { path: [], direction: { x: speed, y: -speed } }
   ).path;
 
 export const calculatePath = (song: Song, speed: number) => {
