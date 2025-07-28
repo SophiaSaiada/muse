@@ -86,58 +86,30 @@ const getComplementaryEndStep = (firstStep: Step, secondStep: Step) => {
 // TODO: bezier curve
 function getStepPointsToResult(step: Step, reversed: boolean = false) {
   if (step.newDirection.x === step.directionOnHit.x) {
+    const y = step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5);
+    const firstPoint = { x: step.x - BLOCK_SCALE * 0.5, y };
+    const secondPoint = { x: step.x + BLOCK_SCALE * 0.5, y };
+
     if (
       (!reversed && step.directionOnHit.x > 0) ||
       (reversed && step.directionOnHit.x < 0)
     ) {
-      return [
-        {
-          x: step.x - BLOCK_SCALE * 0.5,
-          y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        },
-        {
-          x: step.x + BLOCK_SCALE * 0.5,
-          y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        },
-      ];
+      return [firstPoint, secondPoint];
     }
 
-    return [
-      {
-        x: step.x + BLOCK_SCALE * 0.5,
-        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      },
-      {
-        x: step.x - BLOCK_SCALE * 0.5,
-        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      },
-    ];
+    return [secondPoint, firstPoint];
   }
+
+  const x = step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5);
+  const firstPoint = { x, y: step.y - BLOCK_SCALE * 0.5 };
+  const secondPoint = { x, y: step.y + BLOCK_SCALE * 0.5 };
 
   if (
     (!reversed && step.directionOnHit.y > 0) ||
     (reversed && step.directionOnHit.y < 0)
   ) {
-    return [
-      {
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y - BLOCK_SCALE * 0.5,
-      },
-      {
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y + BLOCK_SCALE * 0.5,
-      },
-    ];
+    return [firstPoint, secondPoint];
   }
 
-  return [
-    {
-      x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      y: step.y + BLOCK_SCALE * 0.5,
-    },
-    {
-      x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      y: step.y - BLOCK_SCALE * 0.5,
-    },
-  ];
+  return [secondPoint, firstPoint];
 }
