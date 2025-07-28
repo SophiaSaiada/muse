@@ -22,7 +22,7 @@ export const calculateTunnelPoints = (
       nextNextStep.newDirection.x === -1 * step.newDirection.x &&
       nextNextStep.newDirection.y === -1 * step.newDirection.y;
 
-    addStepPointsToResult(step, result);
+    result.push(...getStepPointsToResult(step));
 
     alreadyAddedIndexes.add(i);
 
@@ -35,7 +35,6 @@ export const calculateTunnelPoints = (
     }
   }
 
-  // TODO: adapt to addStepPointsToResult
   result.push(
     getComplementaryMiddleStep(path[path.length - 1], path[path.length - 2])
   );
@@ -46,12 +45,11 @@ export const calculateTunnelPoints = (
     if (alreadyAddedIndexes.has(i)) {
       continue;
     }
-    addStepPointsToResult(step, result, true);
+    result.push(...getStepPointsToResult(step, true));
 
     alreadyAddedIndexes.add(i);
   }
 
-  // TODO: adapt to addStepPointsToResult
   result.push(getComplementaryEndStep(path[0], path[1]));
 
   return result;
@@ -59,69 +57,87 @@ export const calculateTunnelPoints = (
 
 const getComplementaryMiddleStep = (lastStep: Step, previousStep: Step) => {
   if (lastStep.directionOnHit.x === -1 * lastStep.newDirection.x) {
-    return { x: previousStep.x, y: lastStep.y };
+    return {
+      x: getStepPointsToResult(previousStep)[1].x,
+      y: getStepPointsToResult(lastStep, true)[0].y,
+    };
   }
-  return { x: lastStep.x, y: previousStep.y };
+
+  return {
+    x: getStepPointsToResult(lastStep, true)[0].x,
+    y: getStepPointsToResult(previousStep)[1].y,
+  };
 };
 
-const getComplementaryEndStep = (lastStep: Step, previousStep: Step) => {
-  if (lastStep.directionOnHit.x === -1 * lastStep.newDirection.x) {
-    return { x: previousStep.x, y: lastStep.y };
+const getComplementaryEndStep = (firstStep: Step, secondStep: Step) => {
+  if (firstStep.directionOnHit.x === -1 * firstStep.newDirection.x) {
+    return {
+      x: getStepPointsToResult(secondStep, true)[1].x,
+      y: getStepPointsToResult(firstStep)[0].y,
+    };
   }
-  return { x: lastStep.x, y: previousStep.y };
+
+  return {
+    x: getStepPointsToResult(firstStep)[0].x,
+    y: getStepPointsToResult(secondStep, true)[1].y,
+  };
 };
 
 // TODO: bezier curve
-function addStepPointsToResult(
-  step: Step,
-  result: { x: number; y: number }[],
-  reversed: boolean = false
-) {
+function getStepPointsToResult(step: Step, reversed: boolean = false) {
   if (step.newDirection.x === step.directionOnHit.x) {
     if (
       (!reversed && step.directionOnHit.x > 0) ||
       (reversed && step.directionOnHit.x < 0)
     ) {
-      result.push({
-        x: step.x - BLOCK_SCALE * 0.5,
-        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      });
-      result.push({
+      return [
+        {
+          x: step.x - BLOCK_SCALE * 0.5,
+          y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+        },
+        {
+          x: step.x + BLOCK_SCALE * 0.5,
+          y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+        },
+      ];
+    }
+
+    return [
+      {
         x: step.x + BLOCK_SCALE * 0.5,
         y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      });
-    } else {
-      result.push({
-        x: step.x + BLOCK_SCALE * 0.5,
-        y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      });
-      result.push({
+      },
+      {
         x: step.x - BLOCK_SCALE * 0.5,
         y: step.y + (step.directionOnHit.y > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-      });
-    }
-  } else {
-    if (
-      (!reversed && step.directionOnHit.y > 0) ||
-      (reversed && step.directionOnHit.y < 0)
-    ) {
-      result.push({
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y - BLOCK_SCALE * 0.5,
-      });
-      result.push({
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y + BLOCK_SCALE * 0.5,
-      });
-    } else {
-      result.push({
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y + BLOCK_SCALE * 0.5,
-      });
-      result.push({
-        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
-        y: step.y - BLOCK_SCALE * 0.5,
-      });
-    }
+      },
+    ];
   }
+
+  if (
+    (!reversed && step.directionOnHit.y > 0) ||
+    (reversed && step.directionOnHit.y < 0)
+  ) {
+    return [
+      {
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+        y: step.y - BLOCK_SCALE * 0.5,
+      },
+      {
+        x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+        y: step.y + BLOCK_SCALE * 0.5,
+      },
+    ];
+  }
+
+  return [
+    {
+      x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+      y: step.y + BLOCK_SCALE * 0.5,
+    },
+    {
+      x: step.x + (step.directionOnHit.x > 0 ? SCALE * 0.5 : -SCALE * 0.5),
+      y: step.y - BLOCK_SCALE * 0.5,
+    },
+  ];
 }

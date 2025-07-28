@@ -11,7 +11,7 @@ import {
   SHOW_BLOCKS,
   BLOCK_SCALE,
 } from "../constants";
-import { calculateTunnelPoints } from "../lib/tunnel";
+import { Tunnel } from "./tunnel";
 
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize(); // TODO: fix mobile height issue
@@ -72,16 +72,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
     <Stage width={width} height={height} style={{ backgroundColor: "#4d4d4d" }}>
       <Layer>
         <Group x={0} y={0} ref={layerRef}>
-          <Path
-            data={
-              "M 0 0 " +
-              calculateTunnelPoints(path)
-                .map(({ x, y }) => `L ${x} ${y}`)
-                .join(" ") +
-              " Z"
-            }
-            fill="#0a0a0a"
-          />
+          <Tunnel path={path} />
 
           {SHOW_BLOCKS &&
             path.map(({ note, x, y, directionOnHit, newDirection }) => (
