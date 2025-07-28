@@ -46,6 +46,12 @@ function App() {
       }
 
       return path;
+    },
+    {
+      errorRetryCount: 0,
+      onError(err, key, config) {
+        console.error(err, key, config);
+      },
     }
   );
 
