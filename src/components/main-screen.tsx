@@ -11,8 +11,9 @@ export const MainScreen = ({
   selectedFile: (typeof MIDI_FILES)[number] | null;
 }) => (
   <div className="flex flex-col gap-2.5">
-    <h1 className="text-5xl mb-1 font-headline text-shadow-dino">
+    <h1 className="text-5xl mb-1 font-headline text-shadow-dino flex flex-row items-start">
       Muse by Sophie
+      {import.meta.env.DEV && <span className="text-2xl ml-2">Local</span>}
     </h1>
     {MIDI_FILES.map((file) => (
       <button
