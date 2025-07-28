@@ -1,4 +1,4 @@
-import { Layer, Stage, Group, Circle, Path } from "react-konva";
+import { Layer, Stage, Circle, Path } from "react-konva";
 import { type Step } from "../lib/path";
 import { useEffect, useRef, useState } from "react";
 import Konva from "konva";
@@ -8,14 +8,16 @@ import {
   SHOW_PATH,
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
+  CAMERA_FOLLOW_SMOOTHING,
 } from "../constants";
 import { Tunnel } from "./tunnel";
 import { Block } from "./block";
+import { smoothstep } from "../lib/smoothstep";
 
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize(); // TODO: fix mobile height issue
 
-  const layerRef = useRef<Konva.Group>(null);
+  const layerRef = useRef<Konva.Layer>(null);
 
   const circleRef = useRef<Konva.Circle>(null);
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
@@ -50,7 +52,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
         circle: circleRef.current,
       });
 
-      updateObstaclesLayerPosition({
+      updateCameraPosition({
         layer: layerRef.current,
         width,
         height,
@@ -71,61 +73,58 @@ export const Viz = ({ path }: { path: Step[] }) => {
     };
   }, [height, path, width]);
 
-  // TODO: smooth camera movement
   // TODO: render only visible rectangles
 
   return (
     <Stage width={width} height={height} style={{ backgroundColor: "#4d4d4d" }}>
-      <Layer>
-        <Group x={0} y={0} ref={layerRef}>
-          <Tunnel path={path} />
+      <Layer ref={layerRef}>
+        <Tunnel path={path} />
 
-          {path.map((step, index) => (
-            <Block
-              key={step.note.when}
-              step={step}
-              index={index}
-              currentNoteIndex={currentNoteIndex}
-            />
-          ))}
-          {SHOW_PATH && (
-            <Path
-              data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
-              stroke="#E5438A"
-              opacity={0.75}
-              strokeWidth={1}
-            />
-          )}
-
-          <Circle
-            ref={farPartOfTrailRef}
-            width={SCALE}
-            height={SCALE}
-            x={0}
-            y={0}
-            fill="#E5438A"
-            opacity={0.33}
+        {path.map((step, index) => (
+          <Block
+            key={step.note.when}
+            step={step}
+            index={index}
+            currentNoteIndex={currentNoteIndex}
           />
-
-          <Circle
-            ref={nearPartOfTrailRef}
-            x={0}
-            y={0}
-            width={SCALE}
-            height={SCALE}
-            fill="#E5438A"
-            opacity={0.66}
+        ))}
+        {SHOW_PATH && (
+          <Path
+            data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
+            stroke="#E5438A"
+            opacity={0.75}
+            strokeWidth={1}
           />
+        )}
 
-          <Circle
-            x={0}
-            y={0}
-            ref={circleRef}
-            width={SCALE}
-            height={SCALE}
-            fill="#E5438A"
-          />
-        </Group>
+        <Circle
+          ref={farPartOfTrailRef}
+          width={SCALE}
+          height={SCALE}
+          x={0}
+          y={0}
+          fill="#E5438A"
+          opacity={0.33}
+        />
+
+        <Circle
+          ref={nearPartOfTrailRef}
+          x={0}
+          y={0}
+          width={SCALE}
+          height={SCALE}
+          fill="#E5438A"
+          opacity={0.66}
+        />
+
+        <Circle
+          x={0}
+          y={0}
+          ref={circleRef}
+          width={SCALE}
+          height={SCALE}
+          fill="#E5438A"
+        />
       </Layer>
     </Stage>
   );
@@ -214,13 +213,13 @@ function updateCirclePosition({
   circle?.y(y);
 }
 
-function updateObstaclesLayerPosition({
+function updateCameraPosition({
   layer,
   circle,
   width,
   height,
 }: {
-  layer: Konva.Group | null;
+  layer: Konva.Layer | null;
   circle: Konva.Circle | null;
   width: number;
   height: number;
@@ -228,6 +227,23 @@ function updateObstaclesLayerPosition({
   const containerXCenter = width / 2;
   const containerYCenter = height / 2;
 
-  layer?.x(containerXCenter - (circle?.x() ?? 0));
-  layer?.y(containerYCenter - (circle?.y() ?? 0));
+  if (!layer || !circle) {
+    return;
+  }
+
+  const desiredX = containerXCenter - circle.x();
+  const desiredY = containerYCenter - circle.y();
+
+  const currentX = layer.x();
+  const currentY = layer.y();
+
+  const newX =
+    currentX +
+    (desiredX - currentX) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+  const newY =
+    currentY +
+    (desiredY - currentY) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+
+  layer.x(newX);
+  layer.y(newY);
 }
