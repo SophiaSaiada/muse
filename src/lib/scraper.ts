@@ -45,7 +45,7 @@ const findMidiDownloadUrl = async (filePageUrl: string) => {
   const filePageText = await fetchHtml(filePageUrl);
 
   const midiFileLinkMatch = filePageText.match(
-    /<a href="(https:\/\/www.mididb.com\/midi-download\/[^"]+)"/
+    /<a href="(https:\/\/www.mididb.com\/midi-download\/[^.]+\.mid)"/
   );
   if (!midiFileLinkMatch) {
     throw new Error("No midi file link matches");
