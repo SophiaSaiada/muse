@@ -1,20 +1,24 @@
 import { MIDI_FILES } from "../constants";
 import { cn } from "../utils/cn";
+import { SearchBox } from "./search-box";
 
 export const MainScreen = ({
   onSelectFile,
   isLoading,
   selectedFile,
+  onSearch,
 }: {
   onSelectFile: (file: (typeof MIDI_FILES)[number]) => void;
   isLoading: boolean;
   selectedFile: (typeof MIDI_FILES)[number] | null;
+  onSearch: (search: string) => void;
 }) => (
   <div className="flex flex-col gap-2.5">
     <h1 className="text-5xl mb-1 font-headline text-shadow-dino flex flex-row items-start">
       Muse by Sophie
       {import.meta.env.DEV && <span className="text-2xl ml-2">Local</span>}
     </h1>
+    <SearchBox onSearch={onSearch} isLoading={isLoading} />
     {MIDI_FILES.map((file) => (
       <button
         key={file.fileName}

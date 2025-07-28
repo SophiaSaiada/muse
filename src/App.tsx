@@ -9,21 +9,25 @@ import { MIDI_FILES, MUTE, SPEED } from "./constants";
 import { Viz } from "./components/viz";
 import { MainScreen } from "./components/main-screen";
 import type { Song } from "./types";
+import { searchSongOnMidiDB } from "./lib/scraper";
 
 function App() {
   const player = useRef<MIDIPlayer>(MIDIPlayer());
 
+  const [search, setSearch] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<
     (typeof MIDI_FILES)[number] | null
   >(null);
 
   // TODO: add error handling
   const { data: path, isLoading } = useSWR(
-    selectedFile?.fileName,
-    async (fileName: string) => {
+    search || selectedFile ? { search, selectedFile } : null,
+    async ({ search, selectedFile }) => {
       // TODO: stop previously playing song
 
-      const res = await fetch(`/midi/${fileName}`);
+      const res = await (search
+        ? searchSongOnMidiDB(search)
+        : fetch(`/midi/${selectedFile!.fileName}`));
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
 
@@ -49,6 +53,7 @@ function App() {
     <Viz path={path} />
   ) : (
     <MainScreen
+      onSearch={setSearch}
       onSelectFile={setSelectedFile}
       isLoading={isLoading}
       selectedFile={selectedFile}
