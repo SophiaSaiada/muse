@@ -1319,10 +1319,8 @@ MIDIFile.prototype.parseSong = function () {
           if (events[i].subtype == MIDIEvents.EVENT_MIDI_CONTROLLER) {
             if (events[i].param1 == 7) {
               if (events[i].channel != 9) {
-                // TODO why not set loudness for drums?
                 var track = this.takeTrack(events[i].channel, song);
                 track.volume = events[i].param2 / 127 || 0.000001;
-                //console.log('volume', track.volume,'for',events[i].channel);
               }
             } else if (
               (expectedPitchBendRangeMessageNumber == 1 &&
