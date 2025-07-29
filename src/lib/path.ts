@@ -65,6 +65,7 @@ const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
     { path: [], direction: { x: speed, y: -speed } }
   ).path;
 
+// TODO: more interesting path generation
 export const calculatePath = (song: Song, speed: number) => {
   const notes = getNotes(song);
 
