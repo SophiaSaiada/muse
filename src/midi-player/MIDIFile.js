@@ -1,3 +1,5 @@
+// Source: https://github.com/surikov/webaudiofont/blob/fd16e95/examples/MIDIFile.js
+
 var UTF8 = {
   // non UTF8 encoding detection (cf README file for details)
   isNotUTF8: function (bytes, byteOffset, byteLength) {

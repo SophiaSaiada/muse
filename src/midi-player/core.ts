@@ -1,3 +1,5 @@
+// Adapted from https://github.com/surikov/webaudiofont/blob/fd16e95/examples/midiplayer.html
+
 import type { Song } from "@/types";
 import type {
   WebAudioFontChannel,
