@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import useSWRImmutable from "swr/immutable";
+import { useState } from "react";
+import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
 import { calculatePath } from "@/lib/path";
@@ -10,17 +10,13 @@ import type { Song } from "@/types";
 import { toast } from "sonner";
 
 function App() {
-  const player = useRef<MIDIPlayer>(new MIDIPlayer());
-
   const [selectedFile, setSelectedFile] = useState<
     (typeof MIDI_FILES)[number] | null
   >(null);
 
-  const { data: path, isLoading } = useSWRImmutable(
+  const { data: path, isLoading } = useSWR(
     selectedFile,
     async (selectedFile) => {
-      // TODO: stop previously playing song
-
       const res = await fetch(selectedFile.url);
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
@@ -31,8 +27,10 @@ function App() {
         song.beats = [];
       }
 
+      const player = new MIDIPlayer();
+
       const loadingSongIntoPlayerPromise = new Promise((resolve) =>
-        player.current.startLoad(song, resolve)
+        player.startLoad(song, resolve)
       );
 
       const path = calculatePath(song, SPEED); // TODO: calculate on a service worker
@@ -40,7 +38,10 @@ function App() {
       await loadingSongIntoPlayerPromise;
 
       if (!MUTE) {
-        player.current.startPlay();
+        player.startPlay(() => {
+          toast("Hope you had fun, pick another song!");
+          setSelectedFile(null);
+        });
       }
 
       return path;
@@ -51,6 +52,8 @@ function App() {
         console.error(err, key, config);
         toast.error("Error loading file, try again");
       },
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
     }
   );
 

@@ -21,15 +21,19 @@ export class MIDIPlayer {
 
   constructor() {}
 
-  public startPlay = (): void => {
+  public startPlay = (onSongEnd: () => void): void => {
     this.currentSongTime = 0;
     this.songStart = this.audioContext!.currentTime;
     this.nextStepTime = this.audioContext!.currentTime;
     const stepDuration = 44 / 1000;
-    this.tick(this.loadedSong!, stepDuration);
+    this.tick(this.loadedSong!, stepDuration, onSongEnd);
   };
 
-  private tick = (song: Song, stepDuration: number): void => {
+  private tick = (
+    song: Song,
+    stepDuration: number,
+    onSongEnd: () => void
+  ): void => {
     if (this.audioContext!.currentTime > this.nextStepTime - stepDuration) {
       this.sendNotes(
         song,
@@ -43,24 +47,15 @@ export class MIDIPlayer {
       this.currentSongTime = this.currentSongTime + stepDuration;
       this.nextStepTime = this.nextStepTime + stepDuration;
       if (this.currentSongTime > song.duration) {
-        this.currentSongTime = this.currentSongTime - song.duration;
-        this.sendNotes(
-          song,
-          this.songStart,
-          0,
-          this.currentSongTime,
-          this.audioContext!,
-          this.input!,
-          this.player!
-        );
-        this.songStart = this.songStart + song.duration;
+        onSongEnd();
+        return;
       }
     }
     if (this.nextPositionTime < this.audioContext!.currentTime) {
       this.nextPositionTime = this.audioContext!.currentTime + 3;
     }
     window.requestAnimationFrame(() => {
-      this.tick(song, stepDuration);
+      this.tick(song, stepDuration, onSongEnd);
     });
   };
 
@@ -128,7 +123,6 @@ export class MIDIPlayer {
 
     this.equalizer = this.player.createChannel(this.audioContext);
     this.reverberator = this.player.createReverberator(this.audioContext);
-    //this.input = this.reverberator.input;
     this.input = this.equalizer.input;
     this.equalizer.output.connect(this.reverberator.input);
     this.reverberator.output.connect(this.audioContext.destination);
