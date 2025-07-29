@@ -9,7 +9,7 @@ import { MIDI_FILES, MUTE, SPEED } from "./constants";
 import { Viz } from "./components/viz";
 import { MainScreen } from "./components/main-screen";
 import type { Song } from "./types";
-import { searchSongOnMidiDB } from "./lib/scraper";
+import { searchSongOnBitMidi } from "./lib/scraper-bitmidi";
 
 function App() {
   const player = useRef<MIDIPlayer>(MIDIPlayer());
@@ -26,7 +26,7 @@ function App() {
       // TODO: stop previously playing song
 
       const res = await (search
-        ? searchSongOnMidiDB(search)
+        ? searchSongOnBitMidi(search)
         : fetch(`/midi/${selectedFile!.fileName}`));
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
