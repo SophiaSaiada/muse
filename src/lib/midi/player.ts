@@ -144,12 +144,12 @@ export class MIDIPlayer {
     this.player.loader.waitLoad(() => {
       this.audioContext!.resume();
       this.loadedSong = song;
-      this.resetEqlualizer();
+      this.resetEqualizer();
       onSongLoad(song);
     });
   };
 
-  private resetEqlualizer = (): void => {
+  private resetEqualizer = (): void => {
     this.equalizer!.band32.gain.setTargetAtTime(2, 0, 0.0001);
     this.equalizer!.band64.gain.setTargetAtTime(2, 0, 0.0001);
     this.equalizer!.band128.gain.setTargetAtTime(1, 0, 0.0001);
