@@ -22,6 +22,11 @@ export const MainScreen = ({
     {
       errorRetryCount: 0,
       keepPreviousData: true,
+      onSuccess(data) {
+        if (data.length === 0) {
+          toast("No results found, try a different song");
+        }
+      },
       onError(err, key, config) {
         console.error(err, key, config);
         toast.error("Error searching for songs, try again");
@@ -37,12 +42,6 @@ export const MainScreen = ({
       </h1>
 
       <SearchBox setSearch={setSearch} isLoading={isLoading} />
-
-      {search && results && !results.length && (
-        <div className="text-sm font-body -mt-2 opacity-75 mb-2">
-          No results found.
-        </div>
-      )}
 
       {(search && results?.length ? results : MIDI_FILES).map((file) => (
         <button
