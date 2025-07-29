@@ -1,5 +1,4 @@
 import {
-  INCLUDE_BEATS,
   LOOKAHEAD_FOR_COLLISION,
   MIN_INTERVAL_BETWEEN_NOTES,
 } from "../constants";
@@ -167,7 +166,7 @@ const bendPoint = (step: Step, previousStep: Step): Step => {
 const getNotes = (song: Song) => {
   const notes = [
     ...song.tracks.flatMap((track) => track.notes),
-    ...(INCLUDE_BEATS ? song.beats.flatMap((track) => track.notes) : []),
+    ...song.beats.flatMap((track) => track.notes),
   ];
   notes.sort((a, b) => a.when - b.when);
 

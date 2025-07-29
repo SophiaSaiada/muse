@@ -5,7 +5,7 @@ import { MIDIPlayer } from "./midi-player/core";
 // @ts-expect-error TODO: migrate file to TS
 import { MIDIFile } from "./midi-player/MIDIFile";
 import { calculatePath } from "./lib/path";
-import { MIDI_FILES, MUTE, SPEED } from "./constants";
+import { INCLUDE_BEATS, MIDI_FILES, MUTE, SPEED } from "./constants";
 import { Viz } from "./components/viz";
 import { MainScreen } from "./components/main-screen";
 import type { Song } from "./types";
@@ -32,6 +32,10 @@ function App() {
       const midiFile = new MIDIFile(arrayBuffer);
 
       const song: Song = midiFile.parseSong();
+
+      if (!INCLUDE_BEATS) {
+        song.beats = [];
+      }
 
       const loadingSongIntoPlayerPromise = new Promise((resolve) =>
         player.current.startLoad(song, resolve)
