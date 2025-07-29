@@ -17,7 +17,7 @@ export const SearchBox = ({
         type="text"
         placeholder="🔎  Search for a song..."
         className={cn(
-          "border border-tinted-text rounded-md px-2 py-1 outline-0 focus:border-white transition grow font-body",
+          "border border-tinted-text rounded-md p-2 outline-0 focus:border-white transition grow font-body",
           isLoading && "opacity-50"
         )}
         readOnly={isLoading}
