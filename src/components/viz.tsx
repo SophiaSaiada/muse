@@ -17,8 +17,9 @@ import { smoothstep } from "@/lib/smoothstep";
 
 // TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
-  const { width, height } = useWindowSize(); // TODO: fix mobile height issue
+  const { width, height } = useWindowSize();
 
+  const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
 
   const circleRef = useRef<Konva.Circle>(null);
@@ -32,9 +33,12 @@ export const Viz = ({ path }: { path: Step[] }) => {
       const time = (frame?.time ?? 0) / 1000;
 
       const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-      if (nextStepIndex <= 0) {
+      if (nextStepIndex <= 0 || !stageRef.current) {
         return;
       }
+
+      const width = stageRef.current.width();
+      const height = stageRef.current.height();
 
       const nextStep = path[nextStepIndex];
       const currentStep = path[nextStepIndex - 1];
@@ -73,13 +77,14 @@ export const Viz = ({ path }: { path: Step[] }) => {
     return () => {
       animation.stop();
     };
-  }, [height, path, width]);
+  }, [path]);
 
   return (
     <Stage
+      className="bg-[#202020] fixed inset-0 animate-fade-in"
       width={width}
       height={height}
-      className="bg-[#202020] fixed inset-0 animate-fade-in"
+      ref={stageRef}
     >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
         <Tunnel path={path} />
