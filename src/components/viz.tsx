@@ -15,6 +15,7 @@ import { Tunnel } from "./tunnel";
 import { Block } from "./block";
 import { smoothstep } from "../lib/smoothstep";
 
+// TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize(); // TODO: fix mobile height issue
 
