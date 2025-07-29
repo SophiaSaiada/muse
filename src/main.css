@@ -10,6 +10,15 @@
   --color-tinted-text: #ffade4;
   --color-white-text: #fbdff2;
   --text-shadow-dino: 0px 0px 10px #ff30ff;
+  --animate-fade-in: fade-in 300ms ease-in-out;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
 }
 
 @theme inline {

@@ -76,7 +76,11 @@ export const Viz = ({ path }: { path: Step[] }) => {
   }, [height, path, width]);
 
   return (
-    <Stage width={width} height={height} style={{ backgroundColor: "#202020" }}>
+    <Stage
+      width={width}
+      height={height}
+      className="bg-[#202020] fixed inset-0 animate-fade-in"
+    >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
         <Tunnel path={path} />
 

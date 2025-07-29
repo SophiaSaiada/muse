@@ -35,7 +35,7 @@ export const MainScreen = ({
   );
 
   return (
-    <div className="flex flex-col gap-3 p-8">
+    <div className="flex flex-col gap-3 p-8 min-h-dvh justify-center items-start max-w-lg m-auto">
       <h1 className="text-5xl mb-1 font-headline text-shadow-dino flex flex-row items-start">
         Muse by Sophie
         {import.meta.env.DEV && <span className="text-2xl ml-2">Local</span>}
