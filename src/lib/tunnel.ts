@@ -1,5 +1,5 @@
-import { BLOCK_HEIGHT, BLOCK_WIDTH } from "../constants";
-import type { Step } from "./path";
+import { BLOCK_HEIGHT, BLOCK_WIDTH } from "@/constants";
+import type { Step } from "@/lib/path";
 
 export const calculateTunnelPoints = (
   path: Step[]

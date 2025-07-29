@@ -7,11 +7,11 @@ import {
   BLOCK_START_FADE_OUT_AFTER_INDEX,
   BLOCK_START_HUE,
   BLOCK_HEIGHT,
-} from "../constants";
-import type { Step } from "../lib/path";
+} from "@/constants";
+import type { Step } from "@/lib/path";
 import Konva from "konva";
 import { useEffect, useRef } from "react";
-import { getXOfStepInYAxis, getYOfStepInXAxis } from "../lib/tunnel";
+import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 
 export const Block = ({
   step: { note, x, y, directionOnHit, newDirection, duration },

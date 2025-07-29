@@ -1,5 +1,5 @@
 import { Layer, Stage, Circle, Path } from "react-konva";
-import { type Step } from "../lib/path";
+import { type Step } from "@/lib/path";
 import { useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import { useWindowSize } from "react-use";
@@ -10,10 +10,10 @@ import {
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
   MAX_BLOCKS,
-} from "../constants";
-import { Tunnel } from "./tunnel";
-import { Block } from "./block";
-import { smoothstep } from "../lib/smoothstep";
+} from "@/constants";
+import { Tunnel } from "@/components/tunnel";
+import { Block } from "@/components/block";
+import { smoothstep } from "@/lib/smoothstep";
 
 // TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {

@@ -1,4 +1,4 @@
-import type { Song } from "../types";
+import type { Song } from "@/types";
 
 export declare class MIDIFile {
   constructor(buffer?: ArrayBuffer, strictMode?: boolean);

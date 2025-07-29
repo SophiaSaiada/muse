@@ -1,6 +1,6 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { debounce } from "es-toolkit";
-import { cn } from "../utils/cn";
+import { cn } from "@/utils/cn";
 
 export const SearchBox = ({
   setSearch,

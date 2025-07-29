@@ -1,8 +1,8 @@
 import {
   LOOKAHEAD_FOR_COLLISION,
   MIN_INTERVAL_BETWEEN_NOTES,
-} from "../constants";
-import type { Note, Song } from "../types";
+} from "@/constants";
+import type { Note, Song } from "@/types";
 
 type Direction = { x: number; y: number };
 

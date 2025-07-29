@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { MIDI_FILES } from "../constants";
-import { cn } from "../utils/cn";
-import { SearchBox } from "./search-box";
+import { MIDI_FILES } from "@/constants";
+import { cn } from "@/utils/cn";
+import { SearchBox } from "@/components/search-box";
 import useSWRImmutable from "swr/immutable";
-import { searchSongOnBitMidi } from "../lib/scraper-bitmidi";
+import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
 
 export const MainScreen = ({
   onSelectFile,

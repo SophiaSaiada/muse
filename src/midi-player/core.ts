@@ -1,9 +1,9 @@
-import type { Song } from "../types";
+import type { Song } from "@/types";
 import type {
   WebAudioFontChannel,
   WebAudioFontPlayer,
   WebAudioFontReverberator,
-} from "./types";
+} from "@/midi-player/types";
 
 export class MIDIPlayer {
   private audioContext: AudioContext | null = null;

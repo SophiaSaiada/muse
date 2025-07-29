@@ -1,4 +1,4 @@
-import type { MidiFile } from "../types";
+import type { MidiFile } from "@/types";
 
 export const searchSongOnBitMidi = async (
   songName: string
