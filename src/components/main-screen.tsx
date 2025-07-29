@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MIDI_FILES } from "@/constants";
-import { cn } from "@/utils/cn";
+import { cn } from "@/lib/utils";
 import { SearchBox } from "@/components/search-box";
 import useSWRImmutable from "swr/immutable";
 import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
