@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 // @ts-expect-error TODO: migrate file to TS
 import { MIDIPlayer } from "./midi-player/core";
 // @ts-expect-error TODO: migrate file to TS
@@ -20,7 +20,7 @@ function App() {
   >(null);
 
   // TODO: add error handling
-  const { data: path, isLoading } = useSWR(
+  const { data: path, isLoading } = useSWRImmutable(
     search || selectedFile ? { search, selectedFile } : null,
     async ({ search, selectedFile }) => {
       // TODO: stop previously playing song
