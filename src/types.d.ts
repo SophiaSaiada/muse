@@ -1,3 +1,5 @@
+export type NoteOrBeat = Note | Beat;
+
 export type Note = {
   when: number;
   pitch: number;

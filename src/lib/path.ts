@@ -2,12 +2,12 @@ import {
   LOOKAHEAD_FOR_COLLISION,
   MIN_INTERVAL_BETWEEN_NOTES,
 } from "@/constants";
-import type { Note, Song } from "@/types";
+import type { NoteOrBeat, Song } from "@/types";
 
 type Direction = { x: number; y: number };
 
 export type Step = {
-  note: Note;
+  note: NoteOrBeat;
   x: number;
   duration: number;
   y: number;
@@ -15,7 +15,7 @@ export type Step = {
   newDirection: Direction;
 };
 
-const generateStraightPath = (notes: Note[], speed: number) =>
+const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
   notes.reduce<{
     path: Step[];
     direction: Direction;
@@ -170,7 +170,7 @@ const getNotes = (song: Song) => {
   ];
   notes.sort((a, b) => a.when - b.when);
 
-  return notes.reduce<Note[]>((acc, note) => {
+  return notes.reduce<NoteOrBeat[]>((acc, note) => {
     const previousNote = acc.at(-1);
     if (
       previousNote &&
