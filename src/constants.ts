@@ -1,33 +1,35 @@
-export const MIDI_FILES = [
+import type { MidiFile } from "./types";
+
+export const MIDI_FILES: MidiFile[] = [
   {
-    fileName: "7 Rings - Ariana Grande (Piano Cover) - MIDI.mid",
+    url: "/midi/7 Rings - Ariana Grande (Piano Cover) - MIDI.mid",
     displayName: "7 Rings - Ariana Grande",
   },
   {
-    fileName: "Chappell Roan - Pink Pony Club.mid",
+    url: "/midi/Chappell Roan - Pink Pony Club.mid",
     displayName: "Chappell Roan - Pink Pony Club",
   },
-  { fileName: "Frozen - Let it Go.mid", displayName: "Frozen - Let it Go" },
-  { fileName: "Gravity Falls.mid", displayName: "Gravity Falls" },
-  { fileName: "HOW FAR I'LL GO.mid", displayName: "Moana - How Far I'll Go" },
+  { url: "/midi/Frozen - Let it Go.mid", displayName: "Frozen - Let it Go" },
+  { url: "/midi/Gravity Falls.mid", displayName: "Gravity Falls" },
+  { url: "/midi/HOW FAR I'LL GO.mid", displayName: "Moana - How Far I'll Go" },
   //   {
   //     // It's a big file (~2000 notes), so it's currently not supported
-  //     fileName: "Imagine Dragons - Whatever It Takes.mid",
+  //     url: "/midi/Imagine Dragons - Whatever It Takes.mid",
   //     displayName: "Imagine Dragons - Whatever It Takes",
   //   },
   {
-    fileName: "Take Me To Church.mid",
+    url: "/midi/Take Me To Church.mid",
     displayName: "Hozier - Take Me To Church",
   },
   {
-    fileName: "The Beatles - Come Together.mid",
+    url: "/midi/The Beatles - Come Together.mid",
     displayName: "The Beatles - Come Together",
   },
   {
-    fileName: "We Don't Talk About Bruno (Piano Cover).mid",
+    url: "/midi/We Don't Talk About Bruno (Piano Cover).mid",
     displayName: "Encanto - We Don't Talk About Bruno",
   },
-] as const;
+];
 
 export const MUTE = false;
 export const SHOW_PATH = false;

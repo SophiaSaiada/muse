@@ -9,25 +9,21 @@ import { INCLUDE_BEATS, MIDI_FILES, MUTE, SPEED } from "./constants";
 import { Viz } from "./components/viz";
 import { MainScreen } from "./components/main-screen";
 import type { Song } from "./types";
-import { searchSongOnBitMidi } from "./lib/scraper-bitmidi";
 
 function App() {
   const player = useRef<MIDIPlayer>(MIDIPlayer());
 
-  const [search, setSearch] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<
     (typeof MIDI_FILES)[number] | null
   >(null);
 
   // TODO: add error handling
   const { data: path, isLoading } = useSWRImmutable(
-    search || selectedFile ? { search, selectedFile } : null,
-    async ({ search, selectedFile }) => {
+    selectedFile,
+    async (selectedFile) => {
       // TODO: stop previously playing song
 
-      const res = await (search
-        ? searchSongOnBitMidi(search)
-        : fetch(`/midi/${selectedFile!.fileName}`));
+      const res = await fetch(selectedFile.url);
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
 
@@ -63,7 +59,6 @@ function App() {
     <Viz path={path} />
   ) : (
     <MainScreen
-      onSearch={setSearch}
       onSelectFile={setSelectedFile}
       isLoading={isLoading}
       selectedFile={selectedFile}

@@ -1,37 +1,27 @@
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { debounce } from "es-toolkit";
 import { cn } from "../utils/cn";
 
 export const SearchBox = ({
-  onSearch,
+  setSearch,
   isLoading,
 }: {
-  onSearch: (search: string) => void;
+  setSearch: Dispatch<SetStateAction<string | null>>;
   isLoading: boolean;
 }) => {
-  const [search, setSearch] = useState("");
-
-  const onButtonClick = () => {
-    onSearch(search);
-  };
+  const [setSearchDebounced] = useState(() => debounce(setSearch, 1000));
 
   return (
-    <div className="flex flex-row group mt-1 mb-2 w-full">
+    <div className="flex flex-col gap-2.5 mt-1 mb-2 w-full">
       <input
         type="text"
-        className="border border-tinted-text rounded-l-md px-2 py-1 outline-0 focus:border-white transition grow font-body"
-        readOnly={isLoading}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <button
-        onClick={onButtonClick}
-        disabled={isLoading}
         className={cn(
-          "text-xl rounded-r-md bg-white-text px-2 cursor-pointer group-focus-within:bg-white transition",
+          "border border-tinted-text rounded-md px-2 py-1 outline-0 focus:border-white transition grow font-body",
           isLoading && "opacity-50"
         )}
-      >
-        {isLoading ? "⏳" : "🔎"}
-      </button>
+        readOnly={isLoading}
+        onChange={(e) => setSearchDebounced(e.target.value)}
+      />
     </div>
   );
 };
