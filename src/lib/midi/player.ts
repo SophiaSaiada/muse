@@ -5,7 +5,7 @@ import type {
   WebAudioFontChannel,
   WebAudioFontPlayer,
   WebAudioFontReverberator,
-} from "@/midi-player/types";
+} from "@/lib/midi/types";
 
 export class MIDIPlayer {
   private audioContext: AudioContext | null = null;

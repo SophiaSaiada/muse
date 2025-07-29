@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import useSWRImmutable from "swr/immutable";
-import { MIDIPlayer } from "@/midi-player/core";
-import { MIDIFile } from "@/midi-player/MIDIFile";
+import { MIDIPlayer } from "@/lib/midi/player";
+import { MIDIFile } from "@/lib/midi/file";
 import { calculatePath } from "@/lib/path";
 import { INCLUDE_BEATS, MIDI_FILES, MUTE, SPEED } from "@/constants";
 import { Viz } from "@/components/viz";
