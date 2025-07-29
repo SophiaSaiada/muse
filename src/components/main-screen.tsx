@@ -36,7 +36,13 @@ export const MainScreen = ({
 
       <SearchBox setSearch={setSearch} isLoading={isLoading} />
 
-      {(results || MIDI_FILES).map((file) => (
+      {results && !results.length && (
+        <div className="text-sm font-body -mt-2 opacity-75 mb-2">
+          No results found.
+        </div>
+      )}
+
+      {(results?.length ? results : MIDI_FILES).map((file) => (
         <button
           key={file.url}
           onClick={isLoading ? undefined : () => onSelectFile(file)}
