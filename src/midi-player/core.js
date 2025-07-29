@@ -1,5 +1,3 @@
-import { MIDIFile } from "./MIDIFile";
-
 export const MIDIPlayer = () => {
   let audioContext = null;
   let player = null;
@@ -159,21 +157,5 @@ export const MIDIPlayer = () => {
     equalizer.band16k.gain.setTargetAtTime(2, 0, 0.0001);
   };
 
-  const handleFileSelect = (event, onSongLoad) => {
-    console.log(event);
-    const file = event.target.files[0];
-    console.log(file);
-    const fileReader = new FileReader();
-    fileReader.onload = function (progressEvent) {
-      console.log(progressEvent);
-      const arrayBuffer = progressEvent.target.result;
-      console.log(arrayBuffer);
-      const midiFile = new MIDIFile(arrayBuffer);
-      const song = midiFile.parseSong();
-      startLoad(song, onSongLoad);
-    };
-    fileReader.readAsArrayBuffer(file);
-  };
-
-  return { handleFileSelect, startLoad, startPlay };
+  return { startLoad, startPlay };
 };
