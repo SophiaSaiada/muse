@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import useSWRImmutable from "swr/immutable";
-// @ts-expect-error TODO: migrate file to TS
 import { MIDIPlayer } from "./midi-player/core";
 // @ts-expect-error TODO: migrate file to TS
 import { MIDIFile } from "./midi-player/MIDIFile";
@@ -11,7 +10,7 @@ import { MainScreen } from "./components/main-screen";
 import type { Song } from "./types";
 
 function App() {
-  const player = useRef<MIDIPlayer>(MIDIPlayer());
+  const player = useRef<MIDIPlayer>(new MIDIPlayer());
 
   const [selectedFile, setSelectedFile] = useState<
     (typeof MIDI_FILES)[number] | null

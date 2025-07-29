@@ -1,8 +1,32 @@
-export type Note = { when: number };
+export type Note = {
+  when: number;
+  pitch: number;
+  duration: number;
+  slides?: unknown;
+};
+
+export type Beat = {
+  when: number;
+  n: number;
+  duration: number;
+};
 
 export type Song = {
-  tracks: { notes: Note[] }[];
-  beats: { notes: Note[] }[];
+  duration: number;
+  tracks: {
+    notes: Note[];
+    volume: number;
+    program: number;
+    info: { url: string; variable: string };
+    id: number;
+  }[];
+  beats: {
+    notes: Beat[];
+    volume: number;
+    n: number;
+    info: { url: string; variable: string };
+    id: number;
+  }[];
 };
 
 export type MidiFile = {
