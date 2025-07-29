@@ -1,24 +1,26 @@
 import { MIDIFile } from "./MIDIFile";
 
-export function MIDIPlayer() {
-  var audioContext = null;
-  var player = null;
-  var reverberator = null;
-  var equalizer = null;
-  var songStart = 0;
-  var input = null;
-  var currentSongTime = 0;
-  var nextStepTime = 0;
-  var nextPositionTime = 0;
-  var loadedsong = null;
-  function startPlay() {
+export const MIDIPlayer = () => {
+  let audioContext = null;
+  let player = null;
+  let reverberator = null;
+  let equalizer = null;
+  let songStart = 0;
+  let input = null;
+  let currentSongTime = 0;
+  let nextStepTime = 0;
+  let nextPositionTime = 0;
+  let loadedSong = null;
+
+  const startPlay = () => {
     currentSongTime = 0;
     songStart = audioContext.currentTime;
     nextStepTime = audioContext.currentTime;
-    var stepDuration = 44 / 1000;
-    tick(loadedsong, stepDuration);
-  }
-  function tick(song, stepDuration) {
+    const stepDuration = 44 / 1000;
+    tick(loadedSong, stepDuration);
+  };
+
+  const tick = (song, stepDuration) => {
     if (audioContext.currentTime > nextStepTime - stepDuration) {
       sendNotes(
         song,
@@ -51,19 +53,28 @@ export function MIDIPlayer() {
     window.requestAnimationFrame(function (t) {
       tick(song, stepDuration);
     });
-  }
-  function sendNotes(song, songStart, start, end, audioContext, input, player) {
-    for (var t = 0; t < song.tracks.length; t++) {
-      var track = song.tracks[t];
-      for (var i = 0; i < track.notes.length; i++) {
+  };
+
+  const sendNotes = (
+    song,
+    songStart,
+    start,
+    end,
+    audioContext,
+    input,
+    player
+  ) => {
+    for (let t = 0; t < song.tracks.length; t++) {
+      let track = song.tracks[t];
+      for (let i = 0; i < track.notes.length; i++) {
         if (track.notes[i].when >= start && track.notes[i].when < end) {
-          var when = songStart + track.notes[i].when;
-          var duration = track.notes[i].duration;
+          const when = songStart + track.notes[i].when;
+          const duration = track.notes[i].duration;
           if (duration > 3) {
             duration = 3;
           }
-          var instr = track.info.variable;
-          var v = track.volume / 7;
+          const instr = track.info.variable;
+          const v = track.volume / 7;
 
           player.queueWaveTable(
             audioContext,
@@ -78,14 +89,14 @@ export function MIDIPlayer() {
         }
       }
     }
-    for (var b = 0; b < song.beats.length; b++) {
-      var beat = song.beats[b];
-      for (var i = 0; i < beat.notes.length; i++) {
+    for (let b = 0; b < song.beats.length; b++) {
+      const beat = song.beats[b];
+      for (let i = 0; i < beat.notes.length; i++) {
         if (beat.notes[i].when >= start && beat.notes[i].when < end) {
-          var when = songStart + beat.notes[i].when;
-          var duration = 1.5;
-          var instr = beat.info.variable;
-          var v = beat.volume / 2;
+          const when = songStart + beat.notes[i].when;
+          const duration = 1.5;
+          const instr = beat.info.variable;
+          const v = beat.volume / 2;
           player.queueWaveTable(
             audioContext,
             input,
@@ -98,10 +109,11 @@ export function MIDIPlayer() {
         }
       }
     }
-  }
-  function startLoad(song, onSongLoad) {
+  };
+
+  const startLoad = (song, onSongLoad) => {
     console.log(song);
-    var AudioContextFunc = window.AudioContext || window.webkitAudioContext;
+    const AudioContextFunc = window.AudioContext || window.webkitAudioContext;
     audioContext = new AudioContextFunc();
     player = new WebAudioFontPlayer();
 
@@ -112,28 +124,29 @@ export function MIDIPlayer() {
     equalizer.output.connect(reverberator.input);
     reverberator.output.connect(audioContext.destination);
 
-    for (var i = 0; i < song.tracks.length; i++) {
-      var nn = player.loader.findInstrument(song.tracks[i].program);
-      var info = player.loader.instrumentInfo(nn);
+    for (let i = 0; i < song.tracks.length; i++) {
+      const nn = player.loader.findInstrument(song.tracks[i].program);
+      const info = player.loader.instrumentInfo(nn);
       song.tracks[i].info = info;
       song.tracks[i].id = nn;
       player.loader.startLoad(audioContext, info.url, info.variable);
     }
-    for (var i = 0; i < song.beats.length; i++) {
-      var nn = player.loader.findDrum(song.beats[i].n);
-      var info = player.loader.drumInfo(nn);
+    for (let i = 0; i < song.beats.length; i++) {
+      const nn = player.loader.findDrum(song.beats[i].n);
+      const info = player.loader.drumInfo(nn);
       song.beats[i].info = info;
       song.beats[i].id = nn;
       player.loader.startLoad(audioContext, info.url, info.variable);
     }
     player.loader.waitLoad(function () {
       audioContext.resume();
-      loadedsong = song;
+      loadedSong = song;
       resetEqlualizer();
       onSongLoad(song);
     });
-  }
-  function resetEqlualizer() {
+  };
+
+  const resetEqlualizer = () => {
     equalizer.band32.gain.setTargetAtTime(2, 0, 0.0001);
     equalizer.band64.gain.setTargetAtTime(2, 0, 0.0001);
     equalizer.band128.gain.setTargetAtTime(1, 0, 0.0001);
@@ -144,23 +157,23 @@ export function MIDIPlayer() {
     equalizer.band4k.gain.setTargetAtTime(3, 0, 0.0001);
     equalizer.band8k.gain.setTargetAtTime(-2, 0, 0.0001);
     equalizer.band16k.gain.setTargetAtTime(2, 0, 0.0001);
-  }
+  };
 
-  function handleFileSelect(event, onSongLoad) {
+  const handleFileSelect = (event, onSongLoad) => {
     console.log(event);
-    var file = event.target.files[0];
+    const file = event.target.files[0];
     console.log(file);
-    var fileReader = new FileReader();
+    const fileReader = new FileReader();
     fileReader.onload = function (progressEvent) {
       console.log(progressEvent);
-      var arrayBuffer = progressEvent.target.result;
+      const arrayBuffer = progressEvent.target.result;
       console.log(arrayBuffer);
-      var midiFile = new MIDIFile(arrayBuffer);
-      var song = midiFile.parseSong();
+      const midiFile = new MIDIFile(arrayBuffer);
+      const song = midiFile.parseSong();
       startLoad(song, onSongLoad);
     };
     fileReader.readAsArrayBuffer(file);
-  }
+  };
 
   return { handleFileSelect, startLoad, startPlay };
-}
+};
