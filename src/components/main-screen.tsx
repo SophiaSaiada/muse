@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { SearchBox } from "@/components/search-box";
 import useSWRImmutable from "swr/immutable";
 import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
+import { toast } from "sonner";
 
 export const MainScreen = ({
   onSelectFile,
@@ -23,6 +24,7 @@ export const MainScreen = ({
       keepPreviousData: true,
       onError(err, key, config) {
         console.error(err, key, config);
+        toast.error("Error searching for songs, try again");
       },
     }
   );

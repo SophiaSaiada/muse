@@ -7,6 +7,7 @@ import { INCLUDE_BEATS, MIDI_FILES, MUTE, SPEED } from "@/constants";
 import { Viz } from "@/components/viz";
 import { MainScreen } from "@/components/main-screen";
 import type { Song } from "@/types";
+import { toast } from "sonner";
 
 function App() {
   const player = useRef<MIDIPlayer>(new MIDIPlayer());
@@ -15,7 +16,6 @@ function App() {
     (typeof MIDI_FILES)[number] | null
   >(null);
 
-  // TODO: add error handling
   const { data: path, isLoading } = useSWRImmutable(
     selectedFile,
     async (selectedFile) => {
@@ -49,6 +49,7 @@ function App() {
       errorRetryCount: 0,
       onError(err, key, config) {
         console.error(err, key, config);
+        toast.error("Error loading file, try again");
       },
     }
   );
