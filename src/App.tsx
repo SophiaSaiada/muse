@@ -63,6 +63,7 @@ function App() {
       onError(err, key, config) {
         console.error(err, key, config);
         toast.error("Error loading file, try again");
+        setSelectedFile(null);
       },
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
