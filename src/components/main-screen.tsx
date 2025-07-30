@@ -87,12 +87,16 @@ export const MainScreen = ({
         value={vizType}
         onValueChange={(value) => setVizType(value as VizType)}
       >
-        <SelectTrigger className="w-full mt-2">
+        <SelectTrigger className="w-full mt-2 p-4 py-5 border-tinted-text/50">
           <SelectValue placeholder={vizType} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="TUNNEL">Tunnel</SelectItem>
-          <SelectItem value="STARS">Stars</SelectItem>
+          <SelectItem value="TUNNEL">
+            <span className="mr-0">🪨</span> Tunnel
+          </SelectItem>
+          <SelectItem value="STARS">
+            <span className="mr-0">✨</span> Stars
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
