@@ -2,44 +2,44 @@ import type { MidiFile, VizType } from "@/types";
 
 export const MIDI_FILES: MidiFile[] = [
   {
-    id: "7 Rings - Ariana Grande (Piano Cover) - MIDI",
+    id: "7Rings",
     displayName: "7 Rings - Ariana Grande",
     source: "example",
   },
   {
-    id: "Chappell Roan - Pink Pony Club",
+    id: "PinkPonyClub",
     displayName: "Chappell Roan - Pink Pony Club",
     source: "example",
   },
   {
-    id: "Frozen - Let it Go",
+    id: "Frozen",
     displayName: "Frozen - Let it Go",
     source: "example",
   },
-  { id: "Gravity Falls", displayName: "Gravity Falls", source: "example" },
+  { id: "GravityFalls", displayName: "Gravity Falls", source: "example" },
   {
-    id: "HOW FAR I'LL GO",
+    id: "Moana",
     displayName: "Moana - How Far I'll Go",
     source: "example",
   },
   //   {
   //     // It's a big file (~2000 notes), so it's currently not supported
-  //     id: "Imagine Dragons - Whatever It Takes",
+  //     id: "WhateverIt Takes",
   //     displayName: "Imagine Dragons - Whatever It Takes",
   //     source: "example",
   //   },
   {
-    id: "Take Me To Church",
+    id: "TakeMeToChurch",
     displayName: "Hozier - Take Me To Church",
     source: "example",
   },
   {
-    id: "The Beatles - Come Together",
+    id: "ComeTogether",
     displayName: "The Beatles - Come Together",
     source: "example",
   },
   {
-    id: "We Don't Talk About Bruno (Piano Cover)",
+    id: "WeDontTalkAboutBruno",
     displayName: "Encanto - We Don't Talk About Bruno",
     source: "example",
   },
