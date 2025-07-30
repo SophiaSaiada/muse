@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
@@ -6,7 +6,6 @@ import { calculatePath } from "@/lib/path";
 import {
   INCLUDE_BEATS,
   INITIAL_VIZ_TYPE,
-  MIDI_FILES,
   MUTE,
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
@@ -16,20 +15,22 @@ import { MainScreen } from "@/components/main-screen";
 import type { Song, VizType } from "@/types";
 import { toast } from "sonner";
 import { useLocalStorage } from "react-use";
+import { useSelectedFile } from "@/hooks/useSelectedFile";
+import { getFileUrl } from "@/lib/file-url";
 
 function App() {
-  const [selectedFile, setSelectedFile] = useState<
-    (typeof MIDI_FILES)[number] | null
-  >(null);
-
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
+
+  const player = useRef<MIDIPlayer | null>(null);
+  const [selectedFile, setSelectedFile] = useSelectedFile();
+  const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
   const { data: path, isLoading } = useSWR(
-    selectedFile,
-    async (selectedFile) => {
-      const res = await fetch(selectedFile.url);
+    selectedFileUrl,
+    async (selectedFileUrl) => {
+      const res = await fetch(selectedFileUrl);
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
 
@@ -39,10 +40,10 @@ function App() {
         song.beats = [];
       }
 
-      const player = new MIDIPlayer();
+      player.current = new MIDIPlayer();
 
       const loadingSongIntoPlayerPromise = new Promise((resolve) =>
-        player.startLoad(song, resolve)
+        player.current?.startLoad(song, resolve)
       );
 
       const path = calculatePath(song, SPEED, vizType === "STARS" ? 4 : 14); // TODO: calculate on a service worker
@@ -50,7 +51,7 @@ function App() {
       await loadingSongIntoPlayerPromise;
 
       if (!MUTE) {
-        player.startPlay(() => {
+        player.current?.startPlay(() => {
           toast("Hope you had fun, pick another song!");
           setSelectedFile(null);
         });
@@ -70,15 +71,13 @@ function App() {
     }
   );
 
-  return path ? (
-    <Viz path={path} />
-  ) : (
-    <MainScreen
-      onSelectFile={setSelectedFile}
-      isLoading={isLoading}
-      selectedFile={selectedFile}
-    />
-  );
+  useEffect(() => {
+    if (!selectedFileUrl) {
+      player.current?.stop();
+    }
+  }, [selectedFileUrl]);
+
+  return path ? <Viz path={path} /> : <MainScreen isLoading={isLoading} />;
 }
 
 export default App;

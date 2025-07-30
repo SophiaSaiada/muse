@@ -161,4 +161,9 @@ export class MIDIPlayer {
     this.equalizer!.band8k.gain.setTargetAtTime(-2, 0, 0.0001);
     this.equalizer!.band16k.gain.setTargetAtTime(2, 0, 0.0001);
   };
+
+  public stop = (): void => {
+    this.audioContext?.close();
+    this.input?.disconnect();
+  };
 }

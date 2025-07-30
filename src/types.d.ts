@@ -32,7 +32,8 @@ export type Song = {
 };
 
 export type MidiFile = {
-  url: string;
+  source: "bitmidi" | "example";
+  id: string;
   displayName: string;
 };
 

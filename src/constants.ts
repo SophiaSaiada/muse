@@ -2,32 +2,46 @@ import type { MidiFile, VizType } from "@/types";
 
 export const MIDI_FILES: MidiFile[] = [
   {
-    url: "/midi/7 Rings - Ariana Grande (Piano Cover) - MIDI.mid",
+    id: "7 Rings - Ariana Grande (Piano Cover) - MIDI",
     displayName: "7 Rings - Ariana Grande",
+    source: "example",
   },
   {
-    url: "/midi/Chappell Roan - Pink Pony Club.mid",
+    id: "Chappell Roan - Pink Pony Club",
     displayName: "Chappell Roan - Pink Pony Club",
+    source: "example",
   },
-  { url: "/midi/Frozen - Let it Go.mid", displayName: "Frozen - Let it Go" },
-  { url: "/midi/Gravity Falls.mid", displayName: "Gravity Falls" },
-  { url: "/midi/HOW FAR I'LL GO.mid", displayName: "Moana - How Far I'll Go" },
+  {
+    id: "Frozen - Let it Go",
+    displayName: "Frozen - Let it Go",
+    source: "example",
+  },
+  { id: "Gravity Falls", displayName: "Gravity Falls", source: "example" },
+  {
+    id: "HOW FAR I'LL GO",
+    displayName: "Moana - How Far I'll Go",
+    source: "example",
+  },
   //   {
   //     // It's a big file (~2000 notes), so it's currently not supported
-  //     url: "/midi/Imagine Dragons - Whatever It Takes.mid",
+  //     id: "Imagine Dragons - Whatever It Takes",
   //     displayName: "Imagine Dragons - Whatever It Takes",
+  //     source: "example",
   //   },
   {
-    url: "/midi/Take Me To Church.mid",
+    id: "Take Me To Church",
     displayName: "Hozier - Take Me To Church",
+    source: "example",
   },
   {
-    url: "/midi/The Beatles - Come Together.mid",
+    id: "The Beatles - Come Together",
     displayName: "The Beatles - Come Together",
+    source: "example",
   },
   {
-    url: "/midi/We Don't Talk About Bruno (Piano Cover).mid",
+    id: "We Don't Talk About Bruno (Piano Cover)",
     displayName: "Encanto - We Don't Talk About Bruno",
+    source: "example",
   },
 ];
 

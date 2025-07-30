@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocalStorage } from "react-use";
 import {
   INITIAL_VIZ_TYPE,
   MIDI_FILES,
@@ -16,17 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLocalStorage } from "react-use";
 import type { VizType } from "@/types";
-export const MainScreen = ({
-  onSelectFile,
-  isLoading,
-  selectedFile,
-}: {
-  onSelectFile: (file: (typeof MIDI_FILES)[number]) => void;
-  isLoading: boolean;
-  selectedFile: (typeof MIDI_FILES)[number] | null;
-}) => {
+import { useSelectedFile } from "@/hooks/useSelectedFile";
+import { isEqual } from "es-toolkit";
+
+export const MainScreen = ({ isLoading }: { isLoading: boolean }) => {
+  const [selectedFile, setSelectedFile] = useSelectedFile();
+
   const [vizType, setVizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
@@ -62,22 +59,22 @@ export const MainScreen = ({
 
       {(search && results?.length ? results : MIDI_FILES).map((file) => (
         <button
-          key={file.url}
-          onClick={isLoading ? undefined : () => onSelectFile(file)}
+          key={JSON.stringify(file)}
+          onClick={isLoading ? undefined : () => setSelectedFile(file)}
           disabled={isLoading}
           className={cn(
             "rounded-md group transition font-body text-left",
             isLoading ||
               "cursor-pointer hover:translate-x-1 hover:text-tinted-text hover:text-shadow-dino",
-            file.url === selectedFile?.url &&
+            isEqual(file, selectedFile) &&
               "text-tinted-text text-shadow-dino translate-x-1",
             (isLoading || isSearching) &&
-              file.url !== selectedFile?.url &&
+              !isEqual(file, selectedFile) &&
               "opacity-50"
           )}
         >
           <span className="w-4 mr-2">
-            {file.url === selectedFile?.url ? "⏳" : "♪"}
+            {isEqual(file, selectedFile) ? "⏳" : "♪"}
           </span>
           <span>{file.displayName}</span>
         </button>

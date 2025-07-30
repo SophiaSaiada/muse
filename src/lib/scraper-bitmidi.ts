@@ -9,8 +9,9 @@ export const searchSongOnBitMidi = async (
   const data = await response.json();
 
   return data.result.results.map(
-    ({ downloadUrl, name }: { name: string; downloadUrl: string }) => ({
-      url: `https://bitmidi.com${downloadUrl}`,
+    ({ id, name }: { name: string; id: number }) => ({
+      source: "bitmidi",
+      id: id.toString(),
       displayName: name.replaceAll("-", " ").replace(/\.mid$/, ""),
     })
   );
