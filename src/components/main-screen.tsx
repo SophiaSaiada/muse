@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { MIDI_FILES } from "@/constants";
-import { cn } from "@/lib/utils";
 import { SearchBox } from "@/components/search-box";
 import useSWRImmutable from "swr/immutable";
 import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
 import { toast } from "sonner";
-import { useSelectedFile } from "@/hooks/useSelectedFile";
-import { isEqual } from "es-toolkit";
 import { VizTypeSelect } from "@/components/viz-type-select";
+import { Song } from "@/components/song";
 
 export const MainScreen = ({ isLoading }: { isLoading: boolean }) => {
-  const [selectedFile, setSelectedFile] = useSelectedFile();
-
   const [search, setSearch] = useState<string | null>(null);
   const { data: results, isLoading: isSearching } = useSWRImmutable(
     search,
@@ -41,26 +37,12 @@ export const MainScreen = ({ isLoading }: { isLoading: boolean }) => {
       <SearchBox setSearch={setSearch} isLoading={isLoading} />
 
       {(search && results?.length ? results : MIDI_FILES).map((file) => (
-        <button
+        <Song
           key={JSON.stringify(file)}
-          onClick={isLoading ? undefined : () => setSelectedFile(file)}
-          disabled={isLoading}
-          className={cn(
-            "rounded-md group transition font-body text-left",
-            isLoading ||
-              "cursor-pointer hover:translate-x-1 hover:text-tinted-text hover:text-shadow-dino",
-            isEqual(file, selectedFile) &&
-              "text-tinted-text text-shadow-dino translate-x-1",
-            (isLoading || isSearching) &&
-              !isEqual(file, selectedFile) &&
-              "opacity-50"
-          )}
-        >
-          <span className="w-4 mr-2">
-            {isEqual(file, selectedFile) ? "⏳" : "♪"}
-          </span>
-          <span>{file.displayName}</span>
-        </button>
+          file={file}
+          isLoading={isLoading}
+          isSearching={isSearching}
+        />
       ))}
 
       <VizTypeSelect />
