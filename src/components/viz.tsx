@@ -2,7 +2,7 @@ import { Layer, Stage, Circle, Path } from "react-konva";
 import { type Step } from "@/lib/path";
 import { useEffect, useRef, useState } from "react";
 import Konva from "konva";
-import { useWindowSize } from "react-use";
+import { useLocalStorage, useWindowSize } from "react-use";
 import {
   SCALE,
   SHOW_PATH,
@@ -10,16 +10,23 @@ import {
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
   MAX_BLOCKS,
-  VIZ_TYPE,
+  VIZ_TYPE_LOCAL_STORAGE_KEY,
+  INITIAL_VIZ_TYPE,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { Block } from "@/components/block";
 import { smoothstep } from "@/lib/smoothstep";
 import { cn } from "@/lib/utils";
+import type { VizType } from "@/types";
 
 // TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize();
+
+  const [vizType] = useLocalStorage<VizType>(
+    VIZ_TYPE_LOCAL_STORAGE_KEY,
+    INITIAL_VIZ_TYPE
+  );
 
   const stageRef = useRef<Konva.Stage>(null);
   const layerRef = useRef<Konva.Layer>(null);
@@ -85,19 +92,19 @@ export const Viz = ({ path }: { path: Step[] }) => {
     <Stage
       className={cn(
         "fixed inset-0 animate-fade-in",
-        VIZ_TYPE === "TUNNEL" && "bg-[#202020]"
+        vizType === "TUNNEL" && "bg-[#202020]"
       )}
       width={width}
       height={height}
       ref={stageRef}
     >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
-        {VIZ_TYPE === "TUNNEL" && <Tunnel path={path} />}
+        {vizType === "TUNNEL" && <Tunnel path={path} />}
 
         {path
           .slice(
             Math.max(0, currentNoteIndex - MAX_BLOCKS),
-            currentNoteIndex + (VIZ_TYPE === "TUNNEL" ? 1 : MAX_BLOCKS)
+            currentNoteIndex + (vizType === "TUNNEL" ? 1 : MAX_BLOCKS)
           )
           .map((step, index) => (
             <Block

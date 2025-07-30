@@ -35,3 +35,5 @@ export type MidiFile = {
   url: string;
   displayName: string;
 };
+
+export type VizType = "TUNNEL" | "STARS";

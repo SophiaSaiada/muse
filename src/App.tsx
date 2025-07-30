@@ -3,17 +3,29 @@ import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
 import { calculatePath } from "@/lib/path";
-import { INCLUDE_BEATS, MIDI_FILES, MUTE, SPEED } from "@/constants";
+import {
+  INCLUDE_BEATS,
+  INITIAL_VIZ_TYPE,
+  MIDI_FILES,
+  MUTE,
+  SPEED,
+  VIZ_TYPE_LOCAL_STORAGE_KEY,
+} from "@/constants";
 import { Viz } from "@/components/viz";
 import { MainScreen } from "@/components/main-screen";
-import type { Song } from "@/types";
+import type { Song, VizType } from "@/types";
 import { toast } from "sonner";
+import { useLocalStorage } from "react-use";
 
 function App() {
   const [selectedFile, setSelectedFile] = useState<
     (typeof MIDI_FILES)[number] | null
   >(null);
 
+  const [vizType] = useLocalStorage<VizType>(
+    VIZ_TYPE_LOCAL_STORAGE_KEY,
+    INITIAL_VIZ_TYPE
+  );
   const { data: path, isLoading } = useSWR(
     selectedFile,
     async (selectedFile) => {
@@ -33,7 +45,7 @@ function App() {
         player.startLoad(song, resolve)
       );
 
-      const path = calculatePath(song, SPEED); // TODO: calculate on a service worker
+      const path = calculatePath(song, SPEED, vizType === "STARS" ? 4 : 14); // TODO: calculate on a service worker
 
       await loadingSongIntoPlayerPromise;
 

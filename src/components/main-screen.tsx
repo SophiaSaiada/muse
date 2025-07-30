@@ -1,11 +1,23 @@
 import { useState } from "react";
-import { MIDI_FILES } from "@/constants";
+import {
+  INITIAL_VIZ_TYPE,
+  MIDI_FILES,
+  VIZ_TYPE_LOCAL_STORAGE_KEY,
+} from "@/constants";
 import { cn } from "@/lib/utils";
 import { SearchBox } from "@/components/search-box";
 import useSWRImmutable from "swr/immutable";
 import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
 import { toast } from "sonner";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useLocalStorage } from "react-use";
+import type { VizType } from "@/types";
 export const MainScreen = ({
   onSelectFile,
   isLoading,
@@ -15,6 +27,11 @@ export const MainScreen = ({
   isLoading: boolean;
   selectedFile: (typeof MIDI_FILES)[number] | null;
 }) => {
+  const [vizType, setVizType] = useLocalStorage<VizType>(
+    VIZ_TYPE_LOCAL_STORAGE_KEY,
+    INITIAL_VIZ_TYPE
+  );
+
   const [search, setSearch] = useState<string | null>(null);
   const { data: results, isLoading: isSearching } = useSWRImmutable(
     search,
@@ -65,6 +82,19 @@ export const MainScreen = ({
           <span>{file.displayName}</span>
         </button>
       ))}
+
+      <Select
+        value={vizType}
+        onValueChange={(value) => setVizType(value as VizType)}
+      >
+        <SelectTrigger className="w-full mt-2">
+          <SelectValue placeholder={vizType} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="TUNNEL">Tunnel</SelectItem>
+          <SelectItem value="STARS">Stars</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 };

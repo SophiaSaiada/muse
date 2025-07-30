@@ -1,7 +1,4 @@
-import {
-  LOOKAHEAD_FOR_COLLISION,
-  MIN_INTERVAL_BETWEEN_NOTES,
-} from "@/constants";
+import { MIN_INTERVAL_BETWEEN_NOTES } from "@/constants";
 import type { NoteOrBeat, Song } from "@/types";
 
 type Direction = { x: number; y: number };
@@ -66,7 +63,11 @@ const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
   ).path;
 
 // TODO: more interesting path generation
-export const calculatePath = (song: Song, speed: number) => {
+export const calculatePath = (
+  song: Song,
+  speed: number,
+  lookaheadForCollision: number
+) => {
   const notes = getNotes(song);
 
   let result = generateStraightPath(notes, speed);
@@ -74,16 +75,16 @@ export const calculatePath = (song: Song, speed: number) => {
   let lastBendIndex: number | null = null;
 
   for (
-    let index = result.length - 1 - LOOKAHEAD_FOR_COLLISION;
-    LOOKAHEAD_FOR_COLLISION <= index;
+    let index = result.length - 1 - lookaheadForCollision;
+    lookaheadForCollision <= index;
     index--
   ) {
-    if (lastBendIndex && index > lastBendIndex - LOOKAHEAD_FOR_COLLISION) {
+    if (lastBendIndex && index > lastBendIndex - lookaheadForCollision) {
       continue;
     }
 
     const straightPathBounds = calculateBounds(
-      result.slice(index - LOOKAHEAD_FOR_COLLISION, index)
+      result.slice(index - lookaheadForCollision, index)
     );
 
     const spiralBounds = calculateBounds(result.slice(index));

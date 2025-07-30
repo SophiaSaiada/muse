@@ -7,14 +7,17 @@ import {
   BLOCK_START_FADE_OUT_AFTER_INDEX,
   BLOCK_START_HUE,
   BLOCK_HEIGHT,
-  VIZ_TYPE,
   STAR_COLOR_CHANGE_MAX_DURATION,
+  VIZ_TYPE_LOCAL_STORAGE_KEY,
+  INITIAL_VIZ_TYPE,
 } from "@/constants";
 import type { Step } from "@/lib/path";
 import Konva from "konva";
 import { useEffect, useRef } from "react";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
+import { useLocalStorage } from "react-use";
+import type { VizType } from "@/types";
 
 // TODO: fade stars in in case there are too many on the path ahead
 // TOD: refactor viz types
@@ -27,6 +30,11 @@ export const Block = ({
   index: number;
   currentNoteIndex: number;
 }) => {
+  const [vizType] = useLocalStorage<VizType>(
+    VIZ_TYPE_LOCAL_STORAGE_KEY,
+    INITIAL_VIZ_TYPE
+  );
+
   const rectRef = useRef<Konva.Rect>(null);
 
   const height =
@@ -34,8 +42,8 @@ export const Block = ({
   const width =
     newDirection.y === directionOnHit.y ? BLOCK_HEIGHT : BLOCK_WIDTH;
 
-  const startHeight = VIZ_TYPE === "TUNNEL" ? height : BLOCK_HEIGHT;
-  const startWidth = VIZ_TYPE === "TUNNEL" ? width : BLOCK_HEIGHT;
+  const startHeight = vizType === "TUNNEL" ? height : BLOCK_HEIGHT;
+  const startWidth = vizType === "TUNNEL" ? width : BLOCK_HEIGHT;
 
   const hue =
     Math.round(
@@ -58,7 +66,7 @@ export const Block = ({
 
     const animation = new Konva.Animation((frame) => {
       const time = (frame?.time ?? 0) / 1000;
-      if (VIZ_TYPE === "TUNNEL") {
+      if (vizType === "TUNNEL") {
         const animationDuration = Math.max(duration, BLOCK_FADE_MIN_DURATION);
         rectRef.current?.opacity(
           1 - (animationDuration - time) / animationDuration
@@ -100,7 +108,16 @@ export const Block = ({
     return () => {
       animation.stop();
     };
-  }, [duration, height, hue, shouldFadeIn, startHeight, startWidth, width]);
+  }, [
+    duration,
+    height,
+    hue,
+    shouldFadeIn,
+    startHeight,
+    startWidth,
+    vizType,
+    width,
+  ]);
 
   useEffect(() => {
     if (!shouldFadeOut) {
@@ -139,8 +156,8 @@ export const Block = ({
       height={startHeight}
       offsetX={startWidth / 2}
       offsetY={startHeight / 2}
-      opacity={VIZ_TYPE === "TUNNEL" ? 0 : 1}
-      fill={`hsl(${hue}, ${VIZ_TYPE === "TUNNEL" ? 100 : 0}%, 60%)`}
+      opacity={vizType === "TUNNEL" ? 0 : 1}
+      fill={`hsl(${hue}, ${vizType === "TUNNEL" ? 100 : 0}%, 60%)`}
     />
   );
 };

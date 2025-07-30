@@ -1,4 +1,4 @@
-import type { MidiFile } from "@/types";
+import type { MidiFile, VizType } from "@/types";
 
 export const MIDI_FILES: MidiFile[] = [
   {
@@ -41,8 +41,8 @@ export const BOUNCE_ANIMATION_HALF_TIME = 0.05;
 export const BOUNCE_ANIMATION_SCALE_FACTOR = 0.85;
 export const INCLUDE_BEATS = false;
 export const SPEED = 150;
-export const VIZ_TYPE: "TUNNEL" | "STARS" = "STARS";
-export const LOOKAHEAD_FOR_COLLISION = VIZ_TYPE === "TUNNEL" ? 14 : 4;
+export const VIZ_TYPE_LOCAL_STORAGE_KEY = "vizType" as const;
+export const INITIAL_VIZ_TYPE: VizType = "STARS";
 export const MIN_INTERVAL_BETWEEN_NOTES = 0.025;
 export const BLOCK_FADE_MIN_DURATION = 0.75;
 export const STAR_COLOR_CHANGE_MAX_DURATION = 0.25;
