@@ -93,7 +93,11 @@ function App() {
       <PlayButton onClickPlay={onClickPlay} />
     )
   ) : (
-    <MainScreen isLoading={isLoading} />
+    <MainScreen
+      isLoading={isLoading}
+      selectedFile={selectedFile}
+      setSelectedFile={setSelectedFile}
+    />
   );
 }
 

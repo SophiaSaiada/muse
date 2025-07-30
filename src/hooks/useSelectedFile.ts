@@ -1,6 +1,6 @@
 import type { MidiFile } from "@/types";
 import { useCallback } from "react";
-import { useSearchParam } from "react-use";
+import { useSearchParams } from "react-router";
 
 const ALLOWED_SOURCES: MidiFile["source"][] = ["b", "e"];
 
@@ -12,25 +12,30 @@ export const useSelectedFile = (): [
   MidiFile | undefined,
   (file: MidiFile | null) => void
 ] => {
-  const source = useSearchParam(SEARCH_PARAM_SOURCE);
-  const id = useSearchParam(SEARCH_PARAM_ID);
-  const displayName = useSearchParam(SEARCH_PARAM_NAME);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const setSelectedFile = useCallback((file: MidiFile | null) => {
-    const url = new URL(window.location.href);
+  const source = searchParams.get(SEARCH_PARAM_SOURCE);
+  const id = searchParams.get(SEARCH_PARAM_ID);
+  const displayName = searchParams.get(SEARCH_PARAM_NAME);
 
-    if (file) {
-      url.searchParams.set(SEARCH_PARAM_SOURCE, file.source);
-      url.searchParams.set(SEARCH_PARAM_ID, file.id);
-      url.searchParams.set(SEARCH_PARAM_NAME, file.displayName);
-    } else {
-      url.searchParams.delete(SEARCH_PARAM_SOURCE);
-      url.searchParams.delete(SEARCH_PARAM_ID);
-      url.searchParams.delete(SEARCH_PARAM_NAME);
-    }
+  const setSelectedFile = useCallback(
+    (file: MidiFile | null) => {
+      const url = new URL(window.location.href);
 
-    history.pushState(null, "", url.pathname + url.search);
-  }, []);
+      if (file) {
+        url.searchParams.set(SEARCH_PARAM_SOURCE, file.source);
+        url.searchParams.set(SEARCH_PARAM_ID, file.id);
+        url.searchParams.set(SEARCH_PARAM_NAME, file.displayName);
+      } else {
+        url.searchParams.delete(SEARCH_PARAM_SOURCE);
+        url.searchParams.delete(SEARCH_PARAM_ID);
+        url.searchParams.delete(SEARCH_PARAM_NAME);
+      }
+
+      setSearchParams(url.search);
+    },
+    [setSearchParams]
+  );
 
   if (
     !source ||
