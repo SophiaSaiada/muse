@@ -6,8 +6,11 @@ import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
 import { toast } from "sonner";
 import { VizTypeSelect } from "@/components/viz-type-select";
 import { Song } from "@/components/song";
+import { useSelectedFile } from "@/hooks/useSelectedFile";
 
 export const MainScreen = ({ isLoading }: { isLoading: boolean }) => {
+  const [selectedFile, setSelectedFile] = useSelectedFile();
+
   const [search, setSearch] = useState<string | null>(null);
   const { data: results, isLoading: isSearching } = useSWRImmutable(
     search,
@@ -42,6 +45,8 @@ export const MainScreen = ({ isLoading }: { isLoading: boolean }) => {
           file={file}
           isLoading={isLoading}
           isSearching={isSearching}
+          selectedFile={selectedFile}
+          setSelectedFile={setSelectedFile}
         />
       ))}
 
