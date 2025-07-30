@@ -2,7 +2,7 @@ import type { MidiFile } from "@/types";
 import { useCallback } from "react";
 import { useSearchParam } from "react-use";
 
-const ALLOWED_SOURCES: MidiFile["source"][] = ["bitmidi", "example"];
+const ALLOWED_SOURCES: MidiFile["source"][] = ["b", "e"];
 
 const SEARCH_PARAM_SOURCE = "s";
 const SEARCH_PARAM_ID = "i";

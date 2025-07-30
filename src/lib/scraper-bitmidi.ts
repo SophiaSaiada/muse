@@ -10,7 +10,7 @@ export const searchSongOnBitMidi = async (
 
   return data.result.results.map(
     ({ id, name }: { name: string; id: number }) => ({
-      source: "bitmidi",
+      source: "b",
       id: id.toString(),
       displayName: name.replaceAll("-", " ").replace(/\.mid$/, ""),
     })

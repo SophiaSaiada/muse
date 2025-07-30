@@ -4,44 +4,44 @@ export const MIDI_FILES: MidiFile[] = [
   {
     id: "7Rings",
     displayName: "7 Rings - Ariana Grande",
-    source: "example",
+    source: "e",
   },
   {
     id: "PinkPonyClub",
     displayName: "Chappell Roan - Pink Pony Club",
-    source: "example",
+    source: "e",
   },
   {
     id: "Frozen",
     displayName: "Frozen - Let it Go",
-    source: "example",
+    source: "e",
   },
-  { id: "GravityFalls", displayName: "Gravity Falls", source: "example" },
+  { id: "GravityFalls", displayName: "Gravity Falls", source: "e" },
   {
     id: "Moana",
     displayName: "Moana - How Far I'll Go",
-    source: "example",
+    source: "e",
   },
   //   {
   //     // It's a big file (~2000 notes), so it's currently not supported
   //     id: "WhateverIt Takes",
   //     displayName: "Imagine Dragons - Whatever It Takes",
-  //     source: "example",
+  //     source: "e",
   //   },
   {
     id: "TakeMeToChurch",
     displayName: "Hozier - Take Me To Church",
-    source: "example",
+    source: "e",
   },
   {
     id: "ComeTogether",
     displayName: "The Beatles - Come Together",
-    source: "example",
+    source: "e",
   },
   {
     id: "WeDontTalkAboutBruno",
     displayName: "Encanto - We Don't Talk About Bruno",
-    source: "example",
+    source: "e",
   },
 ];
 
