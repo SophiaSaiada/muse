@@ -7,12 +7,17 @@ import {
   BLOCK_START_FADE_OUT_AFTER_INDEX,
   BLOCK_START_HUE,
   BLOCK_HEIGHT,
+  VIZ_TYPE,
+  STAR_COLOR_CHANGE_MAX_DURATION,
 } from "@/constants";
 import type { Step } from "@/lib/path";
 import Konva from "konva";
 import { useEffect, useRef } from "react";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+import { lerp } from "@/lib/utils";
 
+// TODO: fade stars in in case there are too many on the path ahead
+// TOD: refactor viz types
 export const Block = ({
   step: { note, x, y, directionOnHit, newDirection, duration },
   index,
@@ -28,6 +33,9 @@ export const Block = ({
     newDirection.x === directionOnHit.x ? BLOCK_HEIGHT : BLOCK_WIDTH;
   const width =
     newDirection.y === directionOnHit.y ? BLOCK_HEIGHT : BLOCK_WIDTH;
+
+  const startHeight = VIZ_TYPE === "TUNNEL" ? height : BLOCK_HEIGHT;
+  const startWidth = VIZ_TYPE === "TUNNEL" ? width : BLOCK_HEIGHT;
 
   const hue =
     Math.round(
@@ -48,13 +56,43 @@ export const Block = ({
       return;
     }
 
-    const animationDuration = Math.max(duration, BLOCK_FADE_MIN_DURATION);
-
     const animation = new Konva.Animation((frame) => {
       const time = (frame?.time ?? 0) / 1000;
-      rectRef.current?.opacity(
-        1 - (animationDuration - time) / animationDuration
-      );
+      if (VIZ_TYPE === "TUNNEL") {
+        const animationDuration = Math.max(duration, BLOCK_FADE_MIN_DURATION);
+        rectRef.current?.opacity(
+          1 - (animationDuration - time) / animationDuration
+        );
+      } else {
+        const animationDuration = Math.min(
+          duration,
+          STAR_COLOR_CHANGE_MAX_DURATION
+        );
+        rectRef.current?.fill(
+          `hsl(${hue}, ${lerp({
+            start: 0,
+            end: 100,
+            time: time,
+            duration: animationDuration,
+          })}%, 60%)`
+        );
+        const newWidth = lerp({
+          start: startWidth,
+          end: width,
+          time: time,
+          duration: animationDuration,
+        });
+        const newHeight = lerp({
+          start: startHeight,
+          end: height,
+          time: time,
+          duration: animationDuration,
+        });
+        rectRef.current?.offsetX(newWidth / 2);
+        rectRef.current?.offsetY(newHeight / 2);
+        rectRef.current?.width(newWidth);
+        rectRef.current?.height(newHeight);
+      }
     }, rectRef.current?.getLayer());
 
     animation.start();
@@ -62,7 +100,7 @@ export const Block = ({
     return () => {
       animation.stop();
     };
-  }, [duration, shouldFadeIn]);
+  }, [duration, height, hue, shouldFadeIn, startHeight, startWidth, width]);
 
   useEffect(() => {
     if (!shouldFadeOut) {
@@ -97,12 +135,12 @@ export const Block = ({
           ? y
           : getYOfStepInXAxis({ directionOnHit, y }, BLOCK_HEIGHT * 2)
       }
-      width={width}
-      height={height}
-      offsetX={width / 2}
-      offsetY={height / 2}
-      opacity={0}
-      fill={`hsl(${hue}, 100%, 60%)`}
+      width={startWidth}
+      height={startHeight}
+      offsetX={startWidth / 2}
+      offsetY={startHeight / 2}
+      opacity={VIZ_TYPE === "TUNNEL" ? 0 : 1}
+      fill={`hsl(${hue}, ${VIZ_TYPE === "TUNNEL" ? 100 : 0}%, 60%)`}
     />
   );
 };

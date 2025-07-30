@@ -10,10 +10,12 @@ import {
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
   MAX_BLOCKS,
+  VIZ_TYPE,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { Block } from "@/components/block";
 import { smoothstep } from "@/lib/smoothstep";
+import { cn } from "@/lib/utils";
 
 // TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
@@ -81,18 +83,21 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
   return (
     <Stage
-      className="bg-[#202020] fixed inset-0 animate-fade-in"
+      className={cn(
+        "fixed inset-0 animate-fade-in",
+        VIZ_TYPE === "TUNNEL" && "bg-[#202020]"
+      )}
       width={width}
       height={height}
       ref={stageRef}
     >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
-        <Tunnel path={path} />
+        {VIZ_TYPE === "TUNNEL" && <Tunnel path={path} />}
 
         {path
           .slice(
             Math.max(0, currentNoteIndex - MAX_BLOCKS),
-            currentNoteIndex + 1
+            currentNoteIndex + (VIZ_TYPE === "TUNNEL" ? 1 : MAX_BLOCKS)
           )
           .map((step, index) => (
             <Block
