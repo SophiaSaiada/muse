@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { VizType } from "@/types";
+import { AudioWaveform, Sparkles } from "lucide-react";
 
 export const VizTypeSelect = () => {
   const [vizType, setVizType] = useLocalStorage<VizType>(
@@ -25,10 +26,12 @@ export const VizTypeSelect = () => {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="TUNNEL">
-          <span className="mr-0">🪨</span> Tunnel
+          <AudioWaveform className="size-4 mr-0" />
+          Tunnel
         </SelectItem>
         <SelectItem value="STARS">
-          <span className="mr-0">✨</span> Stars
+          <Sparkles className="size-4 mr-0" />
+          Stars
         </SelectItem>
       </SelectContent>
     </Select>
