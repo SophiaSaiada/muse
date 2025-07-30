@@ -1,12 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
 import { calculatePath } from "@/lib/path";
 import {
   INCLUDE_BEATS,
-  INITIAL_VIZ_TYPE,
   MUTE,
+  INITIAL_VIZ_TYPE,
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
@@ -17,12 +17,15 @@ import { toast } from "sonner";
 import { useLocalStorage } from "react-use";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import { getFileUrl } from "@/lib/file-url";
+import { PlayButton } from "@/components/play-button";
 
 function App() {
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
+
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const player = useRef<MIDIPlayer | null>(null);
   const [selectedFile, setSelectedFile] = useSelectedFile();
@@ -50,12 +53,7 @@ function App() {
 
       await loadingSongIntoPlayerPromise;
 
-      if (!MUTE) {
-        player.current?.startPlay(() => {
-          toast("Hope you had fun, pick another song!");
-          setSelectedFile(null);
-        });
-      }
+      setIsPlaying(false);
 
       return path;
     },
@@ -77,7 +75,26 @@ function App() {
     }
   }, [selectedFileUrl]);
 
-  return path ? <Viz path={path} /> : <MainScreen isLoading={isLoading} />;
+  const onClickPlay = () => {
+    setIsPlaying(true);
+    if (!MUTE) {
+      player.current?.startPlay(() => {
+        toast("Hope you had fun, pick another song!");
+        setSelectedFile(null);
+        setIsPlaying(false);
+      });
+    }
+  };
+
+  return path ? (
+    isPlaying ? (
+      <Viz path={path} />
+    ) : (
+      <PlayButton onClickPlay={onClickPlay} />
+    )
+  ) : (
+    <MainScreen isLoading={isLoading} />
+  );
 }
 
 export default App;
