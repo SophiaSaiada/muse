@@ -69,28 +69,19 @@ function App() {
     }
   }, [player, selectedFileUrl]);
 
-  useEffect(() => {
-    if (data?.song) {
-      const player = new MIDIPlayer();
-      player.startLoad(data.song, () => {
-        setPlayer(player);
-      });
-    }
-
-    return () => {
-      setPlayer(null);
-    };
-  }, [data?.song]);
-
-  const onClickPlay = async (player: MIDIPlayer) => {
-    if (!MUTE) {
-      player.startPlay(() => {
-        toast("Hope you had fun, pick another song!");
-        setSelectedFile(null);
-        setIsPlaying(false);
-      });
-    }
-    setIsPlaying(true);
+  const onClickPlay = async (song: Song) => {
+    const player = new MIDIPlayer();
+    player.startLoad(song, () => {
+      setPlayer(player);
+      if (!MUTE) {
+        player.startPlay(() => {
+          toast("Hope you had fun, pick another song!");
+          setSelectedFile(null);
+          setIsPlaying(false);
+        });
+      }
+      setIsPlaying(true);
+    });
   };
 
   if (selectedFile && (isLoading || isValidating || !isPlaying)) {
@@ -98,9 +89,9 @@ function App() {
       <PlayScreen
         displayName={selectedFile?.displayName}
         onClickPlay={
-          isLoading || isValidating || !player
+          isLoading || isValidating || !data?.song
             ? undefined
-            : () => onClickPlay(player)
+            : () => onClickPlay(data.song)
         }
       />
     );
