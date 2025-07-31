@@ -9,12 +9,12 @@ import {
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
-import { MainScreen } from "@/components/main-screen";
 import type { Song, Step, VizType } from "@/types";
 import { toast } from "sonner";
 import { useLocalStorage } from "react-use";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import { getFileUrl } from "@/lib/file-url";
+import { MainScreen } from "@/screens/main";
 import { VizScreen } from "@/screens/viz";
 import { PlayScreen } from "@/screens/play";
 
