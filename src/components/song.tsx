@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { MidiFile } from "@/types";
+import type { MidiFile, MidiFileWithName } from "@/types";
 import { Loader, Music2 } from "lucide-react";
 
 export const Song = ({
@@ -9,11 +9,11 @@ export const Song = ({
   selectedFile,
   setSelectedFile,
 }: {
-  file: MidiFile;
+  file: MidiFileWithName;
   isLoading: boolean;
   isSearching: boolean;
   selectedFile: MidiFile | undefined;
-  setSelectedFile: (file: MidiFile | null) => void;
+  setSelectedFile: (file: MidiFileWithName | null) => void;
 }) => {
   const isSelected =
     selectedFile &&

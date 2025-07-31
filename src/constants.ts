@@ -1,6 +1,6 @@
-import type { MidiFile, VizType } from "@/types";
+import type { MidiFileWithName, VizType } from "@/types";
 
-export const MIDI_FILES: MidiFile[] = [
+export const MIDI_FILES: MidiFileWithName[] = [
   {
     id: "7Rings",
     displayName: "7 Rings - Ariana Grande",

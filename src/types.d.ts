@@ -47,7 +47,10 @@ export type MidiFile = {
     | "b" // =bitmidi
     | "e"; // =example
   id: string;
-  displayName: string;
+};
+
+export type MidiFileWithName = MidiFile & {
+  displayName?: string;
 };
 
 export type VizType = "TUNNEL" | "STARS";

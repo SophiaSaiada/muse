@@ -6,8 +6,7 @@ import { searchSongOnBitMidi } from "@/lib/scraper-bitmidi";
 import { toast } from "sonner";
 import { VizTypeSelect } from "@/components/viz-type-select";
 import { Song } from "@/components/song";
-
-import type { MidiFile } from "@/types";
+import type { MidiFile, MidiFileWithName } from "@/types";
 
 export const MainScreen = ({
   isLoading,
@@ -16,7 +15,7 @@ export const MainScreen = ({
 }: {
   isLoading: boolean;
   selectedFile: MidiFile | undefined;
-  setSelectedFile: (file: MidiFile | null) => void;
+  setSelectedFile: (file: MidiFileWithName | null) => void;
 }) => {
   const [search, setSearch] = useState<string | null>(null);
   const { data: results, isLoading: isSearching } = useSWRImmutable(
