@@ -31,6 +31,17 @@ export type Song = {
   }[];
 };
 
+export type Direction = { x: number; y: number };
+
+export type Step = {
+  note: NoteOrBeat;
+  x: number;
+  duration: number;
+  y: number;
+  directionOnHit: Direction;
+  newDirection: Direction;
+};
+
 export type MidiFile = {
   source:
     | "b" // =bitmidi

@@ -11,13 +11,12 @@ import {
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
 } from "@/constants";
-import type { Step } from "@/lib/path";
 import Konva from "konva";
 import { useEffect, useRef } from "react";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
 import { useLocalStorage } from "react-use";
-import type { VizType } from "@/types";
+import type { Step, VizType } from "@/types";
 
 // TODO: fade stars in in case there are too many on the path ahead
 // TOD: refactor viz types

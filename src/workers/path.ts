@@ -1,15 +1,17 @@
-import { MIN_INTERVAL_BETWEEN_NOTES } from "@/constants";
-import type { NoteOrBeat, Song } from "@/types";
+import type { Direction, NoteOrBeat, Song, Step } from "../types";
 
-type Direction = { x: number; y: number };
+const MIN_INTERVAL_BETWEEN_NOTES = 0.025;
 
-export type Step = {
-  note: NoteOrBeat;
-  x: number;
-  duration: number;
-  y: number;
-  directionOnHit: Direction;
-  newDirection: Direction;
+self.onmessage = (e: MessageEvent<string>) => {
+  const data = JSON.parse(e.data) as {
+    song: Song;
+    speed: number;
+    lookaheadForCollision: number;
+  };
+
+  const path = calculatePath(data.song, data.speed, data.lookaheadForCollision);
+
+  self.postMessage(JSON.stringify(path));
 };
 
 const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
@@ -63,7 +65,8 @@ const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
   ).path;
 
 // TODO: more interesting path generation
-export const calculatePath = (
+
+const calculatePath = (
   song: Song,
   speed: number,
   lookaheadForCollision: number

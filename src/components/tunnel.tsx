@@ -1,6 +1,6 @@
 import { Path } from "react-konva";
 import { calculateTunnelPoints } from "@/lib/tunnel";
-import type { Step } from "@/lib/path";
+import type { Step } from "@/types";
 
 export const Tunnel = ({ path }: { path: Step[] }) => {
   const tunnelPoints = calculateTunnelPoints(path);

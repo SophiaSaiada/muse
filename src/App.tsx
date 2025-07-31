@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
-import { calculatePath } from "@/lib/path";
 import {
   INCLUDE_BEATS,
   MUTE,
@@ -12,7 +11,7 @@ import {
 } from "@/constants";
 import { Viz } from "@/components/viz";
 import { MainScreen } from "@/components/main-screen";
-import type { Song, VizType } from "@/types";
+import type { Song, Step, VizType } from "@/types";
 import { toast } from "sonner";
 import { useLocalStorage } from "react-use";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
@@ -49,7 +48,11 @@ function App() {
         player.current?.startLoad(song, resolve)
       );
 
-      const path = calculatePath(song, SPEED, vizType === "STARS" ? 4 : 14); // TODO: calculate on a service worker
+      const path = await calculatePath({
+        song,
+        speed: SPEED,
+        lookaheadForCollision: vizType === "STARS" ? 4 : 14,
+      });
 
       await loadingSongIntoPlayerPromise;
 
@@ -102,3 +105,21 @@ function App() {
 }
 
 export default App;
+
+const calculatePath = async ({
+  song,
+  speed,
+  lookaheadForCollision,
+}: {
+  song: Song;
+  speed: number;
+  lookaheadForCollision: number;
+}) => {
+  const worker = new Worker(new URL("./workers/path.ts", import.meta.url));
+  worker.postMessage(JSON.stringify({ song, speed, lookaheadForCollision }));
+  return new Promise<Step[]>((resolve) => {
+    worker.onmessage = (e) => {
+      resolve(JSON.parse(e.data));
+    };
+  });
+};
