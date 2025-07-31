@@ -74,7 +74,11 @@ function App() {
 
   useEffect(() => {
     if (!selectedFileUrl) {
-      player.current?.stop();
+      try {
+        player.current?.stop();
+      } catch {
+        // if we showed the play button, but the user came back to this page instead of playing the song, the player will be initialized, but the audio context will be already closed
+      }
     }
   }, [selectedFileUrl]);
 
