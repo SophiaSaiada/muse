@@ -8,15 +8,17 @@ export const searchSongOnBitMidi = async (
   return data.result.results.map(parseSong);
 };
 
+const PAGE_SIZE = 30;
+
 export const getSongById = async (
   idAsString: string,
-  pageOffset: number = 1
+  pageOffset: number = 0
 ): Promise<MidiFileWithName | undefined> => {
   const id = parseInt(idAsString);
 
   const params = new URLSearchParams({
-    page: (id - pageOffset).toString(),
-    pageSize: "1",
+    page: Math.ceil((id - pageOffset * PAGE_SIZE) / PAGE_SIZE).toString(),
+    pageSize: PAGE_SIZE.toString(),
   });
   const data = await fetchSearchResults(params);
 

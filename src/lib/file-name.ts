@@ -7,6 +7,14 @@ const MIDI_FILE_ID_TO_NAME: Record<MidiFile["source"], Map<string, string>> = {
   e: new Map(),
 };
 
+export const cacheFileName = (
+  source: MidiFile["source"],
+  id: string,
+  fileName: string
+) => {
+  MIDI_FILE_ID_TO_NAME[source].set(id, fileName);
+};
+
 export const getFileName = async ({
   id,
   source,
@@ -18,7 +26,7 @@ export const getFileName = async ({
 
   const fileName = await fetchFileName({ id, source });
   if (fileName) {
-    MIDI_FILE_ID_TO_NAME[source].set(id, fileName);
+    cacheFileName(source, id, fileName);
   }
   return fileName;
 };
