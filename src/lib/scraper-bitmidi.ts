@@ -1,3 +1,4 @@
+import { capitalize } from "es-toolkit";
 import type { MidiFileWithName } from "@/types";
 
 export const searchSongOnBitMidi = async (
@@ -44,5 +45,5 @@ const parseSong = ({
 }): MidiFileWithName => ({
   source: "b",
   id: id.toString(),
-  displayName: name.replaceAll("-", " ").replace(/\.mid$/, ""),
+  displayName: capitalize(name.replaceAll("-", " ").replace(/\.mid$/, "")),
 });
