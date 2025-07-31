@@ -1,12 +1,19 @@
 import { cn } from "@/lib/utils";
 
-export const SiteName = ({ className }: { className?: string }) => (
+export const SiteName = ({
+  className,
+  prefix,
+}: {
+  className?: string;
+  prefix?: React.ReactNode;
+}) => (
   <h1
     className={cn(
       "text-2xl font-headline text-white-text text-shadow-dino relative",
       className
     )}
   >
+    {prefix}
     <a
       href="/"
       target="_blank"
