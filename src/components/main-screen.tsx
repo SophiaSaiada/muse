@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { VizTypeSelect } from "@/components/viz-type-select";
 import { Song } from "@/components/song";
 import type { MidiFile, MidiFileWithName } from "@/types";
+import { SiteName } from "@/components/site-name";
 
 export const MainScreen = ({
   isLoading,
@@ -38,10 +39,7 @@ export const MainScreen = ({
 
   return (
     <div className="flex flex-col gap-3 p-8 min-h-dvh justify-center items-start max-w-lg m-auto">
-      <h1 className="text-5xl mb-1 font-headline text-shadow-dino flex flex-row items-start">
-        Muse by Sophie
-        {import.meta.env.DEV && <span className="text-2xl ml-2">Local</span>}
-      </h1>
+      <SiteName className="text-5xl mb-1" />
 
       <SearchBox setSearch={setSearch} isLoading={isLoading} />
 

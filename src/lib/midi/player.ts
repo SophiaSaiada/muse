@@ -142,7 +142,6 @@ export class MIDIPlayer {
       this.player.loader.startLoad(this.audioContext, info.url, info.variable);
     }
     this.player.loader.waitLoad(() => {
-      this.audioContext!.resume();
       this.loadedSong = song;
       this.resetEqualizer();
       onSongLoad(song);

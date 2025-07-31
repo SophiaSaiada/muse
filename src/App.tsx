@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { MIDIFile } from "@/lib/midi/file";
@@ -9,14 +9,14 @@ import {
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
-import { Viz } from "@/components/viz";
 import { MainScreen } from "@/components/main-screen";
 import type { Song, Step, VizType } from "@/types";
 import { toast } from "sonner";
 import { useLocalStorage } from "react-use";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import { getFileUrl } from "@/lib/file-url";
-import { PlayButton } from "@/components/play-button";
+import { VizScreen } from "@/screens/viz";
+import { PlayScreen } from "@/screens/play";
 
 function App() {
   const [vizType] = useLocalStorage<VizType>(
@@ -24,12 +24,12 @@ function App() {
     INITIAL_VIZ_TYPE
   );
 
+  const [player, setPlayer] = useState<MIDIPlayer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const player = useRef<MIDIPlayer | null>(null);
   const [selectedFile, setSelectedFile] = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
-  const { data: path, isLoading } = useSWR(
+  const { data, isLoading, isValidating } = useSWR(
     selectedFileUrl,
     async (selectedFileUrl) => {
       const res = await fetch(selectedFileUrl);
@@ -42,23 +42,13 @@ function App() {
         song.beats = [];
       }
 
-      player.current = new MIDIPlayer();
-
-      const loadingSongIntoPlayerPromise = new Promise((resolve) =>
-        player.current?.startLoad(song, resolve)
-      );
-
       const path = await calculatePath({
         song,
         speed: SPEED,
         lookaheadForCollision: vizType === "STARS" ? 4 : 14,
       });
 
-      await loadingSongIntoPlayerPromise;
-
-      setIsPlaying(false);
-
-      return path;
+      return { path, song };
     },
     {
       errorRetryCount: 0,
@@ -74,34 +64,53 @@ function App() {
 
   useEffect(() => {
     if (!selectedFileUrl) {
-      try {
-        player.current?.stop();
-      } catch {
-        // if we showed the play button, but the user came back to this page instead of playing the song, the player will be initialized, but the audio context will be already closed
-      }
+      setIsPlaying(false);
+      player?.stop();
     }
-  }, [selectedFileUrl]);
+  }, [player, selectedFileUrl]);
 
-  const onClickPlay = () => {
-    setIsPlaying(true);
+  useEffect(() => {
+    if (data?.song) {
+      const player = new MIDIPlayer();
+      player.startLoad(data.song, () => {
+        setPlayer(player);
+      });
+    }
+
+    return () => {
+      setPlayer(null);
+    };
+  }, [data?.song]);
+
+  const onClickPlay = async (player: MIDIPlayer) => {
     if (!MUTE) {
-      player.current?.startPlay(() => {
+      player.startPlay(() => {
         toast("Hope you had fun, pick another song!");
         setSelectedFile(null);
         setIsPlaying(false);
       });
     }
+    setIsPlaying(true);
   };
 
-  return path ? (
-    isPlaying ? (
-      <Viz path={path} />
-    ) : (
-      <PlayButton onClickPlay={onClickPlay} />
-    )
+  if (selectedFile && (isLoading || isValidating || !isPlaying)) {
+    return (
+      <PlayScreen
+        displayName={selectedFile?.displayName}
+        onClickPlay={
+          isLoading || isValidating || !player
+            ? undefined
+            : () => onClickPlay(player)
+        }
+      />
+    );
+  }
+
+  return data?.path ? (
+    <VizScreen path={data.path} />
   ) : (
     <MainScreen
-      isLoading={isLoading}
+      isLoading={false}
       selectedFile={selectedFile}
       setSelectedFile={setSelectedFile}
     />
