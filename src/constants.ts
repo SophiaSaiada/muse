@@ -42,6 +42,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
 export const MUTE = false;
 export const SHOW_PATH = false;
 export const SHOW_BLOCKS = false;
+export const CIRCLE_COLOR = "#E5438A";
 export const SCALE = 8;
 export const BLOCK_WIDTH = 12;
 export const BLOCK_HEIGHT = 2;

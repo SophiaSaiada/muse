@@ -11,6 +11,7 @@ import {
   MAX_BLOCKS,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
+  CIRCLE_COLOR,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { Block } from "@/components/block";
@@ -116,7 +117,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
         {SHOW_PATH && (
           <Path
             data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
-            stroke="#E5438A"
+            stroke={CIRCLE_COLOR}
             opacity={0.75}
             strokeWidth={1}
           />
@@ -128,7 +129,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
           height={SCALE}
           x={0}
           y={0}
-          fill="#E5438A"
+          fill={CIRCLE_COLOR}
           opacity={0.33}
         />
 
@@ -138,7 +139,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
           y={0}
           width={SCALE}
           height={SCALE}
-          fill="#E5438A"
+          fill={CIRCLE_COLOR}
           opacity={0.66}
         />
 
@@ -148,7 +149,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
           ref={circleRef}
           width={SCALE}
           height={SCALE}
-          fill="#E5438A"
+          fill={CIRCLE_COLOR}
         />
       </Layer>
     </Stage>
