@@ -112,11 +112,9 @@ const getDirection = (
     }
   }
 
-  const clockwiseDistance = Math.hypot(clockwisePoint.x, clockwisePoint.y);
-
-  const counterClockwiseDistance = Math.hypot(
-    counterClockwisePoint.x,
-    counterClockwisePoint.y
+  const clockwiseDistance = getPointDistanceFromOrigin(clockwisePoint);
+  const counterClockwiseDistance = getPointDistanceFromOrigin(
+    counterClockwisePoint
   );
 
   if (clockwiseDistance !== counterClockwiseDistance) {
@@ -125,58 +123,12 @@ const getDirection = (
       : [counterClockwiseDirection, clockwiseDirection];
   }
 
-  if (
-    (previousPoint[0] < 0 && previousPoint[1] < 0) ||
-    (previousPoint[0] > 0 && previousPoint[1] > 0)
-  ) {
-    if (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) {
-      const stepsInClockwiseDirection = path.filter(
-        (point) => point[1] > -point[0]
-      ).length;
-      const stepsInCounterClockwiseDirection = path.filter(
-        (point) => point[1] < -point[0]
-      ).length;
-
-      return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
-        ? [clockwiseDirection, counterClockwiseDirection]
-        : [counterClockwiseDirection, clockwiseDirection];
-    } else {
-      const stepsInClockwiseDirection = path.filter(
-        (point) => point[1] < -point[0]
-      ).length;
-      const stepsInCounterClockwiseDirection = path.filter(
-        (point) => point[1] > -point[0]
-      ).length;
-
-      return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
-        ? [clockwiseDirection, counterClockwiseDirection]
-        : [counterClockwiseDirection, clockwiseDirection];
-    }
-  } else {
-    if (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) {
-      const stepsInClockwiseDirection = path.filter(
-        (point) => point[1] < point[0]
-      ).length;
-      const stepsInCounterClockwiseDirection = path.filter(
-        (point) => point[1] > point[0]
-      ).length;
-
-      return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
-        ? [clockwiseDirection, counterClockwiseDirection]
-        : [counterClockwiseDirection, clockwiseDirection];
-    } else {
-      const stepsInClockwiseDirection = path.filter(
-        (point) => point[1] > point[0]
-      ).length;
-      const stepsInCounterClockwiseDirection = path.filter(
-        (point) => point[1] < point[0]
-      ).length;
-
-      return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
-        ? [clockwiseDirection, counterClockwiseDirection]
-        : [counterClockwiseDirection, clockwiseDirection];
-    }
-  }
+  return getDirectionsWhenBothPointsAreCloseToOrigin({
+    previousPoint,
+    clockwiseDirection,
+    counterClockwiseDirection,
+    path,
+  });
 };
 
 const MAXIMUM_LOOP_STEPS = 10000;
@@ -258,15 +210,7 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
     }
   }
 
-  return path.reduce((acc, step, index) => {
-    return [
-      ...acc,
-      {
-        ...step,
-        newDirection: path[index + 1]?.directionOnHit ?? step.directionOnHit,
-      },
-    ];
-  }, [] as Step[]);
+  return getPathWithNewDirections(path);
 };
 
 const isDirectionPossible = ({
@@ -327,3 +271,64 @@ const isDirectionPossible = ({
   );
   return !newPointIsOnPath;
 };
+
+const getDirectionsWhenBothPointsAreCloseToOrigin = ({
+  previousPoint,
+  clockwiseDirection,
+  counterClockwiseDirection,
+  path,
+}: {
+  previousPoint: [number, number];
+  clockwiseDirection: Direction;
+  counterClockwiseDirection: Direction;
+  path: [number, number][];
+}) => {
+  const isPreviousPointInLeftToRightAxis =
+    (previousPoint[0] < 0 && previousPoint[1] < 0) ||
+    (previousPoint[0] > 0 && previousPoint[1] > 0);
+
+  const isPointInClockwiseHalf = (point: [number, number]) => {
+    if (isPreviousPointInLeftToRightAxis) {
+      return (
+        (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
+        point[1] > -point[0]
+      );
+    } else {
+      return (
+        (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
+        point[1] < point[0]
+      );
+    }
+  };
+  const isPointInCounterClockwiseHalf = (point: [number, number]) => {
+    if (isPreviousPointInLeftToRightAxis) {
+      return (
+        (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
+        point[1] < -point[0]
+      );
+    } else {
+      return (
+        (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
+        point[1] > point[0]
+      );
+    }
+  };
+
+  const stepsInClockwiseDirection = path.filter(isPointInClockwiseHalf).length;
+  const stepsInCounterClockwiseDirection = path.filter(
+    isPointInCounterClockwiseHalf
+  ).length;
+
+  return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
+    ? [clockwiseDirection, counterClockwiseDirection]
+    : [counterClockwiseDirection, clockwiseDirection];
+};
+
+const getPointDistanceFromOrigin = (point: { x: number; y: number }) =>
+  Math.hypot(point.x, point.y);
+
+const getPathWithNewDirections = (path: Omit<Step, "newDirection">[]) =>
+  path.reduce((acc, step, index) => {
+    const newDirection = path[index + 1]?.directionOnHit ?? step.directionOnHit;
+    return [...acc, { ...step, newDirection }];
+  }, [] as Step[]);
