@@ -1,18 +1,6 @@
-import type { Direction, NoteOrBeat, Song, Step } from "../types";
+import type { Direction, NoteOrBeat, Step } from "../../types";
 
-const MIN_INTERVAL_BETWEEN_NOTES = 0.025;
-
-self.onmessage = (e: MessageEvent<string>) => {
-  const data = JSON.parse(e.data) as {
-    song: Song;
-    speed: number;
-    lookaheadForCollision: number;
-  };
-
-  const path = calculatePath(data.song, data.speed, data.lookaheadForCollision);
-
-  self.postMessage(JSON.stringify(path));
-};
+const LOOKAHEAD_FOR_COLLISION = 14;
 
 const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
   notes.reduce<{
@@ -64,30 +52,22 @@ const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
     { path: [], direction: { x: speed, y: -speed } }
   ).path;
 
-// TODO: more interesting path generation
-
-const calculatePath = (
-  song: Song,
-  speed: number,
-  lookaheadForCollision: number
-) => {
-  const notes = getNotes(song);
-
+export const generateSparsePath = (notes: NoteOrBeat[], speed: number) => {
   let result = generateStraightPath(notes, speed);
 
   let lastBendIndex: number | null = null;
 
   for (
-    let index = result.length - 1 - lookaheadForCollision;
-    lookaheadForCollision <= index;
+    let index = result.length - 1 - LOOKAHEAD_FOR_COLLISION;
+    LOOKAHEAD_FOR_COLLISION <= index;
     index--
   ) {
-    if (lastBendIndex && index > lastBendIndex - lookaheadForCollision) {
+    if (lastBendIndex && index > lastBendIndex - LOOKAHEAD_FOR_COLLISION) {
       continue;
     }
 
     const straightPathBounds = calculateBounds(
-      result.slice(index - lookaheadForCollision, index)
+      result.slice(index - LOOKAHEAD_FOR_COLLISION, index)
     );
 
     const spiralBounds = calculateBounds(result.slice(index));
@@ -166,24 +146,4 @@ const bendPoint = (step: Step, previousStep: Step): Step => {
     directionOnHit,
     newDirection,
   };
-};
-
-const getNotes = (song: Song) => {
-  const notes = [
-    ...song.tracks.flatMap((track) => track.notes),
-    ...song.beats.flatMap((track) => track.notes),
-  ];
-  notes.sort((a, b) => a.when - b.when);
-
-  return notes.reduce<NoteOrBeat[]>((acc, note) => {
-    const previousNote = acc.at(-1);
-    if (
-      previousNote &&
-      note.when - previousNote.when < MIN_INTERVAL_BETWEEN_NOTES
-    ) {
-      return acc;
-    }
-
-    return [...acc, note];
-  }, []);
 };

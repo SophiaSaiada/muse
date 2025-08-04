@@ -11,7 +11,7 @@ import {
 } from "@/constants";
 import type { Song, Step, VizType } from "@/types";
 import { toast } from "sonner";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import { getFileUrl } from "@/lib/file-url";
 import { MainScreen } from "@/screens/main";
@@ -30,8 +30,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
   const { data, isLoading, isValidating } = useSWR(
-    selectedFileUrl,
-    async (selectedFileUrl) => {
+    selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
+    async ({ selectedFileUrl, vizType }) => {
       const res = await fetch(selectedFileUrl);
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
@@ -45,7 +45,7 @@ function App() {
       const path = await calculatePath({
         song,
         speed: SPEED,
-        lookaheadForCollision: vizType === "STARS" ? 4 : 14,
+        vizType: vizType ?? "STARS",
       });
 
       return { path, song };
@@ -113,14 +113,20 @@ export default App;
 const calculatePath = async ({
   song,
   speed,
-  lookaheadForCollision,
+  vizType,
 }: {
   song: Song;
   speed: number;
-  lookaheadForCollision: number;
+  vizType: VizType;
 }) => {
-  const worker = new Worker(new URL("./workers/path.ts", import.meta.url));
-  worker.postMessage(JSON.stringify({ song, speed, lookaheadForCollision }));
+  const worker = new Worker(new URL("@/workers/path", import.meta.url), {
+    type: "module",
+  });
+
+  worker.postMessage(
+    JSON.stringify({ song, speed, dense: vizType === "STARS" })
+  );
+
   return new Promise<Step[]>((resolve) => {
     worker.onmessage = (e) => {
       resolve(JSON.parse(e.data));
