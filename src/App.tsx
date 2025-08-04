@@ -42,11 +42,7 @@ function App() {
         song.beats = [];
       }
 
-      const path = await calculatePath({
-        song,
-        speed: SPEED,
-        lookaheadForCollision: vizType === "STARS" ? 4 : 14,
-      });
+      const path = await calculatePath({ song, speed: SPEED });
 
       return { path, song };
     },
@@ -113,14 +109,12 @@ export default App;
 const calculatePath = async ({
   song,
   speed,
-  lookaheadForCollision,
 }: {
   song: Song;
   speed: number;
-  lookaheadForCollision: number;
 }) => {
   const worker = new Worker(new URL("./workers/path.ts", import.meta.url));
-  worker.postMessage(JSON.stringify({ song, speed, lookaheadForCollision }));
+  worker.postMessage(JSON.stringify({ song, speed }));
   return new Promise<Step[]>((resolve) => {
     worker.onmessage = (e) => {
       resolve(JSON.parse(e.data));
