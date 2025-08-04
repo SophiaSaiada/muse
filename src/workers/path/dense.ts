@@ -81,14 +81,7 @@ const getDirection = (
   };
 
   const pathAsFeature = turf.lineString(
-    path.length === 13
-      ? path.slice(9)
-      : path.length > 1
-      ? path
-      : [
-          [0, 0],
-          [0, 0],
-        ]
+    path.length > 1 ? path : [...path, ...path] // lineString requires at least 2 points, so we duplicate the single point
   );
 
   const blocksCloseToClockwisePoint = path.filter((point) => {
@@ -280,6 +273,8 @@ const getDirection = (
   }
 };
 
+const MAXIMUM_LOOP_STEPS = 10000;
+
 // TODO: refactor
 export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
   let path: Omit<Step, "newDirection">[] = [
@@ -293,18 +288,20 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
   ];
   let preferOtherDirection = false;
 
-  const backtrackingStack: number[] = []; // TODO: improve backtracking
+  const backtrackingStack: number[] = [];
 
-  let steps = 0;
+  let loopStepsCount = 0;
   for (let index = 1; index < notes.length; index++) {
-    steps++;
-    if (steps > 10000) {
-      // TODO: detect infinite loop
-      console.log("✨ ~ generateStraightPath ~ steps:", steps);
+    loopStepsCount++;
+    if (loopStepsCount > MAXIMUM_LOOP_STEPS) {
+      console.error("Reached maximum loop steps on dense path generation", {
+        notes,
+        speed,
+      });
       break;
     }
-    const note = notes[index];
 
+    const note = notes[index];
     const previousPoint = path.at(-1)!;
 
     try {

@@ -26,7 +26,6 @@ import type { Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { range } from "es-toolkit";
 
-// TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
   const { width, height } = useWindowSize();
 
