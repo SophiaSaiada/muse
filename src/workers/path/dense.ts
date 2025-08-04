@@ -1,6 +1,6 @@
 import type { Feature, LineString } from "geojson";
 import type { Direction, NoteOrBeat, Step } from "../../types";
-import * as turf from "@turf/turf";
+import { lineString, booleanPointOnLine, point } from "@turf/turf";
 
 const rotateDirectionClockwise = (direction: Direction) => {
   if (direction.x > 0 && direction.y > 0) {
@@ -82,7 +82,7 @@ const getDirection = (
     y: previousPoint[1] + counterClockwiseDirection.y * duration,
   };
 
-  const pathAsFeature = turf.lineString(
+  const pathAsFeature = lineString(
     path.length > 1 ? path : [...path, ...path] // lineString requires at least 2 points, so we duplicate the single point
   );
 
@@ -264,8 +264,8 @@ const isDirectionPossible = ({
     return false;
   }
 
-  const newPointIsOnPath = turf.booleanPointOnLine(
-    turf.point([newPoint.x, newPoint.y]),
+  const newPointIsOnPath = booleanPointOnLine(
+    point([newPoint.x, newPoint.y]),
     pathAsFeature,
     { epsilon: EPSILON }
   );
