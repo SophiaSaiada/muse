@@ -2,59 +2,25 @@ import type { Feature, LineString } from "geojson";
 import type { Direction, NoteOrBeat, Step } from "../../types";
 import { lineString, booleanPointOnLine, point } from "@turf/turf";
 
-const rotateDirectionClockwise = (direction: Direction) => {
-  if (direction.x > 0 && direction.y > 0) {
-    return {
-      x: -direction.x,
-      y: direction.y,
-    };
-  }
-  if (direction.x > 0 && direction.y < 0) {
-    return {
-      x: direction.x,
-      y: -direction.y,
-    };
-  }
+const DIRECTIONS = [
+  { x: 1, y: 1 },
+  { x: -1, y: 1 },
+  { x: -1, y: -1 },
+  { x: 1, y: -1 },
+];
 
-  if (direction.x < 0 && direction.y < 0) {
-    return {
-      x: -direction.x,
-      y: direction.y,
-    };
-  }
-
-  // if (direction.x < 0 && direction.y > 0) {
+const rotateDirection = (direction: Direction, clockwise: boolean) => {
+  const directionIndex = DIRECTIONS.findIndex(
+    ({ x, y }) => x === Math.sign(direction.x) && y === Math.sign(direction.y)
+  );
+  const rotatedDirectionIndex =
+    (directionIndex + (clockwise ? 1 : -1) + DIRECTIONS.length) %
+    DIRECTIONS.length;
+  const rotatedUnscaledDirection = DIRECTIONS[rotatedDirectionIndex];
+  const scale = Math.abs(direction.x);
   return {
-    x: direction.x,
-    y: -direction.y,
-  };
-};
-
-const rotateDirectionCounterClockwise = (direction: Direction) => {
-  if (direction.x > 0 && direction.y > 0) {
-    return {
-      x: direction.x,
-      y: -direction.y,
-    };
-  }
-  if (direction.x > 0 && direction.y < 0) {
-    return {
-      x: -direction.x,
-      y: direction.y,
-    };
-  }
-
-  if (direction.x < 0 && direction.y < 0) {
-    return {
-      x: direction.x,
-      y: -direction.y,
-    };
-  }
-
-  // if (direction.x < 0 && direction.y > 0) {
-  return {
-    x: -direction.x,
-    y: direction.y,
+    x: rotatedUnscaledDirection.x * scale,
+    y: rotatedUnscaledDirection.y * scale,
   };
 };
 
@@ -66,9 +32,13 @@ const getDirection = (
   lastChosenDirection: Direction,
   duration: number
 ) => {
-  const clockwiseDirection = rotateDirectionClockwise(lastChosenDirection);
-  const counterClockwiseDirection =
-    rotateDirectionCounterClockwise(lastChosenDirection);
+  const clockwiseDirection = rotateDirection(lastChosenDirection, true);
+  const counterClockwiseDirection = rotateDirection(lastChosenDirection, false);
+  console.log("✨ ~ getDirection ~ counterClockwiseDirection:", {
+    lastChosenDirection,
+    counterClockwiseDirection,
+    clockwiseDirection,
+  });
 
   const previousPoint = path.at(-1)!;
 
