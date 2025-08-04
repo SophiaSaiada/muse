@@ -1,6 +1,4 @@
-import type { Feature, LineString } from "geojson";
 import type { Direction, NoteOrBeat, Step } from "../../types";
-import { lineString, booleanPointOnLine, point } from "@turf/turf";
 
 const DIRECTIONS = [
   { x: 1, y: 1 },
@@ -24,14 +22,17 @@ const rotateDirection = (direction: Direction, clockwise: boolean) => {
   };
 };
 
+const LOG_INDEXES = [] as number[];
+
 const MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK = 20;
 
-// TODO: fix point not colliding with block at 1:31
 const getDirection = (
   path: [number, number][],
   lastChosenDirection: Direction,
   duration: number
 ) => {
+  const shouldLog = LOG_INDEXES.includes(path.length);
+
   const previousPoint = path.at(-1)!;
 
   const clockwiseDirection = rotateDirection(lastChosenDirection, true);
@@ -49,23 +50,33 @@ const getDirection = (
     duration
   );
 
-  const pathAsFeature = lineString(
-    path.length > 1 ? path : [...path, ...path] // lineString requires at least 2 points, so we duplicate the single point
-  );
-
   const clockwiseIsPossible = isDirectionPossible({
     path,
     previousPoint,
     newPoint: clockwisePoint,
-    pathAsFeature,
+    shouldLog,
   });
 
   const counterClockwiseIsPossible = isDirectionPossible({
     path,
     previousPoint,
     newPoint: counterClockwisePoint,
-    pathAsFeature,
+    shouldLog,
   });
+
+  if (shouldLog) {
+    console.log("clockwiseIsPossible", {
+      index: path.length,
+      clockwiseIsPossible,
+      counterClockwiseIsPossible,
+      clockwisePoint,
+      counterClockwisePoint,
+      clockwiseDirection,
+      counterClockwiseDirection,
+      path,
+      previousPoint,
+    });
+  }
 
   if (!clockwiseIsPossible && !counterClockwiseIsPossible) {
     return [];
@@ -169,6 +180,15 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
       if (possibleDirections.length === 0) {
         const lastIndexWithTwoOptions = backtrackingStack.pop();
         if (lastIndexWithTwoOptions === undefined) {
+          console.error(
+            "No path is possible and no last index with two options",
+            {
+              notes,
+              speed,
+              path,
+              index,
+            }
+          );
           throw new Error(
             "No path is possible and no last index with two options"
           );
@@ -202,19 +222,69 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
     }
   }
 
+  if (LOG_INDEXES.length) {
+    console.log("Completed dense path generation", {
+      notes,
+      speed,
+      path,
+    });
+  }
   return getPathWithNewDirections(path);
 };
+
+const getDistanceOfPointFromSegment = ({
+  point,
+  segmentStart,
+  segmentEnd,
+}: {
+  point: [number, number];
+  segmentStart: [number, number];
+  segmentEnd: [number, number];
+}) => {
+  // Explanation: https://stackoverflow.com/a/6853926
+  const [x1, y1] = segmentStart;
+  const [x2, y2] = segmentEnd;
+  const [x0, y0] = point;
+
+  const A = x0 - x1;
+  const B = y0 - y1;
+  const C = x2 - x1;
+  const D = y2 - y1;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+
+  const t = Math.max(0, Math.min(1, dot / lenSq));
+  const projX = x1 + t * C;
+  const projY = y1 + t * D;
+  return Math.hypot(x0 - projX, y0 - projY);
+};
+
+const isPointOnPath = (
+  point: [number, number],
+  path: [number, number][],
+  maxDistance: number
+) =>
+  path.some(
+    (pointOnPath, index) =>
+      index !== 0 &&
+      getDistanceOfPointFromSegment({
+        point,
+        segmentStart: path[index - 1],
+        segmentEnd: pointOnPath,
+      }) < maxDistance
+  );
 
 const isDirectionPossible = ({
   path,
   previousPoint,
   newPoint,
-  pathAsFeature,
+  shouldLog,
 }: {
   path: [number, number][];
   previousPoint: [number, number];
   newPoint: { x: number; y: number };
-  pathAsFeature: Feature<LineString>;
+  shouldLog: boolean;
 }) => {
   const blocksCloseToNewPoint = path.filter((point) => {
     if (point[0] === previousPoint[0] && point[1] === previousPoint[1]) {
@@ -242,15 +312,32 @@ const isDirectionPossible = ({
     return distance < MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK;
   });
 
+  if (shouldLog) {
+    console.log("blocksCloseToNewPoint", {
+      blocksCloseToNewPoint,
+      newPoint,
+      previousPoint,
+      path,
+    });
+  }
   if (blocksCloseToNewPoint.length > 0) {
     return false;
   }
 
-  const newPointIsOnPath = booleanPointOnLine(
-    point([newPoint.x, newPoint.y]),
-    pathAsFeature,
-    { epsilon: MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK }
+  const newPointIsOnPath = isPointOnPath(
+    [newPoint.x, newPoint.y],
+    path,
+    MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK
   );
+
+  if (shouldLog) {
+    console.log("newPointIsOnPath", {
+      newPointIsOnPath,
+      newPoint,
+      path,
+    });
+  }
+
   return !newPointIsOnPath;
 };
 
