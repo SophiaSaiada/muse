@@ -118,24 +118,24 @@ export const Block = ({
     width,
   ]);
 
-  useEffect(() => {
-    if (!shouldFadeOut) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (!shouldFadeOut) {
+  //     return;
+  //   }
 
-    const animation = new Konva.Animation((frame) => {
-      const time = (frame?.time ?? 0) / 1000;
-      rectRef.current?.opacity(
-        Math.max(0, BLOCK_FADE_MIN_DURATION - time) / BLOCK_FADE_MIN_DURATION
-      );
-    }, rectRef.current?.getLayer());
+  //   const animation = new Konva.Animation((frame) => {
+  //     const time = (frame?.time ?? 0) / 1000;
+  //     rectRef.current?.opacity(
+  //       Math.max(0, BLOCK_FADE_MIN_DURATION - time) / BLOCK_FADE_MIN_DURATION
+  //     );
+  //   }, rectRef.current?.getLayer());
 
-    animation.start();
+  //   animation.start();
 
-    return () => {
-      animation.stop();
-    };
-  }, [duration, shouldFadeOut]);
+  //   return () => {
+  //     animation.stop();
+  //   };
+  // }, [duration, shouldFadeOut]);
 
   return (
     <Rect
