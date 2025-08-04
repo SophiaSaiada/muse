@@ -4,7 +4,7 @@ declare global {
   const turf: typeof turfForTyping;
 }
 
-const MIN_INTERVAL_BETWEEN_NOTES = 0.025;
+const MIN_INTERVAL_BETWEEN_NOTES = 0.05;
 
 importScripts("https://cdn.jsdelivr.net/npm/@turf/turf@7.2.0/turf.min.js");
 
@@ -80,12 +80,12 @@ const EPSILON = 12;
 
 const getDirection = (
   path: [number, number][],
-  lastNewDirection: Direction,
+  lastChosenDirection: Direction,
   duration: number
 ) => {
-  const clockwiseDirection = rotateDirectionClockwise(lastNewDirection);
+  const clockwiseDirection = rotateDirectionClockwise(lastChosenDirection);
   const counterClockwiseDirection =
-    rotateDirectionCounterClockwise(lastNewDirection);
+    rotateDirectionCounterClockwise(lastChosenDirection);
 
   const previousPoint = path.at(-1)!;
 
@@ -299,80 +299,112 @@ const getDirection = (
   }
 };
 
-const generateStraightPath = (
-  notes: NoteOrBeat[],
-  speed: number,
-  path: Step[] = [
-    {
-      x: 0,
-      y: 0,
-      newDirection: { x: speed, y: speed },
-      directionOnHit: { x: speed, y: speed },
-      note: notes[0],
-      duration: notes[0].when,
-    },
-  ],
-  index: number = 1
-) => {
-  console.log("✨ ~ generateStraightPath ~ index:", index);
-  if (index > notes.length) {
-    return path;
-  }
+const generateStraightPath = (notes: NoteOrBeat[], speed: number) =>
+  (() => {
+    let path: {
+      x: number;
+      y: number;
+      chosenDirection: Direction;
+      directionOnHit: Direction;
+    }[] = [
+      {
+        x: 0,
+        y: 0,
+        chosenDirection: { x: speed, y: speed },
+        directionOnHit: { x: speed, y: speed },
+      },
+    ];
+    let preferOtherDirection = false;
 
-  const note = notes[index];
-  const previousPoint = path.at(-1)!;
-  const duration = note.when - (previousPoint.note?.when ?? 0);
+    const backtrackingStack: number[] = []; // TODO: improve backtracking
 
-  const possibleDirections = getDirection(
-    path.map(({ x, y }) => [x, y]),
-    previousPoint.newDirection,
-    duration
-  );
-  if (possibleDirections.length === 0) {
-    throw new Error("No path is possible");
-  }
+    let steps = 0;
+    for (let index = 1; index < notes.length; index++) {
+      steps++;
+      if (steps > 10000) {
+        // TODO: detect infinite loop
+        console.log("✨ ~ generateStraightPath ~ steps:", steps);
+        break;
+      }
+      console.log("✨ ~ generateStraightPath ~ index:", index);
+      const note = notes[index];
 
-  try {
-    const firstOption = possibleDirections[0];
-    return generateStraightPath(
-      notes,
-      speed,
-      [
-        ...path,
-        {
-          note,
+      const previousPoint = path.at(-1)!;
+
+      try {
+        const duration = note.when - (notes[index - 1]?.when ?? 0);
+        const possibleDirections = getDirection(
+          path.map(({ x, y }) => [x, y]),
+          previousPoint.chosenDirection,
+          duration
+        );
+        if (possibleDirections.length === 0) {
+          if (backtrackingStack.length === 0) {
+            throw new Error(
+              "No path is possible and no last index with two options"
+            );
+          }
+          const lastIndexWithTwoOptions = backtrackingStack.pop()!;
+          console.log(
+            "No path is possible, going back to last index with two options",
+            {
+              lastIndexWithTwoOptions,
+              index,
+            }
+          );
+          index = lastIndexWithTwoOptions - 1;
+          preferOtherDirection = true;
+          path = path.slice(0, lastIndexWithTwoOptions);
+          continue;
+        }
+        if (possibleDirections.length > 1 && !preferOtherDirection) {
+          backtrackingStack.push(index);
+        }
+
+        const direction = possibleDirections[preferOtherDirection ? 1 : 0];
+        console.log(
+          "✨ ~ generateStraightPath ~ possibleDirections:",
+          index,
+          possibleDirections,
+          preferOtherDirection
+        );
+        preferOtherDirection = false;
+        const x = previousPoint.x + direction.x * duration;
+        const y = previousPoint.y + direction.y * duration;
+        console.log("✨ ~ generateStraightPath ~ direction:", {
+          index,
+          direction,
+          previousPoint,
           duration,
-          x: previousPoint.x + firstOption.x * duration,
-          y: previousPoint.y + firstOption.y * duration,
-          directionOnHit: previousPoint.newDirection,
-          newDirection: firstOption,
-        },
-      ],
-      index + 1
-    );
-  } catch (e) {
-    if (possibleDirections.length === 1) {
-      throw e;
+          dX: direction.x * duration,
+          dY: direction.y * duration,
+          x,
+          y,
+        });
+
+        path.push({
+          x,
+          y,
+          directionOnHit: previousPoint.chosenDirection,
+          chosenDirection: direction,
+        });
+      } catch (e) {
+        console.error(e);
+        break;
+      }
     }
-    const secondOption = possibleDirections[1];
-    return generateStraightPath(
-      notes,
-      speed,
-      [
-        ...path,
-        {
-          note,
-          duration,
-          x: previousPoint.x + secondOption.x * duration,
-          y: previousPoint.y + secondOption.y * duration,
-          directionOnHit: previousPoint.newDirection,
-          newDirection: secondOption,
-        },
-      ],
-      index + 1
-    );
-  }
-};
+
+    console.log("✨ ~ generateStraightPath ~ path:", path.length, notes.length);
+
+    return path.map((point, index) => ({
+      note: notes[index],
+      directionOnHit: point.directionOnHit,
+      x: point.x,
+      y: point.y,
+      duration: notes[index].when - (notes[index - 1]?.when ?? 0),
+      newDirection: point.chosenDirection,
+    }));
+  })();
 
 // TODO: more interesting path generation
 
