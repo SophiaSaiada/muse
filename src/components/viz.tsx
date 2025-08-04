@@ -1,4 +1,4 @@
-import { Layer, Stage, Circle, Path } from "react-konva";
+import { Layer, Stage, Circle, Path, Rect } from "react-konva";
 import { useEffect, useRef, useState } from "react";
 import Konva from "konva";
 import { useLocalStorage, useWindowSize } from "react-use";
@@ -8,16 +8,22 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
-  MAX_BLOCKS,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
   CIRCLE_COLOR,
+  BLOCK_HEIGHT,
+  BLOCK_START_HUE,
+  BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL,
+  BLOCK_HUE_CHANGE_INDEX_INTERVAL,
+  BLOCK_WIDTH,
+  STAR_COLOR_CHANGE_MAX_DURATION,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
-import { Block } from "@/components/block";
 import { smoothstep } from "@/lib/smoothstep";
-import { cn } from "@/lib/utils";
+import { cn, lerp } from "@/lib/utils";
 import type { Step, VizType } from "@/types";
+import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+import { range } from "es-toolkit";
 
 // TODO: restart when song restarts
 export const Viz = ({ path }: { path: Step[] }) => {
@@ -29,13 +35,12 @@ export const Viz = ({ path }: { path: Step[] }) => {
   );
 
   const stageRef = useRef<Konva.Stage>(null);
+  const rectRefs = useRef<(Konva.Rect | null)[]>([]);
   const layerRef = useRef<Konva.Layer>(null);
 
   const circleRef = useRef<Konva.Circle>(null);
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
-
-  const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
 
   useEffect(() => {
     const animation = new Konva.Animation((frame) => {
@@ -51,8 +56,6 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
       const nextStep = path[nextStepIndex];
       const currentStep = path[nextStepIndex - 1];
-
-      setCurrentNoteIndex(nextStepIndex - 1);
 
       updateTrailPosition({
         nearPartOfTrail: nearPartOfTrailRef.current,
@@ -79,6 +82,15 @@ export const Viz = ({ path }: { path: Step[] }) => {
         time,
         circle: circleRef.current,
       });
+
+      updateRects({
+        vizType,
+        rects: rectRefs.current,
+        path,
+        nextStepIndex,
+        currentStep,
+        time,
+      });
     }, layerRef.current?.getLayer());
 
     animation.start();
@@ -86,7 +98,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
     return () => {
       animation.stop();
     };
-  }, [path]);
+  }, [path, vizType]);
 
   return (
     <Stage
@@ -101,19 +113,45 @@ export const Viz = ({ path }: { path: Step[] }) => {
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
         {vizType === "TUNNEL" && <Tunnel path={path} />}
 
-        {path
-          .slice(
-            Math.max(0, currentNoteIndex - MAX_BLOCKS),
-            currentNoteIndex + (vizType === "TUNNEL" ? 1 : MAX_BLOCKS)
-          )
-          .map((step, index) => (
-            <Block
-              key={step.note.when}
-              step={step}
-              index={index + Math.max(0, currentNoteIndex - MAX_BLOCKS)}
-              currentNoteIndex={currentNoteIndex}
-            />
-          ))}
+        {path.map((step, index) => (
+          <Rect
+            key={step.note.when}
+            ref={(ref) => {
+              rectRefs.current[index] = ref;
+            }}
+            x={
+              step.newDirection.x === step.directionOnHit.x
+                ? step.x
+                : getXOfStepInYAxis(
+                    { directionOnHit: step.directionOnHit, x: step.x },
+                    BLOCK_HEIGHT * 2
+                  )
+            }
+            y={
+              step.newDirection.y === step.directionOnHit.y
+                ? step.y
+                : getYOfStepInXAxis(
+                    { directionOnHit: step.directionOnHit, y: step.y },
+                    BLOCK_HEIGHT * 2
+                  )
+            }
+            width={vizType === "TUNNEL" ? height : BLOCK_HEIGHT}
+            height={vizType === "TUNNEL" ? width : BLOCK_HEIGHT}
+            offsetX={(vizType === "TUNNEL" ? height : BLOCK_HEIGHT) / 2}
+            offsetY={vizType === "TUNNEL" ? width : BLOCK_HEIGHT / 2}
+            opacity={vizType === "TUNNEL" ? 0 : 1}
+            fill={`hsl(${
+              Math.round(
+                (index /
+                  (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+                    ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+                    : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+                  360 +
+                  BLOCK_START_HUE
+              ) % 360
+            }, ${vizType === "TUNNEL" ? 100 : 0}%, 60%)`}
+          />
+        ))}
         {SHOW_PATH && (
           <Path
             data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
@@ -154,6 +192,118 @@ export const Viz = ({ path }: { path: Step[] }) => {
       </Layer>
     </Stage>
   );
+};
+
+const updateRects = ({
+  vizType,
+  rects,
+  path,
+  nextStepIndex,
+  currentStep,
+  time,
+}: {
+  vizType: string | undefined;
+  rects: (Konva.Rect | null)[] | null;
+  path: Step[];
+  nextStepIndex: number;
+  currentStep: Step;
+  time: number;
+}) => {
+  if (vizType !== "STARS") {
+    return;
+  }
+  const rect = rects?.[nextStepIndex - 1];
+  if (!rect) {
+    return;
+  }
+
+  if (rect.width() === BLOCK_WIDTH || rect.height() === BLOCK_WIDTH) {
+    return;
+  }
+
+  const height =
+    currentStep.newDirection.x === currentStep.directionOnHit.x
+      ? BLOCK_HEIGHT
+      : BLOCK_WIDTH;
+  const width =
+    currentStep.newDirection.y === currentStep.directionOnHit.y
+      ? BLOCK_HEIGHT
+      : BLOCK_WIDTH;
+
+  const hue =
+    Math.round(
+      ((nextStepIndex - 1) /
+        (nextStepIndex - 1 < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+        360 +
+        BLOCK_START_HUE
+    ) % 360;
+
+  const timeOffset = currentStep?.note.when ?? 0;
+  const animationDuration =
+    Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION) + timeOffset;
+
+  rect.fill(
+    `hsl(${hue}, ${lerp({
+      start: 0,
+      end: 100,
+      time: time,
+      duration: animationDuration,
+      timeOffset,
+    })}%, 60%)`
+  );
+  const newWidth = lerp({
+    start: BLOCK_HEIGHT,
+    end: width,
+    time: time,
+    duration: animationDuration,
+    timeOffset,
+  });
+  const newHeight = lerp({
+    start: BLOCK_HEIGHT,
+    end: height,
+    time: time,
+    duration: animationDuration,
+    timeOffset,
+  });
+  rect.offsetX(newWidth / 2);
+  rect.offsetY(newHeight / 2);
+  rect.width(newWidth);
+  rect.height(newHeight);
+
+  range(nextStepIndex - 1 - 2, nextStepIndex - 1).forEach((index) => {
+    if (index < 0) {
+      return;
+    }
+
+    const rect = rects?.[index];
+    if (!rect) {
+      return;
+    }
+    const height =
+      path[index].newDirection.x === path[index].directionOnHit.x
+        ? BLOCK_HEIGHT
+        : BLOCK_WIDTH;
+    const width =
+      path[index].newDirection.y === path[index].directionOnHit.y
+        ? BLOCK_HEIGHT
+        : BLOCK_WIDTH;
+    const hue =
+      Math.round(
+        (index /
+          (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+            ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+            : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+          360 +
+          BLOCK_START_HUE
+      ) % 360;
+    rect.fill(`hsl(${hue}, 100%, 60%)`);
+    rect.offsetX(width / 2);
+    rect.offsetY(height / 2);
+    rect.width(width);
+    rect.height(height);
+  });
 };
 
 function getCircleScale({

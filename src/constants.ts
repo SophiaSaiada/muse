@@ -54,7 +54,6 @@ export const VIZ_TYPE_LOCAL_STORAGE_KEY = "vizType" as const;
 export const INITIAL_VIZ_TYPE: VizType = "STARS";
 export const BLOCK_FADE_MIN_DURATION = 0.75;
 export const STAR_COLOR_CHANGE_MAX_DURATION = 0.25;
-export const MAX_BLOCKS = 750;
 export const BLOCK_START_FADE_OUT_AFTER_INDEX = 50;
 export const BLOCK_START_HUE = 334;
 export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
