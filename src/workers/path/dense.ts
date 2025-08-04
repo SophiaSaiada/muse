@@ -125,20 +125,19 @@ const sortDirectionsByDistanceFromOrigin = ({
 
 const MAXIMUM_LOOP_STEPS = 10000;
 
-// TODO: refactor
 export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
-  let path: Omit<Step, "newDirection">[] = [
+  let path = [
     {
+      note: notes[0],
+      directionOnHit: { x: speed, y: speed },
       x: 0,
       y: 0,
-      note: notes[0],
       duration: notes[0].when,
-      directionOnHit: { x: speed, y: speed },
     },
   ];
-  let preferOtherDirection = false;
 
   const backtrackingStack: number[] = [];
+  let skipFirstDirection = false;
 
   let loopStepsCount = 0;
   for (let index = 1; index < notes.length; index++) {
@@ -156,46 +155,47 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
 
     try {
       const duration = note.when - (notes[index - 1]?.when ?? 0);
-      const possibleDirections = getDirection(
+      const allPossibleDirections = getDirection(
         path.map(({ x, y }) => [x, y]),
         previousPoint.directionOnHit,
         duration
       );
+
+      const possibleDirections = skipFirstDirection
+        ? allPossibleDirections.slice(1)
+        : allPossibleDirections;
+      skipFirstDirection = false;
+
       if (possibleDirections.length === 0) {
-        if (backtrackingStack.length === 0) {
+        const lastIndexWithTwoOptions = backtrackingStack.pop();
+        if (lastIndexWithTwoOptions === undefined) {
           throw new Error(
             "No path is possible and no last index with two options"
           );
         }
-        const lastIndexWithTwoOptions = backtrackingStack.pop()!;
-        console.log(
+
+        console.debug(
           "No path is possible, going back to last index with two options",
-          {
-            lastIndexWithTwoOptions,
-            index,
-          }
+          { lastIndexWithTwoOptions, index }
         );
-        index = lastIndexWithTwoOptions - 1;
-        preferOtherDirection = true;
         path = path.slice(0, lastIndexWithTwoOptions);
+        index = lastIndexWithTwoOptions - 1;
+        skipFirstDirection = true;
         continue;
       }
-      if (possibleDirections.length > 1 && !preferOtherDirection) {
+
+      if (possibleDirections.length > 1) {
         backtrackingStack.push(index);
       }
 
-      const newDirection = possibleDirections[preferOtherDirection ? 1 : 0];
-      preferOtherDirection = false;
-      const x = previousPoint.x + newDirection.x * duration;
-      const y = previousPoint.y + newDirection.y * duration;
+      const directionOnHit = possibleDirections[0];
+      const { x, y } = applyDirectionOnPoint(
+        [previousPoint.x, previousPoint.y],
+        directionOnHit,
+        duration
+      );
 
-      path.push({
-        note: notes[index],
-        directionOnHit: newDirection,
-        x,
-        y,
-        duration: notes[index].when - (notes[index - 1]?.when ?? 0),
-      });
+      path.push({ note, directionOnHit, x, y, duration });
     } catch (e) {
       console.error(e);
       break;
