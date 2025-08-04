@@ -13,7 +13,7 @@ export const PlayScreen = ({
   <>
     <button
       className={cn(
-        "flex flex-col p-8 min-h-dvh justify-center items-center max-w-lg m-auto animate-fade-in",
+        "flex flex-col p-8 min-h-dvh justify-center items-center w-full animate-fade-in",
         onClickPlay && "cursor-pointer"
       )}
       onClick={onClickPlay}
