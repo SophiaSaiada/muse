@@ -1,4 +1,4 @@
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { INITIAL_VIZ_TYPE, VIZ_TYPE_LOCAL_STORAGE_KEY } from "@/constants";
 import {
   Select,

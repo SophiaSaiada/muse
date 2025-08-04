@@ -1,7 +1,8 @@
 import { Layer, Stage, Circle, Path, Rect } from "react-konva";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Konva from "konva";
-import { useLocalStorage, useWindowSize } from "react-use";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { useWindowSize } from "react-use";
 import {
   SCALE,
   SHOW_PATH,

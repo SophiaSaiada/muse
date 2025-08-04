@@ -11,7 +11,7 @@ import {
 } from "@/constants";
 import type { Song, Step, VizType } from "@/types";
 import { toast } from "sonner";
-import { useLocalStorage } from "react-use";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import { getFileUrl } from "@/lib/file-url";
 import { MainScreen } from "@/screens/main";
