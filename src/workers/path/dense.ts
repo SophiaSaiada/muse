@@ -1,24 +1,5 @@
-import type { Direction, NoteOrBeat, Song, Step } from "../types";
-import type * as turfForTyping from "@turf/turf";
-declare global {
-  const turf: typeof turfForTyping;
-}
-
-const MIN_INTERVAL_BETWEEN_NOTES = 0.1;
-
-importScripts("https://cdn.jsdelivr.net/npm/@turf/turf@7.2.0/turf.min.js");
-
-self.onmessage = (e: MessageEvent<string>) => {
-  const data = JSON.parse(e.data) as {
-    song: Song;
-    speed: number;
-  };
-
-  const notes = getNotes(data.song);
-  const path = calculatePath(notes, data.speed);
-
-  self.postMessage(JSON.stringify(path));
-};
+import type { Direction, NoteOrBeat, Step } from "../../types";
+import * as turf from "@turf/turf";
 
 const rotateDirectionClockwise = (direction: Direction) => {
   if (direction.x > 0 && direction.y > 0) {
@@ -299,7 +280,8 @@ const getDirection = (
   }
 };
 
-const calculatePath = (notes: NoteOrBeat[], speed: number) => {
+// TODO: refactor
+export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
   let path: Omit<Step, "newDirection">[] = [
     {
       x: 0,
@@ -321,7 +303,6 @@ const calculatePath = (notes: NoteOrBeat[], speed: number) => {
       console.log("✨ ~ generateStraightPath ~ steps:", steps);
       break;
     }
-    console.log("✨ ~ generateStraightPath ~ index:", index);
     const note = notes[index];
 
     const previousPoint = path.at(-1)!;
@@ -357,29 +338,13 @@ const calculatePath = (notes: NoteOrBeat[], speed: number) => {
       }
 
       const newDirection = possibleDirections[preferOtherDirection ? 1 : 0];
-      console.log(
-        "✨ ~ generateStraightPath ~ possibleDirections:",
-        index,
-        possibleDirections,
-        preferOtherDirection
-      );
       preferOtherDirection = false;
       const x = previousPoint.x + newDirection.x * duration;
       const y = previousPoint.y + newDirection.y * duration;
-      console.log("✨ ~ generateStraightPath ~ direction:", {
-        index,
-        direction: newDirection,
-        previousPoint,
-        duration,
-        dX: newDirection.x * duration,
-        dY: newDirection.y * duration,
-        x,
-        y,
-      });
 
       path.push({
         note: notes[index],
-        directionOnHit: newDirection, // TODO: fix this, it shows wrong
+        directionOnHit: newDirection,
         x,
         y,
         duration: notes[index].when - (notes[index - 1]?.when ?? 0),
@@ -399,24 +364,4 @@ const calculatePath = (notes: NoteOrBeat[], speed: number) => {
       },
     ];
   }, [] as Step[]);
-};
-
-const getNotes = (song: Song) => {
-  const notes = [
-    ...song.tracks.flatMap((track) => track.notes),
-    ...song.beats.flatMap((track) => track.notes),
-  ];
-  notes.sort((a, b) => a.when - b.when);
-
-  return notes.reduce<NoteOrBeat[]>((acc, note) => {
-    const previousNote = acc.at(-1);
-    if (
-      previousNote &&
-      note.when - previousNote.when < MIN_INTERVAL_BETWEEN_NOTES
-    ) {
-      return acc;
-    }
-
-    return [...acc, note];
-  }, []);
 };

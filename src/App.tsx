@@ -30,8 +30,8 @@ function App() {
   const [selectedFile, setSelectedFile] = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
   const { data, isLoading, isValidating } = useSWR(
-    selectedFileUrl,
-    async (selectedFileUrl) => {
+    selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
+    async ({ selectedFileUrl, vizType }) => {
       const res = await fetch(selectedFileUrl);
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
@@ -42,7 +42,11 @@ function App() {
         song.beats = [];
       }
 
-      const path = await calculatePath({ song, speed: SPEED });
+      const path = await calculatePath({
+        song,
+        speed: SPEED,
+        vizType: vizType ?? "STARS",
+      });
 
       return { path, song };
     },
@@ -109,12 +113,20 @@ export default App;
 const calculatePath = async ({
   song,
   speed,
+  vizType,
 }: {
   song: Song;
   speed: number;
+  vizType: VizType;
 }) => {
-  const worker = new Worker(new URL("./workers/path.ts", import.meta.url));
-  worker.postMessage(JSON.stringify({ song, speed }));
+  const worker = new Worker(new URL("@/workers/path", import.meta.url), {
+    type: "module",
+  });
+
+  worker.postMessage(
+    JSON.stringify({ song, speed, dense: vizType === "STARS" })
+  );
+
   return new Promise<Step[]>((resolve) => {
     worker.onmessage = (e) => {
       resolve(JSON.parse(e.data));
