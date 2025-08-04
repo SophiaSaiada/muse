@@ -32,25 +32,22 @@ const getDirection = (
   lastChosenDirection: Direction,
   duration: number
 ) => {
-  const clockwiseDirection = rotateDirection(lastChosenDirection, true);
-  const counterClockwiseDirection = rotateDirection(lastChosenDirection, false);
-  console.log("✨ ~ getDirection ~ counterClockwiseDirection:", {
-    lastChosenDirection,
-    counterClockwiseDirection,
-    clockwiseDirection,
-  });
-
   const previousPoint = path.at(-1)!;
 
-  const clockwisePoint = {
-    x: previousPoint[0] + clockwiseDirection.x * duration,
-    y: previousPoint[1] + clockwiseDirection.y * duration,
-  };
+  const clockwiseDirection = rotateDirection(lastChosenDirection, true);
+  const counterClockwiseDirection = rotateDirection(lastChosenDirection, false);
 
-  const counterClockwisePoint = {
-    x: previousPoint[0] + counterClockwiseDirection.x * duration,
-    y: previousPoint[1] + counterClockwiseDirection.y * duration,
-  };
+  const clockwisePoint = applyDirectionOnPoint(
+    previousPoint,
+    clockwiseDirection,
+    duration
+  );
+
+  const counterClockwisePoint = applyDirectionOnPoint(
+    previousPoint,
+    counterClockwiseDirection,
+    duration
+  );
 
   const pathAsFeature = lineString(
     path.length > 1 ? path : [...path, ...path] // lineString requires at least 2 points, so we duplicate the single point
@@ -82,23 +79,48 @@ const getDirection = (
     }
   }
 
-  const clockwiseDistance = getPointDistanceFromOrigin(clockwisePoint);
-  const counterClockwiseDistance = getPointDistanceFromOrigin(
-    counterClockwisePoint
-  );
+  const directionsSortedByDistanceFromOrigin =
+    sortDirectionsByDistanceFromOrigin({
+      clockwisePoint,
+      counterClockwisePoint,
+      clockwiseDirection,
+      counterClockwiseDirection,
+    });
 
-  if (clockwiseDistance !== counterClockwiseDistance) {
-    return clockwiseDistance < counterClockwiseDistance
-      ? [clockwiseDirection, counterClockwiseDirection]
-      : [counterClockwiseDirection, clockwiseDirection];
+  if (directionsSortedByDistanceFromOrigin !== null) {
+    return directionsSortedByDistanceFromOrigin;
   }
 
-  return getDirectionsWhenBothPointsAreCloseToOrigin({
+  return sortDirectionsByBalanceScore({
     previousPoint,
     clockwiseDirection,
     counterClockwiseDirection,
     path,
   });
+};
+
+const sortDirectionsByDistanceFromOrigin = ({
+  clockwisePoint,
+  counterClockwisePoint,
+  clockwiseDirection,
+  counterClockwiseDirection,
+}: {
+  clockwisePoint: { x: number; y: number };
+  counterClockwisePoint: { x: number; y: number };
+  clockwiseDirection: Direction;
+  counterClockwiseDirection: Direction;
+}) => {
+  const clockwiseDistance = getPointDistanceFromOrigin(clockwisePoint);
+  const counterClockwiseDistance = getPointDistanceFromOrigin(
+    counterClockwisePoint
+  );
+
+  if (clockwiseDistance === counterClockwiseDistance) {
+    return null;
+  }
+  return clockwiseDistance < counterClockwiseDistance
+    ? [clockwiseDirection, counterClockwiseDirection]
+    : [counterClockwiseDirection, clockwiseDirection];
 };
 
 const MAXIMUM_LOOP_STEPS = 10000;
@@ -242,7 +264,7 @@ const isDirectionPossible = ({
   return !newPointIsOnPath;
 };
 
-const getDirectionsWhenBothPointsAreCloseToOrigin = ({
+const sortDirectionsByBalanceScore = ({
   previousPoint,
   clockwiseDirection,
   counterClockwiseDirection,
@@ -302,3 +324,12 @@ const getPathWithNewDirections = (path: Omit<Step, "newDirection">[]) =>
     const newDirection = path[index + 1]?.directionOnHit ?? step.directionOnHit;
     return [...acc, { ...step, newDirection }];
   }, [] as Step[]);
+
+const applyDirectionOnPoint = (
+  previousPoint: [number, number],
+  direction: { x: number; y: number },
+  duration: number
+) => ({
+  x: previousPoint[0] + direction.x * duration,
+  y: previousPoint[1] + direction.y * duration,
+});
