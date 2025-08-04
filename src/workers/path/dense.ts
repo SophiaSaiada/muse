@@ -1,3 +1,4 @@
+import type { Feature, LineString } from "geojson";
 import type { Direction, NoteOrBeat, Step } from "../../types";
 import * as turf from "@turf/turf";
 
@@ -59,6 +60,7 @@ const rotateDirectionCounterClockwise = (direction: Direction) => {
 
 const EPSILON = 20;
 
+// TODO: fix point not colliding with block at 1:31
 const getDirection = (
   path: [number, number][],
   lastChosenDirection: Direction,
@@ -84,117 +86,21 @@ const getDirection = (
     path.length > 1 ? path : [...path, ...path] // lineString requires at least 2 points, so we duplicate the single point
   );
 
-  const blocksCloseToClockwisePoint = path.filter((point) => {
-    if (point[0] === previousPoint[0] && point[1] === previousPoint[1]) {
-      return false;
-    }
-
-    // distance from point to line segment from previousPoint to clockwisePoint
-    const x1 = previousPoint[0];
-    const y1 = previousPoint[1];
-    const x2 = clockwisePoint.x;
-    const y2 = clockwisePoint.y;
-    const x0 = point[0];
-    const y0 = point[1];
-
-    // Calculate the parameter t for the projection of point onto the line
-    const A = x0 - x1;
-    const B = y0 - y1;
-    const C = x2 - x1;
-    const D = y2 - y1;
-
-    const dot = A * C + B * D;
-    const lenSq = C * C + D * D;
-
-    let distance;
-    if (lenSq === 0) {
-      // Line segment is actually a point
-      distance = Math.hypot(x0 - x1, y0 - y1);
-    } else {
-      const t = Math.max(0, Math.min(1, dot / lenSq));
-      const projX = x1 + t * C;
-      const projY = y1 + t * D;
-      distance = Math.hypot(x0 - projX, y0 - projY);
-    }
-
-    return distance < EPSILON;
+  const clockwiseIsPossible = isDirectionPossible({
+    path,
+    previousPoint,
+    newPoint: clockwisePoint,
+    pathAsFeature,
   });
 
-  const clockwisePointIsOnPath = turf.booleanPointOnLine(
-    turf.point([clockwisePoint.x, clockwisePoint.y]),
+  const counterClockwiseIsPossible = isDirectionPossible({
+    path,
+    previousPoint,
+    newPoint: counterClockwisePoint,
     pathAsFeature,
-    { epsilon: EPSILON }
-  );
-  const clockwiseIsPossible =
-    blocksCloseToClockwisePoint.length === 0 && !clockwisePointIsOnPath;
-
-  // check if there is any point on counterClockwiseNewSegment that is close (within 1) to any point in path
-  const blocksCloseToCounterClockwisePoint = path
-    .map((point) => {
-      // distance from point to line segment from previousPoint to counterClockwisePoint
-      const x1 = previousPoint[0];
-      const y1 = previousPoint[1];
-      const x2 = counterClockwisePoint.x;
-      const y2 = counterClockwisePoint.y;
-      const x0 = point[0];
-      const y0 = point[1];
-
-      // Calculate the parameter t for the projection of point onto the line
-      const A = x0 - x1;
-      const B = y0 - y1;
-      const C = x2 - x1;
-      const D = y2 - y1;
-
-      const dot = A * C + B * D;
-      const lenSq = C * C + D * D;
-
-      let distance;
-      if (lenSq === 0) {
-        // Line segment is actually a point
-        distance = Math.hypot(x0 - x1, y0 - y1);
-      } else {
-        const t = Math.max(0, Math.min(1, dot / lenSq));
-        const projX = x1 + t * C;
-        const projY = y1 + t * D;
-        distance = Math.hypot(x0 - projX, y0 - projY);
-      }
-
-      return {
-        point,
-        distance,
-      };
-    })
-    .filter(({ point, distance }) => {
-      return (
-        !(point[0] === previousPoint[0] && point[1] === previousPoint[1]) &&
-        distance < EPSILON
-      );
-    });
-
-  const counterClockwisePointIsOnPath = turf.booleanPointOnLine(
-    turf.point([counterClockwisePoint.x, counterClockwisePoint.y]),
-    pathAsFeature,
-    { epsilon: EPSILON }
-  );
-  const counterClockwiseIsPossible =
-    blocksCloseToCounterClockwisePoint.length === 0 &&
-    !counterClockwisePointIsOnPath;
+  });
 
   if (!clockwiseIsPossible && !counterClockwiseIsPossible) {
-    console.log("No path is possible", {
-      index: path.length,
-      path,
-      previousPoint,
-      blocksCloseToClockwisePoint,
-      blocksCloseToCounterClockwisePoint,
-      counterClockwiseDirection,
-      counterClockwisePoint,
-      clockwiseDirection,
-      clockwisePoint,
-      clockwisePointIsOnPath,
-      counterClockwisePointIsOnPath,
-      pathAsFeature,
-    });
     return [];
   }
 
@@ -361,4 +267,63 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
       },
     ];
   }, [] as Step[]);
+};
+
+const isDirectionPossible = ({
+  path,
+  previousPoint,
+  newPoint,
+  pathAsFeature,
+}: {
+  path: [number, number][];
+  previousPoint: [number, number];
+  newPoint: { x: number; y: number };
+  pathAsFeature: Feature<LineString>;
+}) => {
+  const blocksCloseToNewPoint = path.filter((point) => {
+    if (point[0] === previousPoint[0] && point[1] === previousPoint[1]) {
+      return false;
+    }
+
+    // distance from point to line segment from previousPoint to newPoint
+    const x1 = previousPoint[0];
+    const y1 = previousPoint[1];
+    const x2 = newPoint.x;
+    const y2 = newPoint.y;
+    const x0 = point[0];
+    const y0 = point[1];
+
+    // Calculate the parameter t for the projection of point onto the line
+    const A = x0 - x1;
+    const B = y0 - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+
+    let distance;
+    if (lenSq === 0) {
+      // Line segment is actually a point
+      distance = Math.hypot(x0 - x1, y0 - y1);
+    } else {
+      const t = Math.max(0, Math.min(1, dot / lenSq));
+      const projX = x1 + t * C;
+      const projY = y1 + t * D;
+      distance = Math.hypot(x0 - projX, y0 - projY);
+    }
+
+    return distance < EPSILON;
+  });
+
+  if (blocksCloseToNewPoint.length > 0) {
+    return false;
+  }
+
+  const newPointIsOnPath = turf.booleanPointOnLine(
+    turf.point([newPoint.x, newPoint.y]),
+    pathAsFeature,
+    { epsilon: EPSILON }
+  );
+  return !newPointIsOnPath;
 };
