@@ -24,7 +24,7 @@ const rotateDirection = (direction: Direction, clockwise: boolean) => {
   };
 };
 
-const EPSILON = 20;
+const MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK = 20;
 
 // TODO: fix point not colliding with block at 1:31
 const getDirection = (
@@ -221,15 +221,11 @@ const isDirectionPossible = ({
       return false;
     }
 
-    // distance from point to line segment from previousPoint to newPoint
-    const x1 = previousPoint[0];
-    const y1 = previousPoint[1];
-    const x2 = newPoint.x;
-    const y2 = newPoint.y;
-    const x0 = point[0];
-    const y0 = point[1];
+    // Explanation: https://stackoverflow.com/a/6853926
+    const [x1, y1] = previousPoint;
+    const { x: x2, y: y2 } = newPoint;
+    const [x0, y0] = point;
 
-    // Calculate the parameter t for the projection of point onto the line
     const A = x0 - x1;
     const B = y0 - y1;
     const C = x2 - x1;
@@ -238,18 +234,12 @@ const isDirectionPossible = ({
     const dot = A * C + B * D;
     const lenSq = C * C + D * D;
 
-    let distance;
-    if (lenSq === 0) {
-      // Line segment is actually a point
-      distance = Math.hypot(x0 - x1, y0 - y1);
-    } else {
-      const t = Math.max(0, Math.min(1, dot / lenSq));
-      const projX = x1 + t * C;
-      const projY = y1 + t * D;
-      distance = Math.hypot(x0 - projX, y0 - projY);
-    }
+    const t = Math.max(0, Math.min(1, dot / lenSq));
+    const projX = x1 + t * C;
+    const projY = y1 + t * D;
+    const distance = Math.hypot(x0 - projX, y0 - projY);
 
-    return distance < EPSILON;
+    return distance < MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK;
   });
 
   if (blocksCloseToNewPoint.length > 0) {
@@ -259,7 +249,7 @@ const isDirectionPossible = ({
   const newPointIsOnPath = booleanPointOnLine(
     point([newPoint.x, newPoint.y]),
     pathAsFeature,
-    { epsilon: EPSILON }
+    { epsilon: MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK }
   );
   return !newPointIsOnPath;
 };
