@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import type { MidiFileWithName } from "@/types";
 import { LoaderPinwheel, Play } from "lucide-react";
 
-// TODO: handle long song names
 export const PlayScreen = ({
   displayName,
   onClickPlay,
@@ -38,11 +37,13 @@ export const PlayScreen = ({
         <div
           className={cn(
             "text-3xl font-headline text-tinted-text inline text-left",
-            "h-12 leading-12 max-w-0 whitespace-nowrap overflow-hidden opacity-0 transition-all duration-500 delay-200 ease-in-out",
-            displayName && "ml-2.5 max-w-[30rem] opacity-100"
+            "leading-none py-4 max-w-0 overflow-hidden opacity-0 transition-all duration-750 delay-200 ease-in-out",
+            displayName && "ml-2.5 max-w-[60rem] opacity-100"
           )}
         >
-          {displayName}
+          <span className="inline-block max-w-[calc(100vw-8rem)] w-max">
+            {displayName}
+          </span>
         </div>
       </div>
     </button>
