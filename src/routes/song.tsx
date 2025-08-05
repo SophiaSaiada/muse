@@ -96,7 +96,7 @@ export const SongRoute = () => {
     <PlayScreen
       displayName={selectedFile?.displayName}
       onClickPlay={
-        isLoading || isValidating || !player
+        isLoading || isValidating || !player || !selectedFile?.displayName
           ? undefined
           : () => onClickPlay(player)
       }

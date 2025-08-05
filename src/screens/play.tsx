@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import type { MidiFileWithName } from "@/types";
 import { LoaderPinwheel, Play } from "lucide-react";
 
-// TODO: animate in display name
 export const PlayScreen = ({
   displayName,
   onClickPlay,
@@ -19,12 +18,12 @@ export const PlayScreen = ({
       )}
       onClick={onClickPlay}
     >
-      <div className="flex flex-row gap-2.5 items-center">
+      <div className="flex flex-row items-center">
         <div className="size-8 text-tinted-text relative shrink-0">
           {onClickPlay ? (
             <>
-              <div className="absolute inset-1 rounded-full cursor-pointer bg-tinted-text/75 flex items-center justify-center animate-ping" />
-              <div className="absolute inset-0 rounded-full cursor-pointer bg-[hsl(320,20%,10%)] flex items-center justify-center border-tinted-text/50 border-2 border-solid">
+              <div className="absolute inset-1 rounded-full cursor-pointer bg-tinted-text/75 flex items-center justify-center animate-ping delay-300" />
+              <div className="absolute inset-0 rounded-full cursor-pointer bg-[hsl(320,20%,10%)] flex items-center justify-center border-tinted-text/50 border-2 border-solid animate-slight-scale-in">
                 <Play className="size-4 text-tinted-text" />
               </div>
             </>
@@ -35,7 +34,13 @@ export const PlayScreen = ({
             />
           )}
         </div>
-        <div className="text-3xl font-headline text-tinted-text inline leading-none text-left">
+        <div
+          className={cn(
+            "text-3xl font-headline text-tinted-text inline leading-none text-left",
+            "max-h-[1em] max-w-0 overflow-hidden leading-none opacity-0 transition-all duration-500 delay-200 ease-in-out",
+            displayName && "ml-2.5 max-w-[30rem] opacity-100"
+          )}
+        >
           {displayName}
         </div>
       </div>
