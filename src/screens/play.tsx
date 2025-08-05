@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { MidiFileWithName } from "@/types";
 import { LoaderPinwheel, Play } from "lucide-react";
 
+// TODO: handle long song names
 export const PlayScreen = ({
   displayName,
   onClickPlay,
