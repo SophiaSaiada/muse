@@ -1,3 +1,4 @@
+// TODO: simplify it
 export const smoothstep = (start: number, end: number, smoothTime: number) => {
   const t = Math.max(0, Math.min(1, (smoothTime - start) / (end - start)));
 

@@ -18,6 +18,7 @@ import {
   BLOCK_HUE_CHANGE_INDEX_INTERVAL,
   BLOCK_WIDTH,
   STAR_COLOR_CHANGE_MAX_DURATION,
+  ZOOM_OUT_PADDING_FACTOR,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { smoothstep } from "@/lib/smoothstep";
@@ -46,8 +47,13 @@ export const Viz = ({ path }: { path: Step[] }) => {
     const animation = new Konva.Animation((frame) => {
       const time = (frame?.time ?? 0) / 1000;
 
+      if (!stageRef.current) {
+        return;
+      }
+
       const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-      if (nextStepIndex <= 0 || !stageRef.current) {
+      if (nextStepIndex <= 0) {
+        zoomOut(layerRef.current, path, stageRef.current);
         return;
       }
 
@@ -303,6 +309,47 @@ const updateRects = ({
     rect.offsetY(height / 2);
     rect.width(width);
     rect.height(height);
+  });
+};
+
+const zoomOut = (
+  layer: Konva.Layer | null,
+  path: Step[],
+  stage: Konva.Stage
+) => {
+  if (!layer) {
+    return;
+  }
+
+  const currentScaleX = layer.scaleX();
+
+  const actualWidth =
+    Math.max(...path.map(({ y }) => y)) - Math.min(...path.map(({ y }) => y));
+  const actualHeight =
+    Math.max(...path.map(({ x }) => x)) - Math.min(...path.map(({ x }) => x));
+
+  const desiredScale = Math.min(
+    // TODO: handle small songs
+    stage.height() /
+      (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
+    stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
+  );
+
+  const newScale =
+    currentScaleX +
+    (desiredScale - currentScaleX) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+
+  layer.scale({ x: newScale, y: newScale });
+
+  layer.position({
+    x:
+      layer.x() +
+      (stage.width() / 2 - layer.x()) *
+        smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING),
+    y:
+      layer.y() +
+      (stage.height() / 2 - layer.y()) *
+        smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING),
   });
 };
 
