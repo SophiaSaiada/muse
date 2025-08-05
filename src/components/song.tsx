@@ -1,3 +1,4 @@
+import { getFileId } from "@/lib/file-id";
 import { cn } from "@/lib/utils";
 import type { MidiFileWithName } from "@/types";
 import { Music2 } from "lucide-react";
@@ -12,7 +13,7 @@ export const Song = ({
 }) => {
   return (
     <NavLink
-      to={`/s/${file.source}/${file.id}`}
+      to={`/s/${getFileId(file)}`}
       state={{ displayName: file.displayName }}
       className={cn(
         "rounded-md group transition font-body text-left",

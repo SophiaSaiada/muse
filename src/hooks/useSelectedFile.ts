@@ -1,15 +1,14 @@
 import { useLocation, useParams } from "react-router";
 import useSWR from "swr";
 import { fetchFileName } from "@/lib/file-name";
-import type { MidiFile, MidiFileWithName } from "@/types";
-
-const ALLOWED_SOURCES: MidiFile["source"][] = ["b", "e"];
+import type { MidiFileWithName } from "@/types";
+import { parseFileId } from "@/lib/file-id";
 
 export const useSelectedFile = (): MidiFileWithName | undefined => {
-  const { source, id } = useParams();
+  const { id } = useParams();
   const location = useLocation();
 
-  const midiFile = getValidMidiFile({ source, id });
+  const midiFile = parseFileId(id);
   const displayNameFromState = location.state?.displayName;
 
   const { data: displayName } = useSWR(
@@ -23,28 +22,6 @@ export const useSelectedFile = (): MidiFileWithName | undefined => {
   );
 
   return midiFile && { ...midiFile, displayName };
-};
-
-const getValidMidiFile = ({
-  source,
-  id,
-}: {
-  source: string | undefined;
-  id: string | undefined;
-}): MidiFile | undefined => {
-  if (
-    !source ||
-    !ALLOWED_SOURCES.includes(source as MidiFile["source"]) ||
-    !id ||
-    id.includes("/")
-  ) {
-    return undefined;
-  }
-
-  return {
-    source: source as MidiFile["source"],
-    id,
-  };
 };
 
 const sanitizeDisplayName = (displayName: string | undefined) =>

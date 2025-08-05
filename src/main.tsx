@@ -13,7 +13,7 @@ createRoot(document.getElementById("root")!).render(
       <PlayerContextProvider>
         <Routes>
           <Route path="/" Component={IndexRoute} />
-          <Route path="/s/:source/:id" Component={SongRoute} />
+          <Route path="/s/:id" Component={SongRoute} />
         </Routes>
       </PlayerContextProvider>
     </BrowserRouter>
