@@ -1,14 +1,11 @@
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { debounce } from "es-toolkit";
-import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
 
 export const SearchBox = ({
   setSearch,
-  isLoading,
 }: {
   setSearch: Dispatch<SetStateAction<string | null>>;
-  isLoading: boolean;
 }) => {
   const [setSearchDebounced] = useState(() => debounce(setSearch, 1000));
 
@@ -18,11 +15,7 @@ export const SearchBox = ({
       <input
         type="text"
         placeholder="Search for a song..."
-        className={cn(
-          "outline-0 grow font-body py-2.5 px-4 pl-10 z-10 relative text-sm w-full",
-          isLoading && "opacity-50"
-        )}
-        readOnly={isLoading}
+        className="outline-0 grow font-body py-2.5 px-4 pl-10 z-10 relative text-sm w-full"
         onChange={(e) => setSearchDebounced(e.target.value)}
       />
     </div>

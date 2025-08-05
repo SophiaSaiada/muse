@@ -161,8 +161,12 @@ export class MIDIPlayer {
     this.equalizer!.band16k.gain.setTargetAtTime(2, 0, 0.0001);
   };
 
-  public stop = (): void => {
-    this.audioContext?.close();
+  public stop = async (): Promise<void> => {
     this.input?.disconnect();
+    try {
+      await this.audioContext?.close();
+    } catch {
+      // it will throw an error unless the song was stopped midway
+    }
   };
 }

@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import type { MidiFileWithName } from "@/types";
 import { LoaderPinwheel, Play } from "lucide-react";
 
+// TODO: animate in display name
 export const PlayScreen = ({
   displayName,
   onClickPlay,

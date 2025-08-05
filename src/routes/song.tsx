@@ -1,33 +1,37 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import useSWR from "swr";
-import { MIDIPlayer } from "@/lib/midi/player";
-import { MIDIFile } from "@/lib/midi/file";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { useSelectedFile } from "@/hooks/useSelectedFile";
 import {
   INCLUDE_BEATS,
-  MUTE,
   INITIAL_VIZ_TYPE,
+  MUTE,
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
-import type { Song, Step, VizType } from "@/types";
-import { toast } from "sonner";
-import { useLocalStorage } from "@uidotdev/usehooks";
-import { useSelectedFile } from "@/hooks/useSelectedFile";
+import type { VizType, Song, Step } from "@/types";
+import { MIDIPlayer } from "@/lib/midi/player";
+import { PlayerContext } from "@/contexts/player/context";
 import { getFileUrl } from "@/lib/file-url";
-import { MainScreen } from "@/screens/main";
-import { VizScreen } from "@/screens/viz";
+import { useRequiredContext } from "@/lib/utils";
+import { MIDIFile } from "@/lib/midi/file";
 import { PlayScreen } from "@/screens/play";
+import { VizScreen } from "@/screens/viz";
 
-function App() {
+export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
 
-  const [player, setPlayer] = useState<MIDIPlayer | null>(null);
+  const navigate = useNavigate();
+
+  const { setPlayer } = useRequiredContext(PlayerContext);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const [selectedFile, setSelectedFile] = useSelectedFile();
+  const selectedFile = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
   const { data, isLoading, isValidating } = useSWR(
     selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
@@ -55,28 +59,22 @@ function App() {
       onError(err, key, config) {
         console.error(err, key, config);
         toast.error("Error loading file, try again");
-        setSelectedFile(null);
+        navigate("/");
       },
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
     }
   );
 
-  useEffect(() => {
-    if (!selectedFileUrl) {
-      setIsPlaying(false);
-      player?.stop();
-    }
-  }, [player, selectedFileUrl]);
-
   const onClickPlay = async (song: Song) => {
     const player = new MIDIPlayer();
+    setPlayer(player);
     player.startLoad(song, () => {
       setPlayer(player);
       if (!MUTE) {
         player.startPlay(() => {
           toast("Hope you had fun, pick another song!");
-          setSelectedFile(null);
+          navigate("/");
           setIsPlaying(false);
         });
       }
@@ -84,31 +82,19 @@ function App() {
     });
   };
 
-  if (selectedFile && (isLoading || isValidating || !isPlaying)) {
-    return (
-      <PlayScreen
-        displayName={selectedFile?.displayName}
-        onClickPlay={
-          isLoading || isValidating || !data?.song
-            ? undefined
-            : () => onClickPlay(data.song)
-        }
-      />
-    );
-  }
-
-  return data?.path ? (
+  return data?.path && !isLoading && !isValidating && isPlaying ? (
     <VizScreen path={data.path} />
   ) : (
-    <MainScreen
-      isLoading={false}
-      selectedFile={selectedFile}
-      setSelectedFile={setSelectedFile}
+    <PlayScreen
+      displayName={selectedFile?.displayName}
+      onClickPlay={
+        isLoading || isValidating || !data?.song
+          ? undefined
+          : () => onClickPlay(data.song)
+      }
     />
   );
-}
-
-export default App;
+};
 
 const calculatePath = async ({
   song,
