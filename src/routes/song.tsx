@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -67,28 +67,19 @@ export const SongRoute = () => {
     }
   );
 
-  useEffect(() => {
-    const song = data?.song;
-    if (!song) {
-      setPlayer(null);
-      return;
-    }
-
+  const onClickPlay = async (song: Song) => {
     const player = new MIDIPlayer();
     player.startLoad(song, () => {
       setPlayer(player);
+      if (!MUTE) {
+        player.startPlay(() => {
+          toast("Hope you had fun, pick another song!");
+          navigate("/");
+          setIsPlaying(false);
+        });
+      }
+      setIsPlaying(true);
     });
-  }, [data?.song, setPlayer]);
-
-  const onClickPlay = async (player: MIDIPlayer) => {
-    if (!MUTE) {
-      player.startPlay(() => {
-        toast("Hope you had fun, pick another song!");
-        navigate("/");
-        setIsPlaying(false);
-      });
-    }
-    setIsPlaying(true);
   };
 
   return data?.path && !isLoading && !isValidating && isPlaying && player ? (
@@ -97,9 +88,9 @@ export const SongRoute = () => {
     <PlayScreen
       displayName={selectedFile?.displayName}
       onClickPlay={
-        isLoading || isValidating || !player || !selectedFile?.displayName
+        isLoading || isValidating || !data?.song || !selectedFile?.displayName
           ? undefined
-          : () => onClickPlay(player)
+          : () => onClickPlay(data.song)
       }
     />
   );
