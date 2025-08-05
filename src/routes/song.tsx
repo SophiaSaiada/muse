@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -28,7 +28,7 @@ export const SongRoute = () => {
 
   const navigate = useNavigate();
 
-  const { setPlayer } = useRequiredContext(PlayerContext);
+  const { player, setPlayer } = useRequiredContext(PlayerContext);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const selectedFile = useSelectedFile();
@@ -66,31 +66,39 @@ export const SongRoute = () => {
     }
   );
 
-  const onClickPlay = async (song: Song) => {
+  useEffect(() => {
+    const song = data?.song;
+    if (!song) {
+      setPlayer(null);
+      return;
+    }
+
     const player = new MIDIPlayer();
-    setPlayer(player);
     player.startLoad(song, () => {
       setPlayer(player);
-      if (!MUTE) {
-        player.startPlay(() => {
-          toast("Hope you had fun, pick another song!");
-          navigate("/");
-          setIsPlaying(false);
-        });
-      }
-      setIsPlaying(true);
     });
+  }, [data?.song, setPlayer]);
+
+  const onClickPlay = async (player: MIDIPlayer) => {
+    if (!MUTE) {
+      player.startPlay(() => {
+        toast("Hope you had fun, pick another song!");
+        navigate("/");
+        setIsPlaying(false);
+      });
+    }
+    setIsPlaying(true);
   };
 
-  return data?.path && !isLoading && !isValidating && isPlaying ? (
+  return data?.path && !isLoading && !isValidating && isPlaying && player ? (
     <VizScreen path={data.path} />
   ) : (
     <PlayScreen
       displayName={selectedFile?.displayName}
       onClickPlay={
-        isLoading || isValidating || !data?.song
+        isLoading || isValidating || !player
           ? undefined
-          : () => onClickPlay(data.song)
+          : () => onClickPlay(player)
       }
     />
   );
