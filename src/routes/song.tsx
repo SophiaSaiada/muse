@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import {
-  INCLUDE_BEATS,
   INITIAL_VIZ_TYPE,
   MUTE,
   SPEED,
@@ -20,6 +19,7 @@ import { MIDIFile } from "@/lib/midi/file";
 import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
 import { trimSong } from "@/lib/trim-song";
+import { adjustBeats } from "@/lib/adjust-beats";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -41,11 +41,7 @@ export const SongRoute = () => {
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
 
-      const song: Song = trimSong(midiFile.parseSong());
-
-      if (!INCLUDE_BEATS) {
-        song.beats = [];
-      }
+      const song: Song = adjustBeats(trimSong(midiFile.parseSong()));
 
       const path = await calculatePath({
         song,
