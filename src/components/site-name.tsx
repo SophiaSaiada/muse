@@ -1,3 +1,4 @@
+import { NavLink } from "react-router";
 import { cn } from "@/lib/utils";
 
 export const SiteName = ({
@@ -14,14 +15,9 @@ export const SiteName = ({
     )}
   >
     {prefix}
-    <a
-      href="/"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-tinted-text"
-    >
+    <NavLink to="/" className="text-tinted-text">
       Muse
-    </a>{" "}
+    </NavLink>{" "}
     by{" "}
     <a href="https://sophies.dev" target="_blank" className="text-tinted-text">
       Sophie
