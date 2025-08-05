@@ -36,8 +36,8 @@ export const PlayScreen = ({
         </div>
         <div
           className={cn(
-            "text-3xl font-headline text-tinted-text inline leading-none text-left",
-            "max-h-[1em] max-w-0 overflow-hidden leading-none opacity-0 transition-all duration-500 delay-200 ease-in-out",
+            "text-3xl font-headline text-tinted-text inline text-left",
+            "h-12 leading-12 max-w-0 whitespace-nowrap overflow-hidden opacity-0 transition-all duration-500 delay-200 ease-in-out",
             displayName && "ml-2.5 max-w-[30rem] opacity-100"
           )}
         >
