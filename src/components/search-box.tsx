@@ -1,13 +1,26 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useState, type ChangeEvent, type Dispatch } from "react";
 import { debounce } from "es-toolkit";
 import { Search } from "lucide-react";
 
 export const SearchBox = ({
   setSearch,
+  initialValue,
 }: {
-  setSearch: Dispatch<SetStateAction<string | null>>;
+  setSearch: Dispatch<string>;
+  initialValue: string | null;
 }) => {
+  const [value, setValue] = useState(initialValue ?? "");
+  useEffect(() => {
+    setValue(initialValue ?? "");
+  }, [initialValue]);
+
   const [setSearchDebounced] = useState(() => debounce(setSearch, 1000));
+
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setValue(value);
+    setSearchDebounced(value);
+  };
 
   return (
     <div className="relative mt-1 mb-2 w-full border border-tinted-text/50 bg-input/30 rounded-md  group focus-within:border-white transition">
@@ -16,7 +29,8 @@ export const SearchBox = ({
         type="text"
         placeholder="Search for a song..."
         className="outline-0 grow font-body py-2.5 px-4 pl-10 z-10 relative text-sm w-full"
-        onChange={(e) => setSearchDebounced(e.target.value)}
+        onChange={onChange}
+        value={value}
       />
     </div>
   );
