@@ -19,6 +19,7 @@ import { useRequiredContext } from "@/lib/utils";
 import { MIDIFile } from "@/lib/midi/file";
 import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
+import { trimSong } from "@/lib/trim-song";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -40,7 +41,7 @@ export const SongRoute = () => {
       const arrayBuffer = await res.arrayBuffer();
       const midiFile = new MIDIFile(arrayBuffer);
 
-      const song: Song = midiFile.parseSong();
+      const song: Song = trimSong(midiFile.parseSong());
 
       if (!INCLUDE_BEATS) {
         song.beats = [];
