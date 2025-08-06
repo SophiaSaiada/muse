@@ -422,75 +422,60 @@ const findDenseRegion = (path: Omit<Step, "newDirection">[]) => {
   const maxX = Math.max(...path.map(({ x }) => x));
   const maxY = Math.max(...path.map(({ y }) => y));
 
-  const gridSize = 50;
+  const gridWidth = 50;
+  const gridHeight = Math.ceil((gridWidth / (maxX - minX)) * (maxY - minY));
 
   // Create a 2D grid to count steps in each cell
-  const grid: number[][] = Array(gridSize)
+  const grid: number[][] = Array(gridHeight)
     .fill(0)
-    .map(() => Array(gridSize).fill(0));
-
-  // Find the center grid position (where 0,0 is mapped)
-  const centerGridX = Math.floor(((0 - minX) / (maxX - minX)) * (gridSize - 1));
-  const centerGridY = Math.floor(((0 - minY) / (maxY - minY)) * (gridSize - 1));
+    .map(() => Array(gridWidth).fill(0));
 
   path.forEach((step) => {
     const gridX = Math.floor(
-      ((step.x - minX) / (maxX - minX)) * (gridSize - 1)
+      ((step.x - minX) / (maxX - minX)) * (gridWidth - 1)
     );
     const gridY = Math.floor(
-      ((step.y - minY) / (maxY - minY)) * (gridSize - 1)
+      ((step.y - minY) / (maxY - minY)) * (gridHeight - 1)
     );
-    const clampedX = Math.max(0, Math.min(gridSize - 1, gridX));
-    const clampedY = Math.max(0, Math.min(gridSize - 1, gridY));
+    const clampedX = Math.max(0, Math.min(gridWidth - 1, gridX));
+    const clampedY = Math.max(0, Math.min(gridHeight - 1, gridY));
     grid[clampedY][clampedX]++;
   });
 
   // Find a large square that captures the main distribution
   // Just expand until we get most points, don't be too conservative
-  let bestRadius = 1;
-  const totalSteps = path.length;
+  let bestLocation = { radius: 0, x: 0, y: 0 };
+  let bestCoverage = 0;
 
-  for (let radius = 1; radius < Math.min(gridSize / 2, 35); radius++) {
-    const minX = Math.max(0, centerGridX - radius);
-    const maxX = Math.min(gridSize - 1, centerGridX + radius);
-    const minY = Math.max(0, centerGridY - radius);
-    const maxY = Math.min(gridSize - 1, centerGridY + radius);
+  const maxRadius = Math.ceil(Math.min(gridWidth, gridHeight) / 2);
 
-    // Count points in this square
-    let pointsInSquare = 0;
-    for (let y = minY; y <= maxY; y++) {
-      for (let x = minX; x <= maxX; x++) {
-        pointsInSquare += grid[y][x];
+  // TODO: improve performance by using a sliding window
+  for (let radius = Math.ceil(maxRadius / 2); radius < maxRadius; radius++) {
+    for (let centerX = radius; centerX < gridWidth - radius; centerX++) {
+      for (let centerY = radius; centerY < gridHeight - radius; centerY++) {
+        let pointsInSquare = 0;
+        for (let y = centerY - radius; y <= centerY + radius; y++) {
+          for (let x = centerX - radius; x <= centerX + radius; x++) {
+            pointsInSquare += grid[y][x];
+          }
+        }
+
+        const coverage = pointsInSquare / radius;
+        if (coverage >= bestCoverage) {
+          bestLocation = { radius, x: centerX, y: centerY };
+          bestCoverage = coverage;
+        }
       }
-    }
-
-    const coverage = pointsInSquare / totalSteps;
-
-    // Keep expanding until we capture most points (85%+) or hit diminishing returns
-    if (coverage >= 0.85) {
-      bestRadius = radius;
-    } else if (coverage >= 0.75) {
-      bestRadius = radius; // Keep this as backup
-    }
-
-    // Continue expanding unless we've captured 90%+ or hit boundaries
-    if (coverage >= 0.9) {
-      break;
     }
   }
 
-  const finalMinX = Math.max(0, centerGridX - bestRadius);
-  const finalMaxX = Math.min(gridSize - 1, centerGridX + bestRadius);
-  const finalMinY = Math.max(0, centerGridY - bestRadius);
-  const finalMaxY = Math.min(gridSize - 1, centerGridY + bestRadius);
-
-  const cellWidth = (maxX - minX) / gridSize;
-  const cellHeight = (maxY - minY) / gridSize;
+  const cellWidth = (maxX - minX) / gridWidth;
+  const cellHeight = (maxY - minY) / gridHeight;
 
   return {
-    startX: minX + finalMinX * cellWidth,
-    startY: minY + finalMinY * cellHeight,
-    endX: minX + (finalMaxX + 1) * cellWidth,
-    endY: minY + (finalMaxY + 1) * cellHeight,
+    startX: minX + (bestLocation.x - bestLocation.radius) * cellWidth,
+    startY: minY + (bestLocation.y - bestLocation.radius) * cellHeight,
+    endX: minX + (bestLocation.x + bestLocation.radius) * cellWidth,
+    endY: minY + (bestLocation.y + bestLocation.radius) * cellHeight,
   };
 };
