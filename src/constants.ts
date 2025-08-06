@@ -39,7 +39,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
   },
 ];
 
-export const MUTE = false;
+export const MUTE = true;
 export const SHOW_PATH = false;
 export const SHOW_BLOCKS = false;
 export const CIRCLE_COLOR = "#E5438A";

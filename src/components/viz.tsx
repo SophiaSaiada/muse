@@ -26,6 +26,7 @@ import { smoothstep } from "@/lib/smoothstep";
 import { cn, lerp } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+import { getBlockMappedColor } from "@/lib/image/color";
 
 type GetBlockColor = (params: {
   x: number;
@@ -95,26 +96,19 @@ export const Viz = ({
         return "black";
       }
 
-      const mappedX =
-        ((x - (denseRegion?.startX ?? 0)) / actualWidth) * imageData.imageWidth;
-      const mappedY =
-        ((y - (denseRegion?.startY ?? 0)) / actualHeight) *
-        imageData.imageHeight;
-
-      const mappedIndex =
-        Math.floor(mappedX) + Math.floor(mappedY) * imageData.imageWidth;
-
-      const rgba = imageData.rgbaValues[mappedIndex];
-      if (!rgba || rgba.a === 0) {
-        return "hsl(0,0%,60%)";
-      }
-
-      return `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`; // TODO: take only hue
+      return getBlockMappedColor({
+        imageData,
+        x,
+        y,
+        denseRegion,
+        saturation,
+      });
     },
-    [actualHeight, actualWidth, denseRegion, imageData]
+    [denseRegion, imageData]
   );
-
   useEffect(() => {
+    const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
+
     const animation = new Konva.Animation((frame) => {
       const time = (frame?.time ?? 0) / 1000;
 
@@ -122,12 +116,16 @@ export const Viz = ({
         return;
       }
 
-      const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-      if (nextStepIndex <= 0) {
+      if (time > lastNoteTime) {
         if (vizType === "STARS") {
           zoomOut(layerRef.current, path, stageRef.current, imageRef.current);
         }
 
+        return;
+      }
+
+      const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
+      if (nextStepIndex <= 0) {
         return;
       }
 
@@ -281,6 +279,7 @@ export const Viz = ({
   );
 };
 
+// TODO: refactor into lb file
 const updateRects = ({
   vizType,
   rects,
@@ -390,6 +389,7 @@ const updateRects = ({
 };
 
 const zoomOut = (
+  // TODO: use dense region
   layer: Konva.Layer | null,
   path: Step[],
   stage: Konva.Stage,

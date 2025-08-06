@@ -20,7 +20,7 @@ import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
 import { trimSong } from "@/lib/trim-song";
 import { adjustBeats } from "@/lib/adjust-beats";
-import { getPNGImageData } from "@/lib/image";
+import { fetchPNGImageData } from "@/lib/image/fetch";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -45,7 +45,7 @@ export const SongRoute = () => {
       const song: Song = adjustBeats(trimSong(midiFile.parseSong()));
 
       const [imageData, { path, denseRegion }] = await Promise.all([
-        getPNGImageData("/artworks/flounder.png"), // TODO: dynamic image
+        fetchPNGImageData("/artworks/flounder.png"), // TODO: dynamic image
         calculatePath({
           song,
           speed: SPEED,

@@ -1,6 +1,6 @@
 import type { ImageData } from "@/types";
 
-export const getPNGImageData = async (imageUrl: string) => {
+export const fetchPNGImageData = async (imageUrl: string) => {
   const imageResponse = await fetch(imageUrl);
   const imageBlob = await imageResponse.blob();
 
