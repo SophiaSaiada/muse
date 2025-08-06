@@ -10,7 +10,7 @@ import {
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
-import type { VizType, Song, Step } from "@/types";
+import type { VizType, Song, PathWorkerResult } from "@/types";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { PlayerContext } from "@/contexts/player/context";
 import { getFileUrl } from "@/lib/file-url";
@@ -43,13 +43,14 @@ export const SongRoute = () => {
 
       const song: Song = adjustBeats(trimSong(midiFile.parseSong()));
 
-      const path = await calculatePath({
+      const { path, denseRegion } = await calculatePath({
         song,
         speed: SPEED,
         vizType: vizType ?? "STARS",
       });
 
-      // Fetch image and extract RGB values
+      // TODO: dynamic image
+      // TODO: refactor
       const imageResponse = await fetch("/artworks/flounder.png");
       const imageBlob = await imageResponse.blob();
 
@@ -101,7 +102,7 @@ export const SongRoute = () => {
         img.src = URL.createObjectURL(imageBlob);
       });
 
-      return { path, song, imageData };
+      return { path, denseRegion, song, imageData };
     },
     {
       errorRetryCount: 0,
@@ -131,7 +132,11 @@ export const SongRoute = () => {
   };
 
   return data?.path && !isLoading && !isValidating && isPlaying && player ? (
-    <VizScreen path={data.path} imageData={data.imageData} />
+    <VizScreen
+      path={data.path}
+      imageData={data.imageData}
+      denseRegion={data.denseRegion}
+    />
   ) : (
     <PlayScreen
       displayName={selectedFile?.displayName}
@@ -161,7 +166,7 @@ const calculatePath = async ({
     JSON.stringify({ song, speed, dense: vizType === "STARS" })
   );
 
-  return new Promise<Step[]>((resolve) => {
+  return new Promise<PathWorkerResult>((resolve) => {
     worker.onmessage = (e) => {
       resolve(JSON.parse(e.data));
     };

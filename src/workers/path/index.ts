@@ -1,4 +1,4 @@
-import type { Song } from "@/types";
+import type { PathWorkerResult, Song } from "@/types";
 import { getNotes } from "@/workers/path/notes";
 import { generateDensePath } from "@/workers/path/dense";
 import { generateSparsePath } from "@/workers/path/sparse";
@@ -11,9 +11,9 @@ self.onmessage = (e: MessageEvent<string>) => {
   };
 
   const notes = getNotes(song, dense);
-  const path = dense
+  const result: PathWorkerResult = dense
     ? generateDensePath(notes, speed)
     : generateSparsePath(notes, speed);
 
-  self.postMessage(JSON.stringify(path));
+  self.postMessage(JSON.stringify(result));
 };

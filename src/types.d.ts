@@ -54,3 +54,15 @@ export type MidiFileWithName = MidiFile & {
 };
 
 export type VizType = "TUNNEL" | "STARS";
+
+export type Region = {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+};
+
+export type PathWorkerResult = {
+  path: Step[];
+  denseRegion?: Region;
+};

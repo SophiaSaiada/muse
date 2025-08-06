@@ -90,7 +90,7 @@ export const generateSparsePath = (notes: NoteOrBeat[], speed: number) => {
     }
   }
 
-  return result;
+  return { path: result };
 };
 
 const calculateBounds = (path: Step[]) => {
