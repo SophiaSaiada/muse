@@ -1,7 +1,4 @@
-import {
-  SONG_START_DELAY_SECONDS,
-  ZOOM_OUT_DURATION_SECONDS,
-} from "@/constants";
+import { SONG_START_DELAY_SECONDS } from "@/constants";
 import type { Song } from "@/types";
 
 export const trimSong = (song: Song) => {
@@ -16,7 +13,7 @@ export const trimSong = (song: Song) => {
 
   const trimmedSong = {
     ...song,
-    duration: getAdjustedTime(song.duration) + ZOOM_OUT_DURATION_SECONDS,
+    duration: getAdjustedTime(song.duration),
     tracks: song.tracks.map((track) => ({
       ...track,
       notes: track.notes.map((note) => ({

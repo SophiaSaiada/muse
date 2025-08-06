@@ -9,18 +9,19 @@ import {
   MUTE,
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
+  ZOOM_OUT_DURATION_SECONDS,
 } from "@/constants";
 import type { VizType, Song, PathWorkerResult } from "@/types";
 import { MIDIPlayer } from "@/lib/midi/player";
 import { PlayerContext } from "@/contexts/player/context";
 import { getFileUrl } from "@/lib/file-url";
 import { useRequiredContext } from "@/lib/utils";
-import { MIDIFile } from "@/lib/midi/file";
 import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
 import { trimSong } from "@/lib/trim-song";
 import { adjustBeats } from "@/lib/adjust-beats";
 import { fetchPNGImageData } from "@/lib/image/fetch";
+import { fetchSong } from "@/lib/midi/fetch";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -38,20 +39,23 @@ export const SongRoute = () => {
   const { data, isLoading, isValidating } = useSWR(
     selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
     async ({ selectedFileUrl, vizType }) => {
-      const res = await fetch(selectedFileUrl);
-      const arrayBuffer = await res.arrayBuffer();
-      const midiFile = new MIDIFile(arrayBuffer);
-
-      const song: Song = adjustBeats(trimSong(midiFile.parseSong()));
-
-      const [imageData, { path, denseRegion }] = await Promise.all([
+      const [imageData, rawSong] = await Promise.all([
         fetchPNGImageData("/artworks/flounder.png"), // TODO: dynamic image
-        calculatePath({
-          song,
-          speed: SPEED,
-          vizType: vizType ?? "STARS",
-        }),
+        fetchSong(selectedFileUrl),
       ]);
+
+      const song = {
+        ...adjustBeats(trimSong(rawSong)),
+        duration:
+          rawSong.duration +
+          (imageData && vizType === "STARS" ? ZOOM_OUT_DURATION_SECONDS : 0),
+      };
+
+      const { path, denseRegion } = await calculatePath({
+        song,
+        speed: SPEED,
+        vizType: vizType ?? "STARS",
+      });
 
       return { path, denseRegion, song, imageData };
     },

@@ -415,7 +415,6 @@ const applyDirectionOnPoint = (
   y: previousPoint[1] + direction.y * duration,
 });
 
-// TODO: refactor
 const findDenseRegion = (path: Omit<Step, "newDirection">[]) => {
   const minX = Math.min(...path.map(({ x }) => x));
   const minY = Math.min(...path.map(({ y }) => y));

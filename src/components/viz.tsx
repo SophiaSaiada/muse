@@ -79,7 +79,7 @@ export const Viz = ({
       index: number;
       saturation: number;
     }) => {
-      if (!denseRegion) {
+      if (!denseRegion || !imageData) {
         return `hsl(${
           Math.round(
             (index /
@@ -90,10 +90,6 @@ export const Viz = ({
               BLOCK_START_HUE
           ) % 360
         }, ${saturation}%, 60%)`;
-      }
-
-      if (!imageData) {
-        return "black";
       }
 
       return getBlockMappedColor({
@@ -117,8 +113,13 @@ export const Viz = ({
       }
 
       if (time > lastNoteTime) {
-        if (vizType === "STARS") {
-          zoomOut(layerRef.current, path, stageRef.current, imageRef.current);
+        if (denseRegion && imageData) {
+          zoomOut(
+            layerRef.current,
+            denseRegion,
+            stageRef.current,
+            imageRef.current
+          );
         }
 
         return;
@@ -177,7 +178,7 @@ export const Viz = ({
     return () => {
       animation.stop();
     };
-  }, [getBlockColor, path, vizType]);
+  }, [denseRegion, getBlockColor, imageData, path, vizType]);
 
   return (
     <Stage
@@ -389,9 +390,8 @@ const updateRects = ({
 };
 
 const zoomOut = (
-  // TODO: use dense region
   layer: Konva.Layer | null,
-  path: Step[],
+  denseRegion: Region,
   stage: Konva.Stage,
   imageRef: Konva.Image | null
 ) => {
@@ -401,45 +401,42 @@ const zoomOut = (
 
   const currentScaleX = layer.scaleX();
 
-  const actualWidth =
-    Math.max(...path.map(({ y }) => y)) - Math.min(...path.map(({ y }) => y));
-  const actualHeight =
-    Math.max(...path.map(({ x }) => x)) - Math.min(...path.map(({ x }) => x));
+  const actualWidth = denseRegion.endX - denseRegion.startX;
+  const actualHeight = denseRegion.endY - denseRegion.startY;
 
   const desiredScale = Math.min(
-    // TODO: handle small songs
     stage.height() /
       (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
     stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
   );
 
   if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
+    // TODO: delay showing the image
     if (imageRef) {
       imageRef.opacity(
-        imageRef.opacity() +
-          (0.125 - imageRef.opacity()) *
-            smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING)
+        smoothstep(imageRef.opacity(), 0.125, CAMERA_FOLLOW_SMOOTHING)
       );
     }
 
     return;
   }
 
-  const newScale =
-    currentScaleX +
-    (desiredScale - currentScaleX) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+  const newScale = smoothstep(
+    currentScaleX,
+    desiredScale,
+    CAMERA_FOLLOW_SMOOTHING
+  );
 
   layer.scale({ x: newScale, y: newScale });
 
+  const desiredX =
+    stage.width() / 2 - (denseRegion.startX + denseRegion.endX) / 2;
+  const desiredY =
+    stage.height() / 2 - (denseRegion.startY + denseRegion.endY) / 2;
+
   layer.position({
-    x:
-      layer.x() +
-      (stage.width() / 2 - layer.x()) *
-        smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING),
-    y:
-      layer.y() +
-      (stage.height() / 2 - layer.y()) *
-        smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING),
+    x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
+    y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
   });
 };
 
@@ -550,12 +547,8 @@ function updateCameraPosition({
   const currentX = layer.x();
   const currentY = layer.y();
 
-  const newX =
-    currentX +
-    (desiredX - currentX) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
-  const newY =
-    currentY +
-    (desiredY - currentY) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+  const newX = smoothstep(currentX, desiredX, CAMERA_FOLLOW_SMOOTHING);
+  const newY = smoothstep(currentY, desiredY, CAMERA_FOLLOW_SMOOTHING);
 
   layer.x(newX);
   layer.y(newY);
