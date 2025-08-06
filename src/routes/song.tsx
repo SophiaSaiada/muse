@@ -49,7 +49,59 @@ export const SongRoute = () => {
         vizType: vizType ?? "STARS",
       });
 
-      return { path, song };
+      // Fetch image and extract RGB values
+      const imageResponse = await fetch("/artworks/flounder.png");
+      const imageBlob = await imageResponse.blob();
+
+      const imageData = await new Promise<{
+        rgbValues: { r: number; g: number; b: number; a: number }[];
+        imageWidth: number;
+        imageHeight: number;
+        image: HTMLImageElement;
+      }>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve({
+              rgbValues: [],
+              imageWidth: 0,
+              imageHeight: 0,
+              image: img,
+            });
+            return;
+          }
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+
+          const pixelData = ctx.getImageData(0, 0, img.width, img.height);
+          const rgbValues: { r: number; g: number; b: number; a: number }[] =
+            [];
+
+          // Copy RGB values (skip alpha channel)
+          for (let i = 0; i < pixelData.data.length; i += 4) {
+            rgbValues.push({
+              r: pixelData.data[i],
+              g: pixelData.data[i + 1],
+              b: pixelData.data[i + 2],
+              a: pixelData.data[i + 3],
+            });
+          }
+
+          resolve({
+            rgbValues,
+            imageWidth: img.width,
+            imageHeight: img.height,
+            image: img,
+          });
+        };
+        img.src = URL.createObjectURL(imageBlob);
+      });
+
+      return { path, song, imageData };
     },
     {
       errorRetryCount: 0,
@@ -79,7 +131,7 @@ export const SongRoute = () => {
   };
 
   return data?.path && !isLoading && !isValidating && isPlaying && player ? (
-    <VizScreen path={data.path} />
+    <VizScreen path={data.path} imageData={data.imageData} />
   ) : (
     <PlayScreen
       displayName={selectedFile?.displayName}

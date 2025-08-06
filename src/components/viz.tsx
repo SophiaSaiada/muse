@@ -1,8 +1,9 @@
-import { Layer, Stage, Circle, Path, Rect } from "react-konva";
+import { Layer, Stage, Circle, Path, Rect, Image } from "react-konva";
 import { useEffect, useRef } from "react";
 import Konva from "konva";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useWindowSize } from "react-use";
+import { range, sortBy } from "es-toolkit";
 import {
   SCALE,
   SHOW_PATH,
@@ -25,9 +26,19 @@ import { smoothstep } from "@/lib/smoothstep";
 import { cn, lerp } from "@/lib/utils";
 import type { Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
-import { range } from "es-toolkit";
 
-export const Viz = ({ path }: { path: Step[] }) => {
+export const Viz = ({
+  path,
+  imageData,
+}: {
+  path: Step[];
+  imageData?: {
+    rgbValues: { r: number; g: number; b: number; a: number }[];
+    imageWidth: number;
+    imageHeight: number;
+    image: HTMLImageElement;
+  };
+}) => {
   const { width, height } = useWindowSize();
 
   const [vizType] = useLocalStorage<VizType>(
@@ -38,14 +49,52 @@ export const Viz = ({ path }: { path: Step[] }) => {
   const stageRef = useRef<Konva.Stage>(null);
   const rectRefs = useRef<(Konva.Rect | null)[]>([]);
   const layerRef = useRef<Konva.Layer>(null);
+  const imageRef = useRef<Konva.Image>(null);
 
   const circleRef = useRef<Konva.Circle>(null);
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
 
+  const pathSortedByX = sortBy(path, ["x"]);
+  const pathSortedByY = sortBy(path, ["y"]);
+
+  const minX = pathSortedByX[0].x;
+  const minY = pathSortedByY[0].y;
+  const maxX = pathSortedByX[pathSortedByX.length - 1].x;
+  const maxY = pathSortedByY[pathSortedByY.length - 1].y;
+
+  const actualWidth = maxX - minX; // TODO: find area with most pixels and display it only there
+  const actualHeight = maxY - minY;
+
+  const getPositionColor = (x: number, y: number) => {
+    if (!imageData) {
+      return "black";
+    }
+
+    const mappedX = ((x - minX) / actualWidth) * imageData.imageWidth;
+    const mappedY = ((y - minY) / actualHeight) * imageData.imageHeight;
+
+    const index =
+      Math.floor(mappedX) + Math.floor(mappedY) * imageData.imageWidth;
+
+    if (!imageData.rgbValues[index]) {
+      console.log({ index, rgbValues: imageData.rgbValues[index] });
+    }
+    const { r, g, b, a } = imageData.rgbValues[index] || {
+      r: 10,
+      g: 10,
+      b: 10,
+    };
+
+    return a === 0 ? "hsl(0,0%,60%)" : `rgb(${r}, ${g}, ${b})`;
+  };
+
   useEffect(() => {
     const animation = new Konva.Animation((frame) => {
-      const time = (frame?.time ?? 0) / 1000;
+      const time =
+        Math.max(...path.map(({ note: { when } }) => when)) +
+        (frame?.time ?? 0) / 1000 -
+        2;
 
       if (!stageRef.current) {
         return;
@@ -53,7 +102,8 @@ export const Viz = ({ path }: { path: Step[] }) => {
 
       const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
       if (nextStepIndex <= 0) {
-        zoomOut(layerRef.current, path, stageRef.current);
+        zoomOut(layerRef.current, path, stageRef.current, imageRef.current);
+
         return;
       }
 
@@ -117,6 +167,16 @@ export const Viz = ({ path }: { path: Step[] }) => {
       ref={stageRef}
     >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
+        <Image
+          ref={imageRef}
+          image={imageData?.image}
+          width={actualWidth}
+          height={actualWidth}
+          x={minX}
+          y={minY}
+          opacity={0}
+        />
+
         {vizType === "TUNNEL" && <Tunnel path={path} />}
 
         {path.map((step, index) => (
@@ -146,16 +206,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
             offsetX={(vizType === "TUNNEL" ? height : BLOCK_HEIGHT) / 2}
             offsetY={vizType === "TUNNEL" ? width : BLOCK_HEIGHT / 2}
             opacity={vizType === "TUNNEL" ? 0 : 1}
-            fill={`hsl(${
-              Math.round(
-                (index /
-                  (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                    ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                    : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-                  360 +
-                  BLOCK_START_HUE
-              ) % 360
-            }, ${vizType === "TUNNEL" ? 100 : 0}%, 60%)`}
+            fill={getPositionColor(step.x, step.y)}
           />
         ))}
         {SHOW_PATH && (
@@ -250,15 +301,15 @@ const updateRects = ({
   const animationDuration =
     Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION) + timeOffset;
 
-  rect.fill(
-    `hsl(${hue}, ${lerp({
-      start: 0,
-      end: 100,
-      time: time,
-      duration: animationDuration,
-      timeOffset,
-    })}%, 60%)`
-  );
+  // rect.fill(
+  //   `hsl(${hue}, ${lerp({
+  //     start: 0,
+  //     end: 100,
+  //     time: time,
+  //     duration: animationDuration,
+  //     timeOffset,
+  //   })}%, 60%)`
+  // );
   const newWidth = lerp({
     start: BLOCK_HEIGHT,
     end: width,
@@ -278,7 +329,7 @@ const updateRects = ({
   rect.width(newWidth);
   rect.height(newHeight);
 
-  range(nextStepIndex - 1 - 2, nextStepIndex - 1).forEach((index) => {
+  range(0, nextStepIndex - 1).forEach((index) => {
     if (index < 0) {
       return;
     }
@@ -304,7 +355,7 @@ const updateRects = ({
           360 +
           BLOCK_START_HUE
       ) % 360;
-    rect.fill(`hsl(${hue}, 100%, 60%)`);
+    // rect.fill(`hsl(${hue}, 100%, 60%)`);
     rect.offsetX(width / 2);
     rect.offsetY(height / 2);
     rect.width(width);
@@ -315,7 +366,8 @@ const updateRects = ({
 const zoomOut = (
   layer: Konva.Layer | null,
   path: Step[],
-  stage: Konva.Stage
+  stage: Konva.Stage,
+  imageRef: Konva.Image | null
 ) => {
   if (!layer) {
     return;
@@ -334,6 +386,18 @@ const zoomOut = (
       (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
     stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
   );
+
+  if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
+    if (imageRef) {
+      imageRef.opacity(
+        imageRef.opacity() +
+          (0.125 - imageRef.opacity()) *
+            smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING)
+      );
+    }
+
+    return;
+  }
 
   const newScale =
     currentScaleX +
