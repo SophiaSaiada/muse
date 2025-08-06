@@ -1,4 +1,4 @@
-import type { Region, Step } from "@/types";
+import type { ImageData, Region, Step } from "@/types";
 import { Footer } from "@/components/footer";
 import { Viz } from "@/components/viz";
 
@@ -8,12 +8,7 @@ export const VizScreen = ({
   denseRegion,
 }: {
   path: Step[];
-  imageData?: {
-    rgbValues: { r: number; g: number; b: number; a: number }[];
-    imageWidth: number;
-    imageHeight: number;
-    image: HTMLImageElement;
-  };
+  imageData?: ImageData;
   denseRegion: Region | undefined;
 }) => (
   <>

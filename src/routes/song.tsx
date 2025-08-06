@@ -20,6 +20,7 @@ import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
 import { trimSong } from "@/lib/trim-song";
 import { adjustBeats } from "@/lib/adjust-beats";
+import { getPNGImageData } from "@/lib/image";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -43,64 +44,14 @@ export const SongRoute = () => {
 
       const song: Song = adjustBeats(trimSong(midiFile.parseSong()));
 
-      const { path, denseRegion } = await calculatePath({
-        song,
-        speed: SPEED,
-        vizType: vizType ?? "STARS",
-      });
-
-      // TODO: dynamic image
-      // TODO: refactor
-      const imageResponse = await fetch("/artworks/flounder.png");
-      const imageBlob = await imageResponse.blob();
-
-      const imageData = await new Promise<{
-        rgbValues: { r: number; g: number; b: number; a: number }[];
-        imageWidth: number;
-        imageHeight: number;
-        image: HTMLImageElement;
-      }>((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            resolve({
-              rgbValues: [],
-              imageWidth: 0,
-              imageHeight: 0,
-              image: img,
-            });
-            return;
-          }
-
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-
-          const pixelData = ctx.getImageData(0, 0, img.width, img.height);
-          const rgbValues: { r: number; g: number; b: number; a: number }[] =
-            [];
-
-          // Copy RGB values (skip alpha channel)
-          for (let i = 0; i < pixelData.data.length; i += 4) {
-            rgbValues.push({
-              r: pixelData.data[i],
-              g: pixelData.data[i + 1],
-              b: pixelData.data[i + 2],
-              a: pixelData.data[i + 3],
-            });
-          }
-
-          resolve({
-            rgbValues,
-            imageWidth: img.width,
-            imageHeight: img.height,
-            image: img,
-          });
-        };
-        img.src = URL.createObjectURL(imageBlob);
-      });
+      const [imageData, { path, denseRegion }] = await Promise.all([
+        getPNGImageData("/artworks/flounder.png"), // TODO: dynamic image
+        calculatePath({
+          song,
+          speed: SPEED,
+          vizType: vizType ?? "STARS",
+        }),
+      ]);
 
       return { path, denseRegion, song, imageData };
     },
@@ -131,7 +82,7 @@ export const SongRoute = () => {
     });
   };
 
-  return data?.path && !isLoading && !isValidating && isPlaying && player ? (
+  return data && !isLoading && !isValidating && isPlaying && player ? (
     <VizScreen
       path={data.path}
       imageData={data.imageData}

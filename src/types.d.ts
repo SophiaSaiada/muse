@@ -66,3 +66,10 @@ export type PathWorkerResult = {
   path: Step[];
   denseRegion?: Region;
 };
+
+export type ImageData = {
+  rgbaValues: { r: number; g: number; b: number; a: number }[];
+  imageWidth: number;
+  imageHeight: number;
+  image: HTMLImageElement;
+};

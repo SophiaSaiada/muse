@@ -24,7 +24,7 @@ import {
 import { Tunnel } from "@/components/tunnel";
 import { smoothstep } from "@/lib/smoothstep";
 import { cn, lerp } from "@/lib/utils";
-import type { Region, Step, VizType } from "@/types";
+import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 
 type GetBlockColor = (params: {
@@ -40,12 +40,7 @@ export const Viz = ({
   denseRegion,
 }: {
   path: Step[];
-  imageData?: {
-    rgbValues: { r: number; g: number; b: number; a: number }[];
-    imageWidth: number;
-    imageHeight: number;
-    image: HTMLImageElement;
-  };
+  imageData?: ImageData;
   denseRegion: Region | undefined;
 }) => {
   const { width, height } = useWindowSize();
@@ -109,12 +104,12 @@ export const Viz = ({
       const mappedIndex =
         Math.floor(mappedX) + Math.floor(mappedY) * imageData.imageWidth;
 
-      const rgb = imageData.rgbValues[mappedIndex];
-      if (!rgb || rgb.a === 0) {
+      const rgba = imageData.rgbaValues[mappedIndex];
+      if (!rgba || rgba.a === 0) {
         return "hsl(0,0%,60%)";
       }
 
-      return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+      return `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`; // TODO: take only hue
     },
     [actualHeight, actualWidth, denseRegion, imageData]
   );
