@@ -1,8 +1,9 @@
-import { Layer, Stage, Circle, Path, Rect } from "react-konva";
-import { useEffect, useRef } from "react";
+import { Layer, Stage, Circle, Path, Rect, Image } from "react-konva";
+import { useCallback, useEffect, useRef } from "react";
 import Konva from "konva";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useWindowSize } from "react-use";
+import { range } from "es-toolkit";
 import {
   SCALE,
   SHOW_PATH,
@@ -18,15 +19,33 @@ import {
   BLOCK_HUE_CHANGE_INDEX_INTERVAL,
   BLOCK_WIDTH,
   STAR_COLOR_CHANGE_MAX_DURATION,
+  ZOOM_OUT_PADDING_FACTOR,
+  DEBUG_SONG_END,
+  IMAGE_REVEAL_SMOOTHING,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { smoothstep } from "@/lib/smoothstep";
 import { cn, lerp } from "@/lib/utils";
-import type { Step, VizType } from "@/types";
+import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
-import { range } from "es-toolkit";
+import { getBlockMappedColor } from "@/lib/image/color";
 
-export const Viz = ({ path }: { path: Step[] }) => {
+type GetBlockColor = (params: {
+  x: number;
+  y: number;
+  index: number;
+  saturation: number;
+}) => string;
+
+export const Viz = ({
+  path,
+  imageData,
+  denseRegion,
+}: {
+  path: Step[];
+  imageData?: ImageData;
+  denseRegion: Region | undefined;
+}) => {
   const { width, height } = useWindowSize();
 
   const [vizType] = useLocalStorage<VizType>(
@@ -37,17 +56,80 @@ export const Viz = ({ path }: { path: Step[] }) => {
   const stageRef = useRef<Konva.Stage>(null);
   const rectRefs = useRef<(Konva.Rect | null)[]>([]);
   const layerRef = useRef<Konva.Layer>(null);
+  const imageRef = useRef<Konva.Image>(null);
 
   const circleRef = useRef<Konva.Circle>(null);
   const nearPartOfTrailRef = useRef<Konva.Circle>(null);
   const farPartOfTrailRef = useRef<Konva.Circle>(null);
 
+  const actualWidth = denseRegion?.endX
+    ? denseRegion.endX - denseRegion.startX
+    : 0;
+  const actualHeight = denseRegion?.endY
+    ? denseRegion.endY - denseRegion.startY
+    : 0;
+
+  const getBlockColor: GetBlockColor = useCallback(
+    ({
+      x,
+      y,
+      index,
+      saturation,
+    }: {
+      x: number;
+      y: number;
+      index: number;
+      saturation: number;
+    }) => {
+      if (!denseRegion || !imageData) {
+        return `hsl(${
+          Math.round(
+            (index /
+              (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+                ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+                : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+              360 +
+              BLOCK_START_HUE
+          ) % 360
+        }, ${saturation}%, 60%)`;
+      }
+
+      return getBlockMappedColor({
+        imageData,
+        x,
+        y,
+        denseRegion,
+        saturation,
+      });
+    },
+    [denseRegion, imageData]
+  );
   useEffect(() => {
+    const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
+
     const animation = new Konva.Animation((frame) => {
-      const time = (frame?.time ?? 0) / 1000;
+      const time =
+        (frame?.time ?? 0) / 1000 + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
+
+      if (!stageRef.current) {
+        return;
+      }
+
+      if (time > lastNoteTime) {
+        if (denseRegion && imageData) {
+          zoomOut(
+            layerRef.current,
+            denseRegion,
+            stageRef.current,
+            imageRef.current
+          );
+        }
+
+        return;
+      }
 
       const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-      if (nextStepIndex <= 0 || !stageRef.current) {
+      if (nextStepIndex <= 0) {
         return;
       }
 
@@ -90,6 +172,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
         nextStepIndex,
         currentStep,
         time,
+        getBlockColor,
       });
     }, layerRef.current?.getLayer());
 
@@ -98,7 +181,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
     return () => {
       animation.stop();
     };
-  }, [path, vizType]);
+  }, [denseRegion, getBlockColor, imageData, path, vizType]);
 
   return (
     <Stage
@@ -111,6 +194,16 @@ export const Viz = ({ path }: { path: Step[] }) => {
       ref={stageRef}
     >
       <Layer ref={layerRef} x={width / 2} y={height / 2}>
+        <Image
+          ref={imageRef}
+          image={imageData?.image}
+          width={actualWidth}
+          height={actualHeight}
+          x={denseRegion?.startX}
+          y={denseRegion?.startY}
+          opacity={0}
+        />
+
         {vizType === "TUNNEL" && <Tunnel path={path} />}
 
         {path.map((step, index) => (
@@ -140,16 +233,12 @@ export const Viz = ({ path }: { path: Step[] }) => {
             offsetX={(vizType === "TUNNEL" ? height : BLOCK_HEIGHT) / 2}
             offsetY={vizType === "TUNNEL" ? width : BLOCK_HEIGHT / 2}
             opacity={vizType === "TUNNEL" ? 0 : 1}
-            fill={`hsl(${
-              Math.round(
-                (index /
-                  (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                    ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                    : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-                  360 +
-                  BLOCK_START_HUE
-              ) % 360
-            }, ${vizType === "TUNNEL" ? 100 : 0}%, 60%)`}
+            fill={getBlockColor({
+              x: step.x,
+              y: step.y,
+              index,
+              saturation: vizType === "TUNNEL" ? 100 : 0,
+            })}
           />
         ))}
         {SHOW_PATH && (
@@ -194,6 +283,7 @@ export const Viz = ({ path }: { path: Step[] }) => {
   );
 };
 
+// TODO: refactor into lb file
 const updateRects = ({
   vizType,
   rects,
@@ -201,6 +291,7 @@ const updateRects = ({
   nextStepIndex,
   currentStep,
   time,
+  getBlockColor,
 }: {
   vizType: string | undefined;
   rects: (Konva.Rect | null)[] | null;
@@ -208,7 +299,9 @@ const updateRects = ({
   nextStepIndex: number;
   currentStep: Step;
   time: number;
+  getBlockColor: GetBlockColor;
 }) => {
+  // TODO: re-implement tunnel animation
   if (vizType !== "STARS") {
     return;
   }
@@ -230,28 +323,23 @@ const updateRects = ({
       ? BLOCK_HEIGHT
       : BLOCK_WIDTH;
 
-  const hue =
-    Math.round(
-      ((nextStepIndex - 1) /
-        (nextStepIndex - 1 < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-          ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-          : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-        360 +
-        BLOCK_START_HUE
-    ) % 360;
-
   const timeOffset = currentStep?.note.when ?? 0;
   const animationDuration =
     Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION) + timeOffset;
 
   rect.fill(
-    `hsl(${hue}, ${lerp({
-      start: 0,
-      end: 100,
-      time: time,
-      duration: animationDuration,
-      timeOffset,
-    })}%, 60%)`
+    getBlockColor({
+      x: currentStep.x,
+      y: currentStep.y,
+      index: nextStepIndex - 1,
+      saturation: lerp({
+        start: 0,
+        end: 100,
+        time: time,
+        duration: animationDuration,
+        timeOffset,
+      }),
+    })
   );
   const newWidth = lerp({
     start: BLOCK_HEIGHT,
@@ -272,7 +360,7 @@ const updateRects = ({
   rect.width(newWidth);
   rect.height(newHeight);
 
-  range(nextStepIndex - 1 - 2, nextStepIndex - 1).forEach((index) => {
+  range(0, nextStepIndex - 1).forEach((index) => {
     if (index < 0) {
       return;
     }
@@ -289,20 +377,68 @@ const updateRects = ({
       path[index].newDirection.y === path[index].directionOnHit.y
         ? BLOCK_HEIGHT
         : BLOCK_WIDTH;
-    const hue =
-      Math.round(
-        (index /
-          (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-            ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-            : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-          360 +
-          BLOCK_START_HUE
-      ) % 360;
-    rect.fill(`hsl(${hue}, 100%, 60%)`);
+    rect.fill(
+      getBlockColor({
+        x: path[index].x,
+        y: path[index].y,
+        index,
+        saturation: 100,
+      })
+    );
     rect.offsetX(width / 2);
     rect.offsetY(height / 2);
     rect.width(width);
     rect.height(height);
+  });
+};
+
+const zoomOut = (
+  layer: Konva.Layer | null,
+  denseRegion: Region,
+  stage: Konva.Stage,
+  imageRef: Konva.Image | null
+) => {
+  if (!layer) {
+    return;
+  }
+
+  const currentScaleX = layer.scaleX();
+
+  const actualWidth = denseRegion.endX - denseRegion.startX;
+  const actualHeight = denseRegion.endY - denseRegion.startY;
+
+  const desiredScale = Math.min(
+    stage.height() /
+      (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
+    stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
+  );
+
+  if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
+    if (imageRef) {
+      imageRef.opacity(
+        smoothstep(imageRef.opacity(), 0.125, IMAGE_REVEAL_SMOOTHING)
+      );
+    }
+
+    return;
+  }
+
+  const newScale = smoothstep(
+    currentScaleX,
+    desiredScale,
+    CAMERA_FOLLOW_SMOOTHING
+  );
+
+  layer.scale({ x: newScale, y: newScale });
+
+  const desiredX =
+    stage.width() / 2 - (denseRegion.startX + denseRegion.endX) / 2;
+  const desiredY =
+    stage.height() / 2 - (denseRegion.startY + denseRegion.endY) / 2;
+
+  layer.position({
+    x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
+    y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
   });
 };
 
@@ -413,12 +549,8 @@ function updateCameraPosition({
   const currentX = layer.x();
   const currentY = layer.y();
 
-  const newX =
-    currentX +
-    (desiredX - currentX) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
-  const newY =
-    currentY +
-    (desiredY - currentY) * smoothstep(0, 1, CAMERA_FOLLOW_SMOOTHING);
+  const newX = smoothstep(currentX, desiredX, CAMERA_FOLLOW_SMOOTHING);
+  const newY = smoothstep(currentY, desiredY, CAMERA_FOLLOW_SMOOTHING);
 
   layer.x(newX);
   layer.y(newY);

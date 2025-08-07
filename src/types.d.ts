@@ -47,6 +47,7 @@ export type MidiFile = {
     | "b" // =bitmidi
     | "e"; // =example
   id: string;
+  artwork?: string;
 };
 
 export type MidiFileWithName = MidiFile & {
@@ -54,3 +55,22 @@ export type MidiFileWithName = MidiFile & {
 };
 
 export type VizType = "TUNNEL" | "STARS";
+
+export type Region = {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+};
+
+export type PathWorkerResult = {
+  path: Step[];
+  denseRegion?: Region;
+};
+
+export type ImageData = {
+  rgbaValues: { r: number; g: number; b: number; a: number }[];
+  imageWidth: number;
+  imageHeight: number;
+  image: HTMLImageElement;
+};

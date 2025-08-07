@@ -229,7 +229,11 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
       path,
     });
   }
-  return getPathWithNewDirections(path);
+
+  return {
+    path: getPathWithNewDirections(path),
+    denseRegion: findDenseRegion(path),
+  };
 };
 
 const getDistanceOfPointFromSegment = ({
@@ -410,3 +414,67 @@ const applyDirectionOnPoint = (
   x: previousPoint[0] + direction.x * duration,
   y: previousPoint[1] + direction.y * duration,
 });
+
+const findDenseRegion = (path: Omit<Step, "newDirection">[]) => {
+  const minX = Math.min(...path.map(({ x }) => x));
+  const minY = Math.min(...path.map(({ y }) => y));
+  const maxX = Math.max(...path.map(({ x }) => x));
+  const maxY = Math.max(...path.map(({ y }) => y));
+
+  const gridWidth = 50;
+  const gridHeight = Math.ceil((gridWidth / (maxX - minX)) * (maxY - minY));
+
+  // Create a 2D grid to count steps in each cell
+  const grid: number[][] = Array(gridHeight)
+    .fill(0)
+    .map(() => Array(gridWidth).fill(0));
+
+  path.forEach((step) => {
+    const gridX = Math.floor(
+      ((step.x - minX) / (maxX - minX)) * (gridWidth - 1)
+    );
+    const gridY = Math.floor(
+      ((step.y - minY) / (maxY - minY)) * (gridHeight - 1)
+    );
+    const clampedX = Math.max(0, Math.min(gridWidth - 1, gridX));
+    const clampedY = Math.max(0, Math.min(gridHeight - 1, gridY));
+    grid[clampedY][clampedX]++;
+  });
+
+  // Find a large square that captures the main distribution
+  // Just expand until we get most points, don't be too conservative
+  let bestLocation = { radius: 0, x: 0, y: 0 };
+  let bestCoverage = 0;
+
+  const maxRadius = Math.ceil(Math.min(gridWidth, gridHeight) / 2);
+
+  // TODO: improve performance by using a sliding window
+  for (let radius = Math.ceil(maxRadius / 2); radius < maxRadius; radius++) {
+    for (let centerX = radius; centerX < gridWidth - radius; centerX++) {
+      for (let centerY = radius; centerY < gridHeight - radius; centerY++) {
+        let pointsInSquare = 0;
+        for (let y = centerY - radius; y <= centerY + radius; y++) {
+          for (let x = centerX - radius; x <= centerX + radius; x++) {
+            pointsInSquare += grid[y][x];
+          }
+        }
+
+        const coverage = pointsInSquare / radius;
+        if (coverage >= bestCoverage) {
+          bestLocation = { radius, x: centerX, y: centerY };
+          bestCoverage = coverage;
+        }
+      }
+    }
+  }
+
+  const cellWidth = (maxX - minX) / gridWidth;
+  const cellHeight = (maxY - minY) / gridHeight;
+
+  return {
+    startX: minX + (bestLocation.x - bestLocation.radius) * cellWidth,
+    startY: minY + (bestLocation.y - bestLocation.radius) * cellHeight,
+    endX: minX + (bestLocation.x + bestLocation.radius) * cellWidth,
+    endY: minY + (bestLocation.y + bestLocation.radius) * cellHeight,
+  };
+};

@@ -15,6 +15,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
     id: "Frozen",
     displayName: "Frozen - Let it Go",
     source: "e",
+    artwork: "/artworks/frozen.png",
   },
   { id: "GravityFalls", displayName: "Gravity Falls", source: "e" },
   {
@@ -40,6 +41,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
 ];
 
 export const MUTE = false;
+export const DEBUG_SONG_END = false;
 export const SHOW_PATH = false;
 export const SHOW_BLOCKS = false;
 export const CIRCLE_COLOR = "#E5438A";
@@ -60,3 +62,6 @@ export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
 export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 export const CAMERA_FOLLOW_SMOOTHING = 0.2;
 export const SONG_START_DELAY_SECONDS = 0.15;
+export const ZOOM_OUT_PADDING_FACTOR = 0.1;
+export const ZOOM_OUT_DURATION_SECONDS = 5;
+export const IMAGE_REVEAL_SMOOTHING = 0.1;

@@ -10,8 +10,9 @@ export const parseFileId = (
     return undefined;
   }
 
-  if (MIDI_FILES.some((file) => file.id === rawId)) {
-    return { source: "e", id: rawId };
+  const exampleFile = MIDI_FILES.find((file) => file.id === rawId);
+  if (exampleFile) {
+    return exampleFile;
   }
 
   const source = rawId[0];
