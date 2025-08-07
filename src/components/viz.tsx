@@ -3,13 +3,9 @@ import { useCallback, useEffect, useRef } from "react";
 import Konva from "konva";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useWindowSize } from "react-use";
-import { range } from "es-toolkit";
 import {
   SCALE,
   SHOW_PATH,
-  BOUNCE_ANIMATION_HALF_TIME,
-  BOUNCE_ANIMATION_SCALE_FACTOR,
-  CAMERA_FOLLOW_SMOOTHING,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
   CIRCLE_COLOR,
@@ -17,25 +13,14 @@ import {
   BLOCK_START_HUE,
   BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL,
   BLOCK_HUE_CHANGE_INDEX_INTERVAL,
-  BLOCK_WIDTH,
-  STAR_COLOR_CHANGE_MAX_DURATION,
-  ZOOM_OUT_PADDING_FACTOR,
   DEBUG_SONG_END,
-  IMAGE_REVEAL_SMOOTHING,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
-import { smoothstep } from "@/lib/smoothstep";
-import { cn, lerp } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { getBlockMappedColor } from "@/lib/image/color";
-
-type GetBlockColor = (params: {
-  x: number;
-  y: number;
-  index: number;
-  saturation: number;
-}) => string;
+import { handleAnimation, type GetBlockColor } from "@/lib/animation";
 
 export const Viz = ({
   path,
@@ -108,71 +93,24 @@ export const Viz = ({
     const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
 
     const animation = new Konva.Animation((frame) => {
-      const time =
-        (frame?.time ?? 0) / 1000 + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
-
-      if (!stageRef.current) {
-        return;
-      }
-
-      if (time > lastNoteTime) {
-        if (denseRegion && imageData) {
-          zoomOut(
-            layerRef.current,
-            denseRegion,
-            stageRef.current,
-            imageRef.current
-          );
-        }
-
-        return;
-      }
-
-      const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-      if (nextStepIndex <= 0) {
-        return;
-      }
-
-      const width = stageRef.current.width();
-      const height = stageRef.current.height();
-
-      const nextStep = path[nextStepIndex];
-      const currentStep = path[nextStepIndex - 1];
-
-      updateTrailPosition({
-        nearPartOfTrail: nearPartOfTrailRef.current,
-        farPartOfTrail: farPartOfTrailRef.current,
-        circle: circleRef.current,
-      });
-
-      updateCirclePosition({
-        currentStep,
-        nextStep,
-        time,
-        circle: circleRef.current,
-      });
-
-      updateCameraPosition({
-        layer: layerRef.current,
-        width,
-        height,
-        circle: circleRef.current,
-      });
-
-      updateCircleScale({
-        currentStep,
-        time,
-        circle: circleRef.current,
-      });
-
-      updateRects({
-        vizType,
-        rects: rectRefs.current,
+      handleAnimation({
+        time:
+          (frame?.time ?? 0) / 1000 + (DEBUG_SONG_END ? lastNoteTime - 1 : 0),
+        lastNoteTime,
+        denseRegion,
+        imageData,
         path,
-        nextStepIndex,
-        currentStep,
-        time,
+        vizType,
         getBlockColor,
+        konvaObjects: {
+          layer: layerRef.current,
+          stage: stageRef.current,
+          image: imageRef.current,
+          nearPartOfTrail: nearPartOfTrailRef.current,
+          farPartOfTrail: farPartOfTrailRef.current,
+          circle: circleRef.current,
+          rects: rectRefs.current,
+        },
       });
     }, layerRef.current?.getLayer());
 
@@ -282,276 +220,3 @@ export const Viz = ({
     </Stage>
   );
 };
-
-// TODO: refactor into lb file
-const updateRects = ({
-  vizType,
-  rects,
-  path,
-  nextStepIndex,
-  currentStep,
-  time,
-  getBlockColor,
-}: {
-  vizType: string | undefined;
-  rects: (Konva.Rect | null)[] | null;
-  path: Step[];
-  nextStepIndex: number;
-  currentStep: Step;
-  time: number;
-  getBlockColor: GetBlockColor;
-}) => {
-  // TODO: re-implement tunnel animation
-  if (vizType !== "STARS") {
-    return;
-  }
-  const rect = rects?.[nextStepIndex - 1];
-  if (!rect) {
-    return;
-  }
-
-  if (rect.width() === BLOCK_WIDTH || rect.height() === BLOCK_WIDTH) {
-    return;
-  }
-
-  const height =
-    currentStep.newDirection.x === currentStep.directionOnHit.x
-      ? BLOCK_HEIGHT
-      : BLOCK_WIDTH;
-  const width =
-    currentStep.newDirection.y === currentStep.directionOnHit.y
-      ? BLOCK_HEIGHT
-      : BLOCK_WIDTH;
-
-  const timeOffset = currentStep?.note.when ?? 0;
-  const animationDuration =
-    Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION) + timeOffset;
-
-  rect.fill(
-    getBlockColor({
-      x: currentStep.x,
-      y: currentStep.y,
-      index: nextStepIndex - 1,
-      saturation: lerp({
-        start: 0,
-        end: 100,
-        time: time,
-        duration: animationDuration,
-        timeOffset,
-      }),
-    })
-  );
-  const newWidth = lerp({
-    start: BLOCK_HEIGHT,
-    end: width,
-    time: time,
-    duration: animationDuration,
-    timeOffset,
-  });
-  const newHeight = lerp({
-    start: BLOCK_HEIGHT,
-    end: height,
-    time: time,
-    duration: animationDuration,
-    timeOffset,
-  });
-  rect.offsetX(newWidth / 2);
-  rect.offsetY(newHeight / 2);
-  rect.width(newWidth);
-  rect.height(newHeight);
-
-  range(0, nextStepIndex - 1).forEach((index) => {
-    if (index < 0) {
-      return;
-    }
-
-    const rect = rects?.[index];
-    if (!rect) {
-      return;
-    }
-    const height =
-      path[index].newDirection.x === path[index].directionOnHit.x
-        ? BLOCK_HEIGHT
-        : BLOCK_WIDTH;
-    const width =
-      path[index].newDirection.y === path[index].directionOnHit.y
-        ? BLOCK_HEIGHT
-        : BLOCK_WIDTH;
-    rect.fill(
-      getBlockColor({
-        x: path[index].x,
-        y: path[index].y,
-        index,
-        saturation: 100,
-      })
-    );
-    rect.offsetX(width / 2);
-    rect.offsetY(height / 2);
-    rect.width(width);
-    rect.height(height);
-  });
-};
-
-const zoomOut = (
-  layer: Konva.Layer | null,
-  denseRegion: Region,
-  stage: Konva.Stage,
-  imageRef: Konva.Image | null
-) => {
-  if (!layer) {
-    return;
-  }
-
-  const currentScaleX = layer.scaleX();
-
-  const actualWidth = denseRegion.endX - denseRegion.startX;
-  const actualHeight = denseRegion.endY - denseRegion.startY;
-
-  const desiredScale = Math.min(
-    stage.height() /
-      (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
-    stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
-  );
-
-  if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
-    if (imageRef) {
-      imageRef.opacity(
-        smoothstep(imageRef.opacity(), 0.125, IMAGE_REVEAL_SMOOTHING)
-      );
-    }
-
-    return;
-  }
-
-  const newScale = smoothstep(
-    currentScaleX,
-    desiredScale,
-    CAMERA_FOLLOW_SMOOTHING
-  );
-
-  layer.scale({ x: newScale, y: newScale });
-
-  const desiredX =
-    stage.width() / 2 - (denseRegion.startX + denseRegion.endX) / 2;
-  const desiredY =
-    stage.height() / 2 - (denseRegion.startY + denseRegion.endY) / 2;
-
-  layer.position({
-    x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
-    y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
-  });
-};
-
-function getCircleScale({
-  currentStep,
-  time,
-}: {
-  currentStep: Step;
-  time: number;
-}) {
-  const nextNoteTime = currentStep.note.when;
-  const currentNoteTime = currentStep.note.when;
-  if (
-    nextNoteTime - BOUNCE_ANIMATION_HALF_TIME <= time &&
-    time <= nextNoteTime
-  ) {
-    return (
-      1 -
-      ((time - (nextNoteTime - BOUNCE_ANIMATION_HALF_TIME)) /
-        BOUNCE_ANIMATION_HALF_TIME) *
-        (1 - BOUNCE_ANIMATION_SCALE_FACTOR)
-    );
-  }
-  if (
-    currentNoteTime <= time &&
-    time <= currentNoteTime + BOUNCE_ANIMATION_HALF_TIME
-  ) {
-    return (
-      BOUNCE_ANIMATION_SCALE_FACTOR +
-      ((time - currentNoteTime) / BOUNCE_ANIMATION_HALF_TIME) *
-        (1 - BOUNCE_ANIMATION_SCALE_FACTOR)
-    );
-  }
-  return 1;
-}
-function updateCircleScale({
-  currentStep,
-  time,
-  circle,
-}: {
-  currentStep: Step;
-  time: number;
-  circle: Konva.Circle | null;
-}) {
-  const scale = getCircleScale({ currentStep, time });
-  circle?.scale({ x: scale, y: scale });
-}
-
-function updateTrailPosition({
-  nearPartOfTrail,
-  farPartOfTrail,
-  circle,
-}: {
-  nearPartOfTrail: Konva.Circle | null;
-  farPartOfTrail: Konva.Circle | null;
-  circle: Konva.Circle | null;
-}) {
-  farPartOfTrail?.x(nearPartOfTrail?.x());
-  farPartOfTrail?.y(nearPartOfTrail?.y());
-
-  nearPartOfTrail?.x(circle?.x());
-  nearPartOfTrail?.y(circle?.y());
-}
-
-function updateCirclePosition({
-  currentStep,
-  nextStep,
-  time,
-  circle,
-}: {
-  currentStep: Step;
-  nextStep: Step;
-  time: number;
-  circle: Konva.Circle | null;
-}) {
-  const offset =
-    (time - currentStep.note.when) /
-    (currentStep.note.when - nextStep.note.when);
-
-  const x = currentStep.x + (currentStep.x - nextStep.x) * offset;
-  const y = currentStep.y + (currentStep.y - nextStep.y) * offset;
-
-  circle?.x(x);
-  circle?.y(y);
-}
-
-function updateCameraPosition({
-  layer,
-  circle,
-  width,
-  height,
-}: {
-  layer: Konva.Layer | null;
-  circle: Konva.Circle | null;
-  width: number;
-  height: number;
-}) {
-  const containerXCenter = width / 2;
-  const containerYCenter = height / 2;
-
-  if (!layer || !circle) {
-    return;
-  }
-
-  const desiredX = containerXCenter - circle.x();
-  const desiredY = containerYCenter - circle.y();
-
-  const currentX = layer.x();
-  const currentY = layer.y();
-
-  const newX = smoothstep(currentX, desiredX, CAMERA_FOLLOW_SMOOTHING);
-  const newY = smoothstep(currentY, desiredY, CAMERA_FOLLOW_SMOOTHING);
-
-  layer.x(newX);
-  layer.y(newY);
-}
