@@ -35,7 +35,7 @@ export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
 export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 
 // Zoom Out Animation
-export const ZOOM_OUT_PADDING_FACTOR = 0.1;
+export const ZOOM_OUT_PADDING_FACTOR = 0.025;
 export const ZOOM_OUT_DURATION_SECONDS = 5;
 export const IMAGE_REVEAL_SMOOTHING = 0.1;
 

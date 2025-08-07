@@ -236,7 +236,7 @@ const zoomOut = (
     stage.height() /
       (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
     stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
-  ); // TODO: fix on mobile
+  );
 
   if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
     if (imageRef) {
@@ -257,9 +257,11 @@ const zoomOut = (
   layer.scale({ x: newScale, y: newScale });
 
   const desiredX =
-    stage.width() / 2 - (denseRegion.startX + denseRegion.endX) / 2;
+    stage.width() / 2 -
+    ((denseRegion.startX + denseRegion.endX) / 2) * newScale;
   const desiredY =
-    stage.height() / 2 - (denseRegion.startY + denseRegion.endY) / 2;
+    stage.height() / 2 -
+    ((denseRegion.startY + denseRegion.endY) / 2) * newScale;
 
   layer.position({
     x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
