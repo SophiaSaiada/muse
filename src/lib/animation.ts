@@ -4,6 +4,7 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
+  DEBUG_SONG_END,
   IMAGE_REVEAL_SMOOTHING,
   STAR_COLOR_CHANGE_MAX_DURATION,
   ZOOM_OUT_PADDING_FACTOR,
@@ -109,33 +110,26 @@ export const handleAnimation = ({
   });
 };
 
-const updateRects = ({
+const updateRect = ({
   vizType,
-  rects,
-  path,
-  nextStepIndex,
+  rect,
   currentStep,
+  index,
   time,
   getBlockColor,
 }: {
-  vizType: string | undefined;
-  rects: (Konva.Rect | null)[] | null;
-  path: Step[];
-  nextStepIndex: number;
+  vizType: VizType;
+  rect: Konva.Rect;
   currentStep: Step;
+  index: number;
   time: number;
   getBlockColor: GetBlockColor;
 }) => {
-  // TODO: re-implement tunnel animation
-  if (vizType !== "STARS") {
-    return;
-  }
-  const rect = rects?.[nextStepIndex - 1];
-  if (!rect) {
-    return;
-  }
-
-  if (rect.width() === BLOCK_WIDTH || rect.height() === BLOCK_WIDTH) {
+  if (
+    (vizType === "STARS" &&
+      (rect.width() === BLOCK_WIDTH || rect.height() === BLOCK_WIDTH)) ||
+    (vizType === "TUNNEL" && rect.opacity() === 1)
+  ) {
     return;
   }
 
@@ -156,36 +150,87 @@ const updateRects = ({
     getBlockColor({
       x: currentStep.x,
       y: currentStep.y,
-      index: nextStepIndex - 1,
+      index,
       saturation: lerp({
         start: 0,
         end: 100,
-        time: time,
+        time,
         duration: animationDuration,
         timeOffset,
       }),
     })
   );
-  const newWidth = lerp({
-    start: BLOCK_HEIGHT,
-    end: width,
-    time: time,
-    duration: animationDuration,
-    timeOffset,
-  });
-  const newHeight = lerp({
-    start: BLOCK_HEIGHT,
-    end: height,
-    time: time,
-    duration: animationDuration,
-    timeOffset,
-  });
-  rect.offsetX(newWidth / 2);
-  rect.offsetY(newHeight / 2);
-  rect.width(newWidth);
-  rect.height(newHeight);
+  const newWidth =
+    vizType === "TUNNEL"
+      ? width
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: width,
+          time,
+          duration: animationDuration,
+          timeOffset,
+        });
+  const newHeight =
+    vizType === "TUNNEL"
+      ? height
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: height,
+          time,
+          duration: animationDuration,
+          timeOffset,
+        });
+  rect.offset({ x: newWidth / 2, y: newHeight / 2 });
+  rect.size({ width: newWidth, height: newHeight });
 
-  range(0, nextStepIndex - 1).forEach((index) => {
+  if (vizType === "TUNNEL") {
+    rect.opacity(
+      lerp({
+        start: 0,
+        end: 1,
+        time,
+        duration: animationDuration,
+        timeOffset,
+      })
+    );
+  }
+};
+
+const updateRects = ({
+  vizType,
+  rects,
+  path,
+  nextStepIndex,
+  currentStep,
+  time,
+  getBlockColor,
+}: {
+  vizType: VizType;
+  rects: (Konva.Rect | null)[] | null;
+  path: Step[];
+  nextStepIndex: number;
+  currentStep: Step;
+  time: number;
+  getBlockColor: GetBlockColor;
+}) => {
+  const rect = rects?.[nextStepIndex - 1];
+  if (!rect) {
+    return;
+  }
+
+  updateRect({
+    vizType,
+    rect,
+    currentStep,
+    index: nextStepIndex - 1,
+    time,
+    getBlockColor,
+  });
+
+  range(
+    DEBUG_SONG_END ? 0 : Math.max(0, nextStepIndex - 3),
+    nextStepIndex - 1
+  ).forEach((index) => {
     if (index < 0) {
       return;
     }
@@ -194,26 +239,15 @@ const updateRects = ({
     if (!rect) {
       return;
     }
-    const height =
-      path[index].newDirection.x === path[index].directionOnHit.x
-        ? BLOCK_HEIGHT
-        : BLOCK_WIDTH;
-    const width =
-      path[index].newDirection.y === path[index].directionOnHit.y
-        ? BLOCK_HEIGHT
-        : BLOCK_WIDTH;
-    rect.fill(
-      getBlockColor({
-        x: path[index].x,
-        y: path[index].y,
-        index,
-        saturation: 100,
-      })
-    );
-    rect.offsetX(width / 2);
-    rect.offsetY(height / 2);
-    rect.width(width);
-    rect.height(height);
+
+    updateRect({
+      vizType,
+      rect,
+      currentStep: path[index],
+      index,
+      time,
+      getBlockColor,
+    });
   });
 };
 

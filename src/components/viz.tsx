@@ -166,10 +166,10 @@ export const Viz = ({
                     BLOCK_HEIGHT * 2
                   )
             }
-            width={vizType === "TUNNEL" ? height : BLOCK_HEIGHT}
-            height={vizType === "TUNNEL" ? width : BLOCK_HEIGHT}
-            offsetX={(vizType === "TUNNEL" ? height : BLOCK_HEIGHT) / 2}
-            offsetY={vizType === "TUNNEL" ? width : BLOCK_HEIGHT / 2}
+            width={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT}
+            height={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT}
+            offsetX={(vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT) / 2}
+            offsetY={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT / 2}
             opacity={vizType === "TUNNEL" ? 0 : 1}
             fill={getBlockColor({
               x: step.x,
