@@ -20,6 +20,8 @@ import {
   BLOCK_WIDTH,
   STAR_COLOR_CHANGE_MAX_DURATION,
   ZOOM_OUT_PADDING_FACTOR,
+  DEBUG_SONG_END,
+  IMAGE_REVEAL_SMOOTHING,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
 import { smoothstep } from "@/lib/smoothstep";
@@ -106,7 +108,8 @@ export const Viz = ({
     const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
 
     const animation = new Konva.Animation((frame) => {
-      const time = (frame?.time ?? 0) / 1000;
+      const time =
+        (frame?.time ?? 0) / 1000 + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
 
       if (!stageRef.current) {
         return;
@@ -411,10 +414,9 @@ const zoomOut = (
   );
 
   if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
-    // TODO: delay showing the image
     if (imageRef) {
       imageRef.opacity(
-        smoothstep(imageRef.opacity(), 0.125, CAMERA_FOLLOW_SMOOTHING)
+        smoothstep(imageRef.opacity(), 0.125, IMAGE_REVEAL_SMOOTHING)
       );
     }
 

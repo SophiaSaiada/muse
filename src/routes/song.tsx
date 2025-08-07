@@ -40,7 +40,9 @@ export const SongRoute = () => {
     selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
     async ({ selectedFileUrl, vizType }) => {
       const [imageData, rawSong] = await Promise.all([
-        fetchPNGImageData("/artworks/flounder.png"), // TODO: dynamic image
+        selectedFile?.artwork
+          ? fetchPNGImageData(selectedFile.artwork)
+          : undefined,
         fetchSong(selectedFileUrl),
       ]);
 

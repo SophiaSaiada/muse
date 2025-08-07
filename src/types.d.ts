@@ -47,6 +47,7 @@ export type MidiFile = {
     | "b" // =bitmidi
     | "e"; // =example
   id: string;
+  artwork?: string;
 };
 
 export type MidiFileWithName = MidiFile & {
