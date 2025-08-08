@@ -32,6 +32,7 @@ export const SongRoute = () => {
   const navigate = useNavigate();
 
   const { player, setPlayer } = useRequiredContext(PlayerContext);
+  const [isLoadingSong, setIsLoadingSong] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const selectedFile = useSelectedFile();
@@ -74,6 +75,11 @@ export const SongRoute = () => {
   );
 
   const onClickPlay = async (song: Song) => {
+    if (isLoadingSong) {
+      return;
+    }
+
+    setIsLoadingSong(true);
     const player = new MIDIPlayer();
     player.startLoad(song, () => {
       setPlayer(player);
@@ -85,6 +91,7 @@ export const SongRoute = () => {
         });
       }
       setIsPlaying(true);
+      setIsLoadingSong(false);
     });
   };
 
