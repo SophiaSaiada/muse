@@ -81,6 +81,7 @@ export const SongRoute = () => {
 
     setIsLoadingSong(true);
     const player = new MIDIPlayer();
+    // TODO: preload instruments
     player.startLoad(song, () => {
       setPlayer(player);
       if (!MUTE) {
