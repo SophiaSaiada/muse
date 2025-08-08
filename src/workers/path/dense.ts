@@ -448,7 +448,7 @@ const findDenseRegion = (path: Omit<Step, "newDirection">[]) => {
 
   const maxRadius = Math.ceil(Math.min(gridWidth, gridHeight) / 2);
 
-  // TODO: improve performance by using a sliding window
+  // performance can be improved by using a sliding window, but this is good enough for now (max)
   for (let radius = Math.ceil(maxRadius / 2); radius < maxRadius; radius++) {
     for (let centerX = radius; centerX < gridWidth - radius; centerX++) {
       for (let centerY = radius; centerY < gridHeight - radius; centerY++) {
