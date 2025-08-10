@@ -5,6 +5,7 @@ export const MUTE = false;
 export const DEBUG_SONG_END = false;
 export const SHOW_PATH = false;
 export const SHOW_BLOCKS = false;
+export const RECORD_MODE = true;
 
 // Color & Size
 export const CIRCLE_COLOR = "#E5438A";

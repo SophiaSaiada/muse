@@ -1,5 +1,6 @@
 import { NavLink } from "react-router";
 import { cn } from "@/lib/utils";
+import { RECORD_MODE } from "@/constants";
 
 export const SiteName = ({
   className,
@@ -14,7 +15,7 @@ export const SiteName = ({
       className
     )}
   >
-    {prefix}
+    {!RECORD_MODE && prefix}
     <NavLink to="/" className="text-tinted-text">
       Muse
     </NavLink>{" "}
@@ -22,7 +23,7 @@ export const SiteName = ({
     <a href="https://sophies.dev" target="_blank" className="text-tinted-text">
       Sophie
     </a>
-    {import.meta.env.DEV && (
+    {import.meta.env.DEV && !RECORD_MODE && (
       <span className="text-[50%] ml-2 absolute top-[10%]">Local</span>
     )}
   </h1>
