@@ -6,15 +6,25 @@ import {
   CAMERA_FOLLOW_SMOOTHING,
   DEBUG_SONG_END,
   IMAGE_REVEAL_SMOOTHING,
+  SPARK_DISTANCE,
+  SPARK_DURATION,
+  SPARK_OFFSETS,
+  SPARK_RANDOM_FACTOR,
+  SPARK_SIZE,
   STAR_COLOR_CHANGE_MAX_DURATION,
   ZOOM_OUT_PADDING_FACTOR,
 } from "@/constants";
 import type { ImageData, Step, VizType } from "@/types";
 import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
-import type Konva from "konva";
+import Konva from "konva";
 import { lerp } from "@/lib/utils";
 import { range } from "es-toolkit";
+import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+
+export type AnimationState = {
+  lastHandledBlockIndex: number;
+};
 
 export type GetBlockColor = (params: {
   x: number;
@@ -31,6 +41,7 @@ export const handleAnimation = ({
   path,
   vizType,
   getBlockColor,
+  animationState,
   konvaObjects,
 }: {
   time: number;
@@ -40,6 +51,7 @@ export const handleAnimation = ({
   path: Step[];
   vizType: VizType;
   getBlockColor: GetBlockColor;
+  animationState: AnimationState;
   konvaObjects: {
     layer: Konva.Layer | null;
     stage: Konva.Stage | null;
@@ -106,6 +118,7 @@ export const handleAnimation = ({
     currentStep,
     time,
     getBlockColor,
+    animationState,
     ...konvaObjects,
   });
 };
@@ -204,6 +217,8 @@ const updateRects = ({
   currentStep,
   time,
   getBlockColor,
+  animationState,
+  layer,
 }: {
   vizType: VizType;
   rects: (Konva.Rect | null)[] | null;
@@ -212,6 +227,8 @@ const updateRects = ({
   currentStep: Step;
   time: number;
   getBlockColor: GetBlockColor;
+  animationState: AnimationState;
+  layer: Konva.Layer | null;
 }) => {
   const rect = rects?.[nextStepIndex - 1];
   if (!rect) {
@@ -226,6 +243,82 @@ const updateRects = ({
     time,
     getBlockColor,
   });
+
+  if (animationState.lastHandledBlockIndex < nextStepIndex - 1 && layer) {
+    animationState.lastHandledBlockIndex = nextStepIndex - 1;
+    const color = getBlockColor({
+      x: currentStep.x,
+      y: currentStep.y,
+      index: nextStepIndex - 1,
+      saturation: 100,
+    });
+    const x =
+      currentStep.newDirection.x === currentStep.directionOnHit.x
+        ? currentStep.x
+        : getXOfStepInYAxis(
+            { directionOnHit: currentStep.directionOnHit, x: currentStep.x },
+            BLOCK_HEIGHT * 3 + SPARK_SIZE
+          );
+    const y =
+      currentStep.newDirection.y === currentStep.directionOnHit.y
+        ? currentStep.y
+        : getYOfStepInXAxis(
+            { directionOnHit: currentStep.directionOnHit, y: currentStep.y },
+            BLOCK_HEIGHT * 3 + SPARK_SIZE
+          );
+
+    SPARK_OFFSETS.forEach((offset) => {
+      const sparkRect = new Konva.Circle({
+        x,
+        y,
+        radius: SPARK_SIZE,
+        fill: color,
+        opacity: 1,
+      });
+      layer.add(sparkRect);
+
+      const tween = new Konva.Tween({
+        node: sparkRect,
+        duration: SPARK_DURATION,
+        x:
+          currentStep.newDirection.x === currentStep.directionOnHit.x
+            ? currentStep.x + offset * BLOCK_WIDTH
+            : getXOfStepInYAxis(
+                {
+                  directionOnHit: currentStep.directionOnHit,
+                  x: currentStep.x,
+                },
+                BLOCK_HEIGHT * 3 +
+                  SPARK_DISTANCE *
+                    (1 -
+                      SPARK_RANDOM_FACTOR +
+                      Math.random() * SPARK_RANDOM_FACTOR)
+              ),
+        y:
+          currentStep.newDirection.y === currentStep.directionOnHit.y
+            ? currentStep.y + offset * BLOCK_WIDTH
+            : getYOfStepInXAxis(
+                {
+                  directionOnHit: currentStep.directionOnHit,
+                  y: currentStep.y,
+                },
+                BLOCK_HEIGHT * 3 +
+                  SPARK_DISTANCE *
+                    (1 -
+                      SPARK_RANDOM_FACTOR +
+                      Math.random() * SPARK_RANDOM_FACTOR)
+              ),
+        rotation: Math.random() * 360,
+        opacity: 0,
+        easing: Konva.Easings.EaseOut,
+        onFinish: () => {
+          tween.destroy();
+          sparkRect.destroy();
+        },
+      });
+      tween.play();
+    });
+  }
 
   range(
     DEBUG_SONG_END ? 0 : Math.max(0, nextStepIndex - 3),

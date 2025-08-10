@@ -11,6 +11,7 @@ export const CIRCLE_COLOR = "#E5438A";
 export const SCALE = 8;
 export const BLOCK_WIDTH = 12;
 export const BLOCK_HEIGHT = 2;
+export const SPARK_SIZE = 1;
 
 // Music
 export const SONG_START_DELAY_SECONDS = 0.15;
@@ -33,6 +34,12 @@ export const BLOCK_FADE_MIN_DURATION = 0.75;
 export const BLOCK_START_HUE = 334;
 export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
 export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
+
+// Sparks Animation
+export const SPARK_DISTANCE = 30;
+export const SPARK_DURATION = 0.5;
+export const SPARK_OFFSETS = [-1, -0.33, 0.33, 1];
+export const SPARK_RANDOM_FACTOR = 0.3;
 
 // Zoom Out Animation
 export const ZOOM_OUT_PADDING_FACTOR = 0.025;

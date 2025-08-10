@@ -20,7 +20,11 @@ import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { getBlockMappedColor } from "@/lib/image/color";
-import { handleAnimation, type GetBlockColor } from "@/lib/animation";
+import {
+  handleAnimation,
+  type AnimationState,
+  type GetBlockColor,
+} from "@/lib/animation";
 
 export const Viz = ({
   path,
@@ -89,8 +93,13 @@ export const Viz = ({
     },
     [denseRegion, imageData]
   );
+
   useEffect(() => {
     const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
+
+    const animationState: AnimationState = {
+      lastHandledBlockIndex: -1,
+    };
 
     const animation = new Konva.Animation((frame) => {
       handleAnimation({
@@ -102,6 +111,7 @@ export const Viz = ({
         path,
         vizType,
         getBlockColor,
+        animationState,
         konvaObjects: {
           layer: layerRef.current,
           stage: stageRef.current,
