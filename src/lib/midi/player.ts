@@ -115,36 +115,66 @@ export class MIDIPlayer {
     }
   };
 
-  public startLoad = (song: Song, onSongLoad: (song: Song) => void): void => {
-    console.log(song);
-    const AudioContextFunc = window.AudioContext || window.webkitAudioContext;
-    this.audioContext = new AudioContextFunc();
-    this.player = new window.WebAudioFontPlayer();
-
-    this.equalizer = this.player.createChannel(this.audioContext);
-    this.reverberator = this.player.createReverberator(this.audioContext);
-    this.input = this.equalizer.input;
-    this.equalizer.output.connect(this.reverberator.input);
-    this.reverberator.output.connect(this.audioContext.destination);
+  private forEachInstrument = async (
+    song: Song,
+    action: (info: { url: string; variable: string }) => Promise<void>
+  ) => {
+    if (!this.player) {
+      return;
+    }
 
     for (let i = 0; i < song.tracks.length; i++) {
       const nn = this.player.loader.findInstrument(song.tracks[i].program);
       const info = this.player.loader.instrumentInfo(nn);
       song.tracks[i].info = info;
       song.tracks[i].id = nn;
-      this.player.loader.startLoad(this.audioContext, info.url, info.variable);
+      await action(info);
     }
     for (let i = 0; i < song.beats.length; i++) {
       const nn = this.player.loader.findDrum(song.beats[i].n);
       const info = this.player.loader.drumInfo(nn);
       song.beats[i].info = info;
       song.beats[i].id = nn;
-      this.player.loader.startLoad(this.audioContext, info.url, info.variable);
+      await action(info);
     }
-    this.player.loader.waitLoad(() => {
-      this.loadedSong = song;
-      this.resetEqualizer();
-      onSongLoad(song);
+  };
+
+  public startLoad = async (song: Song): Promise<void> => {
+    if (!this.player) {
+      this.player = new window.WebAudioFontPlayer();
+    }
+
+    const AudioContextFunc = window.AudioContext || window.webkitAudioContext;
+    this.audioContext = new AudioContextFunc();
+    this.equalizer = this.player.createChannel(this.audioContext);
+    this.reverberator = this.player.createReverberator(this.audioContext);
+    this.input = this.equalizer.input;
+    this.equalizer.output.connect(this.reverberator.input);
+    this.reverberator.output.connect(this.audioContext.destination);
+
+    await this.forEachInstrument(song, async (info) => {
+      if (this.audioContext && this.player) {
+        this.player.loader.startLoad(
+          this.audioContext,
+          info.url,
+          info.variable
+        );
+      }
+    });
+
+    return new Promise((resolve) => {
+      this.player?.loader.waitLoad(() => {
+        this.loadedSong = song;
+        this.resetEqualizer();
+        resolve();
+      });
+    });
+  };
+
+  public preloadInstruments = async (song: Song): Promise<void> => {
+    this.player = new window.WebAudioFontPlayer();
+    await this.forEachInstrument(song, async (info) => {
+      this.player?.loader.loadInstrument(info.url, info.variable);
     });
   };
 
@@ -163,8 +193,14 @@ export class MIDIPlayer {
 
   public stop = async (): Promise<void> => {
     this.input?.disconnect();
+
+    if (!this.audioContext) {
+      return;
+    }
+
+    this.player?.cancelQueue(this.audioContext);
     try {
-      await this.audioContext?.close();
+      await this.audioContext.close();
     } catch {
       // it will throw an error unless the song was stopped midway
     }

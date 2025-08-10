@@ -4,6 +4,7 @@ export interface WebAudioFontPlayer {
     findDrum(n: number): number;
     instrumentInfo(nn: number): { url: string; variable: string };
     drumInfo(nn: number): { url: string; variable: string };
+    loadInstrument(url: string, variable: string): Promise<void>;
     startLoad(audioContext: AudioContext, url: string, variable: string): void;
     waitLoad(callback: () => void): void;
   };
@@ -19,6 +20,7 @@ export interface WebAudioFontPlayer {
     volume: number,
     slides?: unknown
   ): void;
+  cancelQueue(audioContext: AudioContext): void;
 }
 
 export interface WebAudioFontReverberator {

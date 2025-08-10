@@ -175,12 +175,39 @@ var WebAudioFontLoader = /** @class */ (function () {
         };
         this.player = player;
     }
+    WebAudioFontLoader.prototype.loadInstrument = function (filePath, variableName) {
+        return new Promise((resolve) => {
+            if (window[variableName]) {
+                resolve();
+                return;
+            }
+            for (var i = 0; i < this.cached.length; i++) {
+                if (this.cached[i].variableName == variableName) {
+                    resolve();
+                    return;
+                }
+            }
+            this.cached.push({
+                filePath: filePath,
+                variableName: variableName
+            });
+            var r = document.createElement('script');
+            r.setAttribute("type", "text/javascript");
+            r.setAttribute("src", filePath);
+            document.getElementsByTagName("head")[0].appendChild(r);
+            this.waitOrFinish(variableName, function () {
+                resolve();
+            });
+        })
+    };
     WebAudioFontLoader.prototype.startLoad = function (audioContext, filePath, variableName) {
         if (window[variableName]) {
+            this.player.adjustPreset(audioContext, window[variableName]);
             return;
         }
         for (var i = 0; i < this.cached.length; i++) {
             if (this.cached[i].variableName == variableName) {
+                this.player.adjustPreset(audioContext, this.cached[i]);
                 return;
             }
         }

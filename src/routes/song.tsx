@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import useSWR from "swr";
@@ -13,9 +13,7 @@ import {
 } from "@/constants";
 import type { VizType, Song, PathWorkerResult } from "@/types";
 import { MIDIPlayer } from "@/lib/midi/player";
-import { PlayerContext } from "@/contexts/player/context";
 import { getFileUrl } from "@/lib/file-url";
-import { useRequiredContext } from "@/lib/utils";
 import { PlayScreen } from "@/screens/play";
 import { VizScreen } from "@/screens/viz";
 import { trimSong } from "@/lib/trim-song";
@@ -31,8 +29,6 @@ export const SongRoute = () => {
 
   const navigate = useNavigate();
 
-  const { player, setPlayer } = useRequiredContext(PlayerContext);
-  const [isLoadingSong, setIsLoadingSong] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
 
   const selectedFile = useSelectedFile();
@@ -54,13 +50,17 @@ export const SongRoute = () => {
           (imageData && vizType === "STARS" ? ZOOM_OUT_DURATION_SECONDS : 0),
       };
 
-      const { path, denseRegion } = await calculatePath({
-        song,
-        speed: SPEED,
-        vizType: vizType ?? "STARS",
-      });
+      const player = new MIDIPlayer();
+      const [, { path, denseRegion }] = await Promise.all([
+        player.preloadInstruments(song),
+        calculatePath({
+          song,
+          speed: SPEED,
+          vizType: vizType ?? "STARS",
+        }),
+      ]);
 
-      return { path, denseRegion, song, imageData };
+      return { path, player, denseRegion, song, imageData };
     },
     {
       errorRetryCount: 0,
@@ -74,16 +74,20 @@ export const SongRoute = () => {
     }
   );
 
-  const onClickPlay = async (song: Song) => {
-    if (isLoadingSong) {
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      data?.player?.stop();
+    };
+  }, [data?.player]);
 
-    setIsLoadingSong(true);
-    const player = new MIDIPlayer();
-    // TODO: preload instruments
-    player.startLoad(song, () => {
-      setPlayer(player);
+  const onClickPlay = async ({
+    player,
+    song,
+  }: {
+    player: MIDIPlayer;
+    song: Song;
+  }) => {
+    player.startLoad(song).then(() => {
       if (!MUTE) {
         player.startPlay(() => {
           toast("Hope you had fun, pick another song!");
@@ -92,11 +96,10 @@ export const SongRoute = () => {
         });
       }
       setIsPlaying(true);
-      setIsLoadingSong(false);
     });
   };
 
-  return data && !isLoading && !isValidating && isPlaying && player ? (
+  return data && !isLoading && !isValidating && isPlaying && data.player ? (
     <VizScreen
       path={data.path}
       imageData={data.imageData}
@@ -108,7 +111,7 @@ export const SongRoute = () => {
       onClickPlay={
         isLoading || isValidating || !data?.song || !selectedFile?.displayName
           ? undefined
-          : () => onClickPlay(data.song)
+          : () => onClickPlay(data)
       }
     />
   );
