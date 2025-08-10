@@ -20,6 +20,7 @@ import { smoothstep } from "@/lib/smoothstep";
 import Konva from "konva";
 import { range } from "es-toolkit";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+import { lerp } from "@/lib/utils";
 
 export type AnimationState = {
   lastHandledBlockIndex: number;
@@ -61,33 +62,21 @@ export const handleAnimation = ({
     rects: (Konva.Rect | null)[] | null;
   };
 }) => {
-  if (!konvaObjects.stage) {
-    return;
+  if (time > lastNoteTime && denseRegion && imageData && konvaObjects.stage) {
+    zoomOut(
+      konvaObjects.layer,
+      denseRegion,
+      konvaObjects.stage,
+      konvaObjects.image
+    );
   }
 
-  if (time > lastNoteTime) {
-    if (denseRegion && imageData) {
-      zoomOut(
-        konvaObjects.layer,
-        denseRegion,
-        konvaObjects.stage,
-        konvaObjects.image
-      );
-    }
-
-    return;
-  }
-
-  const nextStepIndex = path.findIndex(({ note: { when } }) => time < when);
-  if (nextStepIndex <= 0) {
-    return;
-  }
-
-  const width = konvaObjects.stage.width();
-  const height = konvaObjects.stage.height();
-
-  const nextStep = path[nextStepIndex];
-  const currentStep = path[nextStepIndex - 1];
+  const currentStepIndex = Math.max(
+    path.findLastIndex(({ note: { when } }) => time >= when),
+    0
+  );
+  const currentStep = path[currentStepIndex];
+  const nextStep = path[currentStepIndex + 1];
 
   updateTrailPosition(konvaObjects);
 
@@ -98,11 +87,7 @@ export const handleAnimation = ({
     ...konvaObjects,
   });
 
-  updateCameraPosition({
-    width,
-    height,
-    ...konvaObjects,
-  });
+  updateCameraPosition(konvaObjects);
 
   updateCircleScale({
     currentStep,
@@ -113,7 +98,7 @@ export const handleAnimation = ({
   updateRects({
     vizType,
     path,
-    nextStepIndex,
+    currentStepIndex,
     currentStep,
     getBlockColor,
     animationState,
@@ -166,7 +151,7 @@ const updateRects = ({
   vizType,
   rects,
   path,
-  nextStepIndex,
+  currentStepIndex,
   currentStep,
   getBlockColor,
   animationState,
@@ -175,13 +160,13 @@ const updateRects = ({
   vizType: VizType;
   rects: (Konva.Rect | null)[] | null;
   path: Step[];
-  nextStepIndex: number;
+  currentStepIndex: number;
   currentStep: Step;
   getBlockColor: GetBlockColor;
   animationState: AnimationState;
   layer: Konva.Layer | null;
 }) => {
-  const rect = rects?.[nextStepIndex - 1];
+  const rect = rects?.[currentStepIndex];
   if (!rect) {
     return;
   }
@@ -191,13 +176,13 @@ const updateRects = ({
     STAR_COLOR_CHANGE_MAX_DURATION
   );
 
-  if (animationState.lastHandledBlockIndex < nextStepIndex - 1 && layer) {
-    animationState.lastHandledBlockIndex = nextStepIndex - 1;
+  if (animationState.lastHandledBlockIndex < currentStepIndex && layer) {
+    animationState.lastHandledBlockIndex = currentStepIndex;
 
     const blockFinalForm = getBlockFinalForm({
       vizType,
       currentStep,
-      index: nextStepIndex - 1,
+      index: currentStepIndex,
       getBlockColor,
     });
 
@@ -212,11 +197,16 @@ const updateRects = ({
     });
     tween.play();
 
-    displaySparks({ currentStep, fill: blockFinalForm.fill, layer });
+    if (
+      currentStep.directionOnHit.x !== currentStep.newDirection.x ||
+      currentStep.directionOnHit.y !== currentStep.newDirection.y
+    ) {
+      displaySparks({ currentStep, fill: blockFinalForm.fill, layer });
+    }
   }
 
   if (DEBUG_SONG_END) {
-    range(0, nextStepIndex - 1).forEach((index) => {
+    range(0, currentStepIndex).forEach((index) => {
       rects?.[index]?.setAttrs(
         getBlockFinalForm({
           vizType,
@@ -428,32 +418,48 @@ const updateCirclePosition = ({
   circle,
 }: {
   currentStep: Step;
-  nextStep: Step;
+  nextStep: Step | undefined;
   time: number;
   circle: Konva.Circle | null;
 }) => {
-  const offset =
-    (time - currentStep.note.when) /
-    (currentStep.note.when - nextStep.note.when);
+  if (!nextStep) {
+    return;
+  }
 
-  const x = currentStep.x + (currentStep.x - nextStep.x) * offset;
-  const y = currentStep.y + (currentStep.y - nextStep.y) * offset;
-
-  circle?.x(x);
-  circle?.y(y);
+  circle?.position({
+    x: lerp({
+      start: currentStep.x,
+      end: nextStep.x,
+      time,
+      timeOffset: currentStep.note.when,
+      endTime: nextStep.note.when,
+    }),
+    y: lerp({
+      start: currentStep.y,
+      end: nextStep.y,
+      time,
+      timeOffset: currentStep.note.when,
+      endTime: nextStep.note.when,
+    }),
+  });
 };
 
 const updateCameraPosition = ({
   layer,
   circle,
-  width,
-  height,
+  stage,
 }: {
   layer: Konva.Layer | null;
   circle: Konva.Circle | null;
-  width: number;
-  height: number;
+  stage: Konva.Stage | null;
 }) => {
+  if (!stage) {
+    return;
+  }
+
+  const width = stage.width();
+  const height = stage.height();
+
   const containerXCenter = width / 2;
   const containerYCenter = height / 2;
 

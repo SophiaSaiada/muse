@@ -11,9 +11,21 @@ export const trimSong = (song: Song) => {
   const getAdjustedTime = (time: number) =>
     time - firstNoteOrBeatTimestamp + SONG_START_DELAY_SECONDS;
 
+  const duration = getAdjustedTime(
+    Math.max(
+      song.duration,
+      ...song.tracks.flatMap((track) =>
+        track.notes.map((note) => note.when + note.duration)
+      ),
+      ...song.beats.flatMap((beat) =>
+        beat.notes.map((note) => note.when + note.duration)
+      )
+    )
+  );
+
   const trimmedSong = {
     ...song,
-    duration: getAdjustedTime(song.duration),
+    duration,
     tracks: song.tracks.map((track) => ({
       ...track,
       notes: track.notes.map((note) => ({

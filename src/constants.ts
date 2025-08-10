@@ -17,6 +17,7 @@ export const SPARK_SIZE = 1;
 // Music
 export const SONG_START_DELAY_SECONDS = 0.15;
 export const BEATS_VOLUME_FACTOR = 0.1;
+export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
 export const SPEED = 200;

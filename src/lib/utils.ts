@@ -12,16 +12,16 @@ export const lerp = ({
   end,
   time,
   timeOffset = 0,
-  duration,
+  endTime,
 }: {
   start: number;
   end: number;
   time: number;
   timeOffset?: number;
-  duration: number;
+  endTime: number;
 }) =>
   start +
-  (end - start) * clamp((time - timeOffset) / (duration - timeOffset), 0, 1);
+  (end - start) * clamp((time - timeOffset) / (endTime - timeOffset), 0, 1);
 
 export const useRequiredContext = <T>(context: Context<T>) => {
   const value = useContext(context);

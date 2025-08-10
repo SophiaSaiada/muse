@@ -7,6 +7,7 @@ import { useSelectedFile } from "@/hooks/useSelectedFile";
 import {
   INITIAL_VIZ_TYPE,
   MUTE,
+  SONG_DURATION_GRACE_PERIOD_SECONDS,
   SPEED,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   ZOOM_OUT_DURATION_SECONDS,
@@ -43,10 +44,12 @@ export const SongRoute = () => {
         fetchSong(selectedFileUrl),
       ]);
 
+      const adjustedSong = adjustBeats(trimSong(rawSong));
       const song = {
-        ...adjustBeats(trimSong(rawSong)),
+        ...adjustedSong,
         duration:
-          rawSong.duration +
+          adjustedSong.duration +
+          SONG_DURATION_GRACE_PERIOD_SECONDS +
           (imageData && vizType === "STARS" ? ZOOM_OUT_DURATION_SECONDS : 0),
       };
 
