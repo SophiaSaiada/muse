@@ -18,7 +18,6 @@ import type { ImageData, Step, VizType } from "@/types";
 import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
 import Konva from "konva";
-import { lerp } from "@/lib/utils";
 import { range } from "es-toolkit";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 
@@ -195,15 +194,17 @@ const updateRects = ({
   if (animationState.lastHandledBlockIndex < nextStepIndex - 1 && layer) {
     animationState.lastHandledBlockIndex = nextStepIndex - 1;
 
+    const blockFinalForm = getBlockFinalForm({
+      vizType,
+      currentStep,
+      index: nextStepIndex - 1,
+      getBlockColor,
+    });
+
     const tween = new Konva.Tween({
       node: rect,
       duration: animationDuration,
-      ...getBlockFinalForm({
-        vizType,
-        currentStep,
-        index: nextStepIndex - 1,
-        getBlockColor,
-      }),
+      ...blockFinalForm,
       easing: Konva.Easings.EaseOut,
       onFinish: () => {
         tween.destroy();
@@ -211,78 +212,7 @@ const updateRects = ({
     });
     tween.play();
 
-    const color = getBlockColor({
-      x: currentStep.x,
-      y: currentStep.y,
-      index: nextStepIndex - 1,
-      saturation: 100,
-    });
-    const x =
-      currentStep.newDirection.x === currentStep.directionOnHit.x
-        ? currentStep.x
-        : getXOfStepInYAxis(
-            { directionOnHit: currentStep.directionOnHit, x: currentStep.x },
-            BLOCK_HEIGHT * 3 + SPARK_SIZE
-          );
-    const y =
-      currentStep.newDirection.y === currentStep.directionOnHit.y
-        ? currentStep.y
-        : getYOfStepInXAxis(
-            { directionOnHit: currentStep.directionOnHit, y: currentStep.y },
-            BLOCK_HEIGHT * 3 + SPARK_SIZE
-          );
-
-    SPARK_OFFSETS.forEach((offset) => {
-      const sparkRect = new Konva.Circle({
-        x,
-        y,
-        radius: SPARK_SIZE,
-        fill: color,
-        opacity: 1,
-      });
-      layer.add(sparkRect);
-
-      const sparkTween = new Konva.Tween({
-        node: sparkRect,
-        duration: SPARK_DURATION,
-        x:
-          currentStep.newDirection.x === currentStep.directionOnHit.x
-            ? currentStep.x + offset * BLOCK_WIDTH
-            : getXOfStepInYAxis(
-                {
-                  directionOnHit: currentStep.directionOnHit,
-                  x: currentStep.x,
-                },
-                BLOCK_HEIGHT * 3 +
-                  SPARK_DISTANCE *
-                    (1 -
-                      SPARK_RANDOM_FACTOR +
-                      Math.random() * SPARK_RANDOM_FACTOR)
-              ),
-        y:
-          currentStep.newDirection.y === currentStep.directionOnHit.y
-            ? currentStep.y + offset * BLOCK_WIDTH
-            : getYOfStepInXAxis(
-                {
-                  directionOnHit: currentStep.directionOnHit,
-                  y: currentStep.y,
-                },
-                BLOCK_HEIGHT * 3 +
-                  SPARK_DISTANCE *
-                    (1 -
-                      SPARK_RANDOM_FACTOR +
-                      Math.random() * SPARK_RANDOM_FACTOR)
-              ),
-        rotation: Math.random() * 360,
-        opacity: 0,
-        easing: Konva.Easings.EaseOut,
-        onFinish: () => {
-          sparkTween.destroy();
-          sparkRect.destroy();
-        },
-      });
-      sparkTween.play();
-    });
+    displaySparks({ currentStep, fill: blockFinalForm.fill, layer });
   }
 
   if (DEBUG_SONG_END) {
@@ -348,6 +278,85 @@ const zoomOut = (
   layer.position({
     x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
     y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
+  });
+};
+
+const displaySparks = ({
+  currentStep,
+  fill,
+  layer,
+}: {
+  currentStep: Step;
+  fill: Konva.CircleConfig["fill"];
+  layer: Konva.Layer;
+}) => {
+  const initialX =
+    currentStep.newDirection.x === currentStep.directionOnHit.x
+      ? currentStep.x
+      : getXOfStepInYAxis(
+          { directionOnHit: currentStep.directionOnHit, x: currentStep.x },
+          BLOCK_HEIGHT * 3 + SPARK_SIZE
+        );
+
+  const initialY =
+    currentStep.newDirection.y === currentStep.directionOnHit.y
+      ? currentStep.y
+      : getYOfStepInXAxis(
+          { directionOnHit: currentStep.directionOnHit, y: currentStep.y },
+          BLOCK_HEIGHT * 3 + SPARK_SIZE
+        );
+
+  SPARK_OFFSETS.forEach((offset) => {
+    const sparkRect = new Konva.Circle({
+      x: initialX,
+      y: initialY,
+      radius: SPARK_SIZE,
+      fill,
+      opacity: 1,
+    });
+    layer.add(sparkRect);
+
+    const finalX =
+      currentStep.newDirection.x === currentStep.directionOnHit.x
+        ? initialX + offset * BLOCK_WIDTH
+        : getXOfStepInYAxis(
+            {
+              directionOnHit: currentStep.directionOnHit,
+              x: initialX,
+            },
+            BLOCK_HEIGHT * 3 +
+              SPARK_DISTANCE *
+                (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
+          );
+
+    const finalY =
+      currentStep.newDirection.y === currentStep.directionOnHit.y
+        ? initialY + offset * BLOCK_WIDTH
+        : getYOfStepInXAxis(
+            {
+              directionOnHit: currentStep.directionOnHit,
+              y: initialY,
+            },
+            BLOCK_HEIGHT * 3 +
+              SPARK_DISTANCE *
+                (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
+          );
+
+    const sparkTween = new Konva.Tween({
+      node: sparkRect,
+      duration: SPARK_DURATION,
+      x: finalX,
+      y: finalY,
+      rotation: Math.random() * 360,
+      opacity: 0,
+      easing: Konva.Easings.EaseOut,
+      onFinish: () => {
+        sparkTween.destroy();
+        sparkRect.destroy();
+      },
+    });
+
+    sparkTween.play();
   });
 };
 

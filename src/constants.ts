@@ -36,7 +36,7 @@ export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
 export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 
 // Sparks Animation
-export const SPARK_DISTANCE = 30;
+export const SPARK_DISTANCE = 24;
 export const SPARK_DURATION = 0.5;
 export const SPARK_OFFSETS = [-1, -0.33, 0.33, 1];
 export const SPARK_RANDOM_FACTOR = 0.3;
