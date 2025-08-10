@@ -34,9 +34,9 @@ export const getBlockMappedColor = ({
     return "hsl(0,0%,60%)";
   }
 
-  return `hsl(${hsl.h}, ${Math.min(saturation, Math.max(hsl.s, 0.5)) * 100}%, ${
-    Math.max(hsl.l, 0.4) * 100
-  }%)`;
+  return `hsl(${Math.round(hsl.h)}, ${Math.round(
+    Math.min(saturation, Math.max(hsl.s, 0.5)) * 100
+  )}%, ${Math.round(Math.max(hsl.l, 0.4) * 100)}%)`;
 };
 
 const rgbToHsl = ({
@@ -70,5 +70,5 @@ const rgbToHsl = ({
   const saturation =
     difference === 0 ? 0 : difference / (1 - Math.abs(2 * lightness - 1));
 
-  return { h: hue * 60, s: saturation, l: lightness };
+  return { h: (hue * 60 + 360) % 360, s: saturation, l: lightness };
 };

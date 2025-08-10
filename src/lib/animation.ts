@@ -116,35 +116,24 @@ export const handleAnimation = ({
     path,
     nextStepIndex,
     currentStep,
-    time,
     getBlockColor,
     animationState,
     ...konvaObjects,
   });
 };
 
-const updateRect = ({
+const getBlockFinalForm = ({
   vizType,
-  rect,
   currentStep,
   index,
-  time,
   getBlockColor,
 }: {
   vizType: VizType;
-  rect: Konva.Rect;
   currentStep: Step;
   index: number;
-  time: number;
   getBlockColor: GetBlockColor;
-}) => {
-  if (
-    (vizType === "STARS" &&
-      (rect.width() === BLOCK_WIDTH || rect.height() === BLOCK_WIDTH)) ||
-    (vizType === "TUNNEL" && rect.opacity() === 1)
-  ) {
-    return;
-  }
+}): Konva.RectConfig => {
+  const form: Konva.RectConfig = {};
 
   const height =
     currentStep.newDirection.x === currentStep.directionOnHit.x
@@ -155,58 +144,23 @@ const updateRect = ({
       ? BLOCK_HEIGHT
       : BLOCK_WIDTH;
 
-  const timeOffset = currentStep?.note.when ?? 0;
-  const animationDuration =
-    Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION) + timeOffset;
+  form.fill = getBlockColor({
+    x: currentStep.x,
+    y: currentStep.y,
+    index,
+    saturation: 100,
+  });
 
-  rect.fill(
-    getBlockColor({
-      x: currentStep.x,
-      y: currentStep.y,
-      index,
-      saturation: lerp({
-        start: 0,
-        end: 100,
-        time,
-        duration: animationDuration,
-        timeOffset,
-      }),
-    })
-  );
-  const newWidth =
-    vizType === "TUNNEL"
-      ? width
-      : lerp({
-          start: BLOCK_HEIGHT,
-          end: width,
-          time,
-          duration: animationDuration,
-          timeOffset,
-        });
-  const newHeight =
-    vizType === "TUNNEL"
-      ? height
-      : lerp({
-          start: BLOCK_HEIGHT,
-          end: height,
-          time,
-          duration: animationDuration,
-          timeOffset,
-        });
-  rect.offset({ x: newWidth / 2, y: newHeight / 2 });
-  rect.size({ width: newWidth, height: newHeight });
+  form.width = width;
+  form.height = height;
+  form.offsetX = width / 2;
+  form.offsetY = height / 2;
 
   if (vizType === "TUNNEL") {
-    rect.opacity(
-      lerp({
-        start: 0,
-        end: 1,
-        time,
-        duration: animationDuration,
-        timeOffset,
-      })
-    );
+    form.opacity = 1;
   }
+
+  return form;
 };
 
 const updateRects = ({
@@ -215,7 +169,6 @@ const updateRects = ({
   path,
   nextStepIndex,
   currentStep,
-  time,
   getBlockColor,
   animationState,
   layer,
@@ -225,7 +178,6 @@ const updateRects = ({
   path: Step[];
   nextStepIndex: number;
   currentStep: Step;
-  time: number;
   getBlockColor: GetBlockColor;
   animationState: AnimationState;
   layer: Konva.Layer | null;
@@ -235,17 +187,30 @@ const updateRects = ({
     return;
   }
 
-  updateRect({
-    vizType,
-    rect,
-    currentStep,
-    index: nextStepIndex - 1,
-    time,
-    getBlockColor,
-  });
+  const animationDuration = Math.min(
+    currentStep.duration,
+    STAR_COLOR_CHANGE_MAX_DURATION
+  );
 
   if (animationState.lastHandledBlockIndex < nextStepIndex - 1 && layer) {
     animationState.lastHandledBlockIndex = nextStepIndex - 1;
+
+    const tween = new Konva.Tween({
+      node: rect,
+      duration: animationDuration,
+      ...getBlockFinalForm({
+        vizType,
+        currentStep,
+        index: nextStepIndex - 1,
+        getBlockColor,
+      }),
+      easing: Konva.Easings.EaseOut,
+      onFinish: () => {
+        tween.destroy();
+      },
+    });
+    tween.play();
+
     const color = getBlockColor({
       x: currentStep.x,
       y: currentStep.y,
@@ -277,7 +242,7 @@ const updateRects = ({
       });
       layer.add(sparkRect);
 
-      const tween = new Konva.Tween({
+      const sparkTween = new Konva.Tween({
         node: sparkRect,
         duration: SPARK_DURATION,
         x:
@@ -312,36 +277,26 @@ const updateRects = ({
         opacity: 0,
         easing: Konva.Easings.EaseOut,
         onFinish: () => {
-          tween.destroy();
+          sparkTween.destroy();
           sparkRect.destroy();
         },
       });
-      tween.play();
+      sparkTween.play();
     });
   }
 
-  range(
-    DEBUG_SONG_END ? 0 : Math.max(0, nextStepIndex - 3),
-    nextStepIndex - 1
-  ).forEach((index) => {
-    if (index < 0) {
-      return;
-    }
-
-    const rect = rects?.[index];
-    if (!rect) {
-      return;
-    }
-
-    updateRect({
-      vizType,
-      rect,
-      currentStep: path[index],
-      index,
-      time,
-      getBlockColor,
+  if (DEBUG_SONG_END) {
+    range(0, nextStepIndex - 1).forEach((index) => {
+      rects?.[index]?.setAttrs(
+        getBlockFinalForm({
+          vizType,
+          currentStep: path[index],
+          index,
+          getBlockColor,
+        })
+      );
     });
-  });
+  }
 };
 
 const zoomOut = (
