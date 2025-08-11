@@ -144,6 +144,10 @@ const getBlockFinalForm = ({
     form.opacity = 1;
   }
 
+  form.shadowColor = form.fill;
+  form.shadowBlur = BLOCK_WIDTH / 2;
+  form.shadowOpacity = 1;
+
   return form;
 };
 

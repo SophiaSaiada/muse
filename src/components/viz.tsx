@@ -181,6 +181,10 @@ export const Viz = ({
             offsetX={(vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT) / 2}
             offsetY={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT / 2}
             opacity={vizType === "TUNNEL" ? 0 : 1}
+            shadowColor="white"
+            shadowBlur={0}
+            shadowOffset={{ x: 0, y: 0 }}
+            shadowOpacity={0}
             fill={getBlockColor({
               x: step.x,
               y: step.y,
@@ -206,6 +210,10 @@ export const Viz = ({
           y={0}
           fill={CIRCLE_COLOR}
           opacity={0.33}
+          shadowColor={CIRCLE_COLOR}
+          shadowBlur={SCALE / 2}
+          shadowOffset={{ x: 0, y: 0 }}
+          shadowOpacity={1}
         />
 
         <Circle
@@ -216,6 +224,10 @@ export const Viz = ({
           height={SCALE}
           fill={CIRCLE_COLOR}
           opacity={0.66}
+          shadowColor={CIRCLE_COLOR}
+          shadowBlur={SCALE / 2}
+          shadowOffset={{ x: 0, y: 0 }}
+          shadowOpacity={1}
         />
 
         <Circle
@@ -225,6 +237,10 @@ export const Viz = ({
           width={SCALE}
           height={SCALE}
           fill={CIRCLE_COLOR}
+          shadowColor={CIRCLE_COLOR}
+          shadowBlur={SCALE / 2}
+          shadowOffset={{ x: 0, y: 0 }}
+          shadowOpacity={1}
         />
       </Layer>
     </Stage>
