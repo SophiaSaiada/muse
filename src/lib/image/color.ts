@@ -5,6 +5,12 @@ import {
 } from "@/constants";
 import type { ImageData, Region } from "@/types";
 
+const DEFAULT_LIGHTNESS = 60;
+const BLUE_HUE_LIGHTNESS_ADDITION = 10;
+
+const hslToString = ({ h, s, l }: { h: number; s: number; l: number }) =>
+  `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
+
 export const getBlockMappedColor = ({
   imageData,
   index,
@@ -42,12 +48,14 @@ export const getBlockMappedColor = ({
   const rgba = imageData.rgbaValues[mappedIndex];
   const hsl = rgba && rgbToHsl(rgba);
   if (!rgba || rgba.a === 0 || hsl.s < 0.3 || hsl.l < 0.3) {
-    return "hsl(0,0%,60%)";
+    return hslToString({ h: 0, s: 0, l: DEFAULT_LIGHTNESS });
   }
 
-  return `hsl(${Math.round(hsl.h)}, ${Math.round(
-    Math.min(saturation, Math.max(hsl.s, 0.5)) * 100
-  )}%, ${Math.round(Math.max(hsl.l, 0.4) * 100)}%)`;
+  return hslToString({
+    h: hsl.h,
+    s: Math.min(saturation, Math.max(hsl.s, 0.5)) * 100,
+    l: Math.max(hsl.l, 0.4) * 100,
+  });
 };
 
 const rgbToHsl = ({
@@ -84,20 +92,34 @@ const rgbToHsl = ({
   return { h: (hue * 60 + 360) % 360, s: saturation, l: lightness };
 };
 
+const BLUE_HUE_START = 215;
+const BLUE_HUE_END = 295;
+
+const BLUE_HUE_PEAK = (BLUE_HUE_START + BLUE_HUE_END) / 2;
+const BLUE_HUE_DISTANCE_FROM_PEAK = (BLUE_HUE_END - BLUE_HUE_START) / 2;
+
 const getBlockColorByIndex = ({
   index,
   saturation,
 }: {
   index: number;
   saturation: number;
-}) =>
-  `hsl(${
-    Math.round(
-      (index /
-        (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-          ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-          : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-        360 +
-        BLOCK_START_HUE
-    ) % 360
-  }, ${saturation}%, 60%)`;
+}) => {
+  const h =
+    ((index /
+      (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+        ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+        : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+      360 +
+      BLOCK_START_HUE) %
+    360;
+
+  const l =
+    DEFAULT_LIGHTNESS +
+    ((BLUE_HUE_DISTANCE_FROM_PEAK -
+      Math.min(Math.abs(h - BLUE_HUE_PEAK), BLUE_HUE_DISTANCE_FROM_PEAK)) /
+      BLUE_HUE_DISTANCE_FROM_PEAK) *
+      BLUE_HUE_LIGHTNESS_ADDITION;
+
+  return hslToString({ h, s: saturation, l });
+};
