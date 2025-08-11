@@ -10,9 +10,6 @@ import {
   INITIAL_VIZ_TYPE,
   CIRCLE_COLOR,
   BLOCK_HEIGHT,
-  BLOCK_START_HUE,
-  BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL,
-  BLOCK_HUE_CHANGE_INDEX_INTERVAL,
   DEBUG_SONG_END,
 } from "@/constants";
 import { Tunnel } from "@/components/tunnel";
@@ -69,28 +66,15 @@ export const Viz = ({
       y: number;
       index: number;
       saturation: number;
-    }) => {
-      if (!denseRegion || !imageData) {
-        return `hsl(${
-          Math.round(
-            (index /
-              (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
-                : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
-              360 +
-              BLOCK_START_HUE
-          ) % 360
-        }, ${saturation}%, 60%)`;
-      }
-
-      return getBlockMappedColor({
+    }) =>
+      getBlockMappedColor({
         imageData,
+        index,
         x,
         y,
         denseRegion,
         saturation,
-      });
-    },
+      }),
     [denseRegion, imageData]
   );
 

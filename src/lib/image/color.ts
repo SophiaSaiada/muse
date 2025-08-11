@@ -1,18 +1,29 @@
+import {
+  BLOCK_HUE_CHANGE_INDEX_INTERVAL,
+  BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL,
+  BLOCK_START_HUE,
+} from "@/constants";
 import type { ImageData, Region } from "@/types";
 
 export const getBlockMappedColor = ({
   imageData,
+  index,
   x,
   y,
   denseRegion,
   saturation,
 }: {
-  imageData: ImageData;
+  imageData: ImageData | undefined;
+  index: number;
   x: number;
   y: number;
-  denseRegion: Region;
+  denseRegion: Region | undefined;
   saturation: number;
 }) => {
+  if (!denseRegion || !imageData) {
+    return getBlockColorByIndex({ index, saturation });
+  }
+
   const actualWidth = denseRegion?.endX
     ? denseRegion.endX - denseRegion.startX
     : 0;
@@ -72,3 +83,21 @@ const rgbToHsl = ({
 
   return { h: (hue * 60 + 360) % 360, s: saturation, l: lightness };
 };
+
+const getBlockColorByIndex = ({
+  index,
+  saturation,
+}: {
+  index: number;
+  saturation: number;
+}) =>
+  `hsl(${
+    Math.round(
+      (index /
+        (index < BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          ? BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL
+          : BLOCK_HUE_CHANGE_INDEX_INTERVAL)) *
+        360 +
+        BLOCK_START_HUE
+    ) % 360
+  }, ${saturation}%, 60%)`;
