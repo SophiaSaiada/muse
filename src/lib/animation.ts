@@ -62,13 +62,16 @@ export const handleAnimation = ({
     rects: (Konva.Rect | null)[] | null;
   };
 }) => {
-  if (time > lastNoteTime && denseRegion && imageData && konvaObjects.stage) {
-    zoomOut(
-      konvaObjects.layer,
-      denseRegion,
-      konvaObjects.stage,
-      konvaObjects.image
-    );
+  if (time > lastNoteTime) {
+    if (denseRegion && imageData && konvaObjects.stage) {
+      zoomOut(
+        konvaObjects.layer,
+        denseRegion,
+        konvaObjects.stage,
+        konvaObjects.image
+      );
+    }
+    return;
   }
 
   const currentStepIndex = Math.max(
