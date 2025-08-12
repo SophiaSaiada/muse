@@ -86,4 +86,10 @@ export const MIDI_FILES: MidiFileWithName[] = [
     displayName: "Encanto - We Don't Talk About Bruno",
     source: "e",
   },
+  {
+    id: "Golden",
+    displayName: "K-Pop Demon Hunters - Golden",
+    artwork: "/artworks/golden.jpg",
+    source: "e",
+  },
 ];
