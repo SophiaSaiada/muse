@@ -125,7 +125,7 @@ export const Viz = ({
       height={height}
       ref={stageRef}
     >
-      <Layer ref={layerRef} x={width / 2} y={height / 2}>
+      <Layer ref={layerRef} x={width / 2} y={height / 2} listening={false}>
         <Image
           ref={imageRef}
           image={imageData?.image}
