@@ -10,8 +10,9 @@ export const RECORD_MODE = true;
 // Color & Size
 export const CIRCLE_COLOR = "#E5438A";
 export const SCALE = 8;
-export const BLOCK_WIDTH = 12;
-export const BLOCK_HEIGHT = 2;
+export const CIRCLE_SIZE = SCALE;
+export const BLOCK_WIDTH = SCALE * (3 / 2);
+export const BLOCK_HEIGHT = SCALE * 0.25;
 export const SPARK_SIZE = 1;
 
 // Music
@@ -20,7 +21,7 @@ export const BEATS_VOLUME_FACTOR = 0.1;
 export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
-export const SPEED = 200;
+export const SPEED = SCALE * 25;
 export const CAMERA_FOLLOW_SMOOTHING = 0.2;
 
 // Viz type
@@ -38,7 +39,7 @@ export const BLOCK_HUE_CHANGE_INDEX_INTERVAL = 100;
 export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 
 // Sparks Animation
-export const SPARK_DISTANCE = 24;
+export const SPARK_DISTANCE = BLOCK_WIDTH * 2;
 export const SPARK_DURATION = 0.5;
 export const SPARK_OFFSETS = [-1, -0.33, 0.33, 1];
 export const SPARK_RANDOM_FACTOR = 0.3;

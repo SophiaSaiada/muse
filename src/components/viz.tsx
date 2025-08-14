@@ -4,7 +4,7 @@ import Konva from "konva";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useWindowSize } from "react-use";
 import {
-  SCALE,
+  CIRCLE_SIZE,
   SHOW_PATH,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
@@ -188,14 +188,14 @@ export const Viz = ({
 
         <Circle
           ref={farPartOfTrailRef}
-          width={SCALE}
-          height={SCALE}
+          width={CIRCLE_SIZE}
+          height={CIRCLE_SIZE}
           x={0}
           y={0}
           fill={CIRCLE_COLOR}
           opacity={0.33}
           shadowColor={CIRCLE_COLOR}
-          shadowBlur={SCALE / 2}
+          shadowBlur={CIRCLE_SIZE / 2}
           shadowOffset={{ x: 0, y: 0 }}
           shadowOpacity={1}
         />
@@ -204,12 +204,12 @@ export const Viz = ({
           ref={nearPartOfTrailRef}
           x={0}
           y={0}
-          width={SCALE}
-          height={SCALE}
+          width={CIRCLE_SIZE}
+          height={CIRCLE_SIZE}
           fill={CIRCLE_COLOR}
           opacity={0.66}
           shadowColor={CIRCLE_COLOR}
-          shadowBlur={SCALE / 2}
+          shadowBlur={CIRCLE_SIZE / 2}
           shadowOffset={{ x: 0, y: 0 }}
           shadowOpacity={1}
         />
@@ -218,11 +218,11 @@ export const Viz = ({
           x={0}
           y={0}
           ref={circleRef}
-          width={SCALE}
-          height={SCALE}
+          width={CIRCLE_SIZE}
+          height={CIRCLE_SIZE}
           fill={CIRCLE_COLOR}
           shadowColor={CIRCLE_COLOR}
-          shadowBlur={SCALE / 2}
+          shadowBlur={CIRCLE_SIZE / 2}
           shadowOffset={{ x: 0, y: 0 }}
           shadowOpacity={1}
         />
