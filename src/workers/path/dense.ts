@@ -65,7 +65,7 @@ const getDirection = (
   });
 
   if (shouldLog) {
-    console.log("clockwiseIsPossible", {
+    console.log("which directions are possible?", {
       index: path.length,
       clockwiseIsPossible,
       counterClockwiseIsPossible,
@@ -99,6 +99,13 @@ const getDirection = (
     });
 
   if (directionsSortedByDistanceFromOrigin !== null) {
+    if (shouldLog) {
+      console.log("picked according to distance from origin", {
+        index: path.length,
+        directionsSortedByDistanceFromOrigin,
+      });
+    }
+
     return directionsSortedByDistanceFromOrigin;
   }
 
@@ -107,7 +114,17 @@ const getDirection = (
     clockwiseDirection,
     counterClockwiseDirection,
     path,
+    shouldLog,
   });
+
+  if (shouldLog) {
+    console.log("picked according to balance score", {
+      index: path.length,
+      directionsSortedByBalanceScore,
+    });
+  }
+
+  return directionsSortedByBalanceScore;
 };
 
 const sortDirectionsByDistanceFromOrigin = ({
@@ -137,6 +154,10 @@ const sortDirectionsByDistanceFromOrigin = ({
 const MAXIMUM_LOOP_STEPS = 10000;
 
 export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
+  if (LOG_INDEXES.length) {
+    console.time("generateDensePath");
+  }
+
   let path = [
     {
       note: notes[0],
@@ -228,6 +249,10 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
       speed,
       path,
     });
+  }
+
+  if (LOG_INDEXES.length) {
+    console.timeEnd("generateDensePath");
   }
 
   return {
@@ -350,11 +375,13 @@ const sortDirectionsByBalanceScore = ({
   clockwiseDirection,
   counterClockwiseDirection,
   path,
+  shouldLog,
 }: {
   previousPoint: [number, number];
   clockwiseDirection: Direction;
   counterClockwiseDirection: Direction;
   path: [number, number][];
+  shouldLog: boolean;
 }) => {
   const isPreviousPointInLeftToRightAxis =
     (previousPoint[0] < 0 && previousPoint[1] < 0) ||
@@ -391,6 +418,13 @@ const sortDirectionsByBalanceScore = ({
   const stepsInCounterClockwiseDirection = path.filter(
     isPointInCounterClockwiseHalf
   ).length;
+
+  if (shouldLog) {
+    console.log("steps in clockwise and counter clockwise directions", {
+      stepsInClockwiseDirection,
+      stepsInCounterClockwiseDirection,
+    });
+  }
 
   return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
     ? [clockwiseDirection, counterClockwiseDirection]
