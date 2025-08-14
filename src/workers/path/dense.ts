@@ -97,6 +97,7 @@ const getDirection = (
       counterClockwisePoint,
       clockwiseDirection,
       counterClockwiseDirection,
+      duration,
     });
 
   if (directionsSortedByDistanceFromOrigin !== null) {
@@ -110,7 +111,7 @@ const getDirection = (
     return directionsSortedByDistanceFromOrigin;
   }
 
-  return sortDirectionsByBalanceScore({
+  const directionsSortedByBalanceScore = sortDirectionsByBalanceScore({
     previousPoint,
     clockwiseDirection,
     counterClockwiseDirection,
@@ -133,18 +134,23 @@ const sortDirectionsByDistanceFromOrigin = ({
   counterClockwisePoint,
   clockwiseDirection,
   counterClockwiseDirection,
+  duration,
 }: {
   clockwisePoint: { x: number; y: number };
   counterClockwisePoint: { x: number; y: number };
   clockwiseDirection: Direction;
   counterClockwiseDirection: Direction;
+  duration: number;
 }) => {
   const clockwiseDistance = getPointDistanceFromOrigin(clockwisePoint);
   const counterClockwiseDistance = getPointDistanceFromOrigin(
     counterClockwisePoint
   );
 
-  if (clockwiseDistance === counterClockwiseDistance) {
+  if (
+    Math.abs(clockwiseDistance - counterClockwiseDistance) <
+    duration * Math.abs(clockwiseDirection.x)
+  ) {
     return null;
   }
   return clockwiseDistance < counterClockwiseDistance
@@ -394,25 +400,26 @@ const sortDirectionsByBalanceScore = ({
         (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
         point[1] > -point[0]
       );
-    } else {
-      return (
-        (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-        point[1] < point[0]
-      );
     }
+
+    return (
+      (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
+      point[1] < point[0]
+    );
   };
+
   const isPointInCounterClockwiseHalf = (point: [number, number]) => {
     if (isPreviousPointInLeftToRightAxis) {
       return (
         (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
         point[1] < -point[0]
       );
-    } else {
-      return (
-        (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-        point[1] > point[0]
-      );
     }
+
+    return (
+      (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
+      point[1] > point[0]
+    );
   };
 
   const stepsInClockwiseDirection = path.filter(isPointInClockwiseHalf).length;
