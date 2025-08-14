@@ -1,3 +1,4 @@
+import { BLOCK_WIDTH } from "@/constants";
 import type { Direction, NoteOrBeat, Step } from "../../types";
 
 const DIRECTIONS = [
@@ -24,7 +25,7 @@ const rotateDirection = (direction: Direction, clockwise: boolean) => {
 
 const LOG_INDEXES = [] as number[];
 
-const MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK = 20;
+const MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK = BLOCK_WIDTH * 1.2;
 
 const getDirection = (
   path: [number, number][],
