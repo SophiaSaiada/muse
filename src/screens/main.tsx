@@ -7,6 +7,9 @@ import { VizTypeSelect } from "@/components/viz-type-select";
 import { Song } from "@/components/song";
 import { SiteName } from "@/components/site-name";
 import { useSearchParams } from "react-router";
+import { PhaserGame, type IRefPhaserGame } from "@/PhaserGame";
+import { useRef } from "react";
+import type { MainMenu } from "@/game/scenes/MainMenu";
 
 const SEARCH_KEY = "q";
 
@@ -53,11 +56,31 @@ export const MainScreen = () => {
     );
   };
 
+  const phaserRef = useRef<IRefPhaserGame | null>(null);
+
+  const changeScene = () => {
+    if (phaserRef.current) {
+      const scene = phaserRef.current.scene as MainMenu;
+
+      if (scene) {
+        scene.changeScene();
+      }
+    }
+  };
+
+  const onSceneChange = (scene: Phaser.Scene) => {
+    console.log("✨ ~ currentScene ~ scene.scene.key:", scene.scene.key);
+  };
+
   return (
     <div className="flex flex-col gap-3 p-8 min-h-dvh justify-center items-start max-w-lg m-auto">
       <SiteName className="text-5xl mb-1" />
 
       <SearchBox setSearch={setSearch} initialValue={search} />
+
+      <PhaserGame ref={phaserRef} currentActiveScene={onSceneChange} />
+
+      <button onClick={changeScene}>Change Scene</button>
 
       {(search && results?.length ? results : MIDI_FILES).map((file) => (
         <Song
