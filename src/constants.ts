@@ -40,8 +40,8 @@ export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 
 // Sparks Animation
 export const SPARK_DISTANCE = BLOCK_WIDTH * 2;
-export const SPARK_DURATION = 0.5;
-export const SPARK_OFFSETS = [-1, -0.33, 0.33, 1];
+export const SPARK_DURATION = 0.75;
+export const SPARK_OFFSETS = [-1, -0.3, 0, 0.6, 1];
 export const SPARK_RANDOM_FACTOR = 0.3;
 
 // Zoom Out Animation

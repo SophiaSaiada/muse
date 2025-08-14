@@ -304,14 +304,16 @@ const displaySparks = ({
         );
 
   SPARK_OFFSETS.forEach((offset) => {
-    const sparkRect = new Konva.Circle({
+    const spark = new Konva.Circle({
       x: initialX,
       y: initialY,
       radius: SPARK_SIZE,
+      scaleX: 1,
+      scaleY: 1,
       fill,
       opacity: 1,
     });
-    layer.add(sparkRect);
+    layer.add(spark);
 
     const finalX =
       currentStep.newDirection.x === currentStep.directionOnHit.x
@@ -340,16 +342,18 @@ const displaySparks = ({
           );
 
     const sparkTween = new Konva.Tween({
-      node: sparkRect,
+      node: spark,
       duration: SPARK_DURATION,
       x: finalX,
       y: finalY,
+      scaleX: 0.25,
+      scaleY: 0.25,
       rotation: Math.random() * 360,
       opacity: 0,
       easing: Konva.Easings.EaseOut,
       onFinish: () => {
         sparkTween.destroy();
-        sparkRect.destroy();
+        spark.destroy();
       },
     });
 
