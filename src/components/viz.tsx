@@ -1,25 +1,23 @@
-import { Layer, Stage, Circle, Path, Rect, Image } from "react-konva";
-import { useCallback, useEffect, useRef } from "react";
-import Konva from "konva";
+import { useCallback, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import * as THREE from "three";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useWindowSize } from "react-use";
 import {
   CIRCLE_SIZE,
-  SHOW_PATH,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
   CIRCLE_COLOR,
   BLOCK_HEIGHT,
-  DEBUG_SONG_END,
 } from "@/constants";
-import { Tunnel } from "@/components/tunnel";
 import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { getBlockMappedColor } from "@/lib/image/color";
 import {
-  handleAnimation,
-  type AnimationState,
+  updateCameraPosition,
+  updateCirclePosition,
+  updateCircleScale,
+  updateRects,
   type GetBlockColor,
 } from "@/lib/animation";
 
@@ -32,28 +30,10 @@ export const Viz = ({
   imageData?: ImageData;
   denseRegion: Region | undefined;
 }) => {
-  const { width, height } = useWindowSize();
-
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
-
-  const stageRef = useRef<Konva.Stage>(null);
-  const rectRefs = useRef<(Konva.Rect | null)[]>([]);
-  const layerRef = useRef<Konva.Layer>(null);
-  const imageRef = useRef<Konva.Image>(null);
-
-  const circleRef = useRef<Konva.Circle>(null);
-  const nearPartOfTrailRef = useRef<Konva.Circle>(null);
-  const farPartOfTrailRef = useRef<Konva.Circle>(null);
-
-  const actualWidth = denseRegion?.endX
-    ? denseRegion.endX - denseRegion.startX
-    : 0;
-  const actualHeight = denseRegion?.endY
-    ? denseRegion.endY - denseRegion.startY
-    : 0;
 
   const getBlockColor: GetBlockColor = useCallback(
     ({
@@ -78,155 +58,182 @@ export const Viz = ({
     [denseRegion, imageData]
   );
 
-  useEffect(() => {
-    const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
-
-    const animationState: AnimationState = {
-      lastHandledBlockIndex: -1,
-    };
-
-    const animation = new Konva.Animation((frame) => {
-      handleAnimation({
-        time:
-          (frame?.time ?? 0) / 1000 + (DEBUG_SONG_END ? lastNoteTime - 1 : 0),
-        lastNoteTime,
-        denseRegion,
-        imageData,
-        path,
-        vizType,
-        getBlockColor,
-        animationState,
-        konvaObjects: {
-          layer: layerRef.current,
-          stage: stageRef.current,
-          image: imageRef.current,
-          nearPartOfTrail: nearPartOfTrailRef.current,
-          farPartOfTrail: farPartOfTrailRef.current,
-          circle: circleRef.current,
-          rects: rectRefs.current,
-        },
-      });
-    }, layerRef.current?.getLayer());
-
-    animation.start();
-
-    return () => {
-      animation.stop();
-    };
-  }, [denseRegion, getBlockColor, imageData, path, vizType]);
-
   return (
-    <Stage
+    <Canvas
+      style={{
+        width: "100vw",
+        height: "100vh",
+      }}
       className={cn(
         "fixed inset-0 animate-fade-in",
         vizType === "TUNNEL" && "bg-[#202020]"
       )}
-      width={width}
-      height={height}
-      ref={stageRef}
+      camera={{ fov: 75, far: 3000, position: [0, 0, 400] }}
     >
-      <Layer ref={layerRef} x={width / 2} y={height / 2} listening={false}>
-        <Image
-          ref={imageRef}
-          image={imageData?.image}
-          width={actualWidth}
-          height={actualHeight}
-          x={denseRegion?.startX}
-          y={denseRegion?.startY}
-          opacity={0}
+      <ambientLight intensity={Math.PI / 2} />
+      <spotLight
+        position={[0, 0, 0]}
+        angle={0.15}
+        penumbra={1}
+        decay={0}
+        intensity={Math.PI}
+      />
+      <pointLight position={[0, 0, 0]} decay={0} intensity={Math.PI / 2} />
+
+      {/* <Image
+        ref={imageRef}
+        image={imageData?.image}
+        width={actualWidth}
+        height={actualHeight}
+        x={denseRegion?.startX}
+        y={denseRegion?.startY}
+        opacity={0}
+      /> */}
+
+      <Blocks path={path} getBlockColor={getBlockColor} vizType={vizType} />
+
+      {/* {SHOW_PATH && (
+        <Path
+          data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
+          stroke={CIRCLE_COLOR}
+          opacity={0.75}
+          strokeWidth={1}
         />
+      )} */}
 
-        {vizType === "TUNNEL" && <Tunnel path={path} />}
-
-        {path.map((step, index) => (
-          <Rect
-            key={step.note.when}
-            ref={(ref) => {
-              rectRefs.current[index] = ref;
-            }}
-            x={
-              step.newDirection.x === step.directionOnHit.x
-                ? step.x
-                : getXOfStepInYAxis(
-                    { directionOnHit: step.directionOnHit, x: step.x },
-                    BLOCK_HEIGHT * 2
-                  )
-            }
-            y={
-              step.newDirection.y === step.directionOnHit.y
-                ? step.y
-                : getYOfStepInXAxis(
-                    { directionOnHit: step.directionOnHit, y: step.y },
-                    BLOCK_HEIGHT * 2
-                  )
-            }
-            width={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT}
-            height={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT}
-            offsetX={(vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT) / 2}
-            offsetY={vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT / 2}
-            opacity={vizType === "TUNNEL" ? 0 : 1}
-            shadowColor="white"
-            shadowBlur={0}
-            shadowOffset={{ x: 0, y: 0 }}
-            shadowOpacity={0}
-            fill={getBlockColor({
-              x: step.x,
-              y: step.y,
-              index,
-              saturation: vizType === "TUNNEL" ? 100 : 0,
-            })}
-          />
-        ))}
-        {SHOW_PATH && (
-          <Path
-            data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
-            stroke={CIRCLE_COLOR}
-            opacity={0.75}
-            strokeWidth={1}
-          />
-        )}
-
-        <Circle
-          ref={farPartOfTrailRef}
-          width={CIRCLE_SIZE}
-          height={CIRCLE_SIZE}
-          x={0}
-          y={0}
-          fill={CIRCLE_COLOR}
-          opacity={0.33}
-          shadowColor={CIRCLE_COLOR}
-          shadowBlur={CIRCLE_SIZE / 2}
-          shadowOffset={{ x: 0, y: 0 }}
-          shadowOpacity={1}
-        />
-
-        <Circle
-          ref={nearPartOfTrailRef}
-          x={0}
-          y={0}
-          width={CIRCLE_SIZE}
-          height={CIRCLE_SIZE}
-          fill={CIRCLE_COLOR}
-          opacity={0.66}
-          shadowColor={CIRCLE_COLOR}
-          shadowBlur={CIRCLE_SIZE / 2}
-          shadowOffset={{ x: 0, y: 0 }}
-          shadowOpacity={1}
-        />
-
-        <Circle
-          x={0}
-          y={0}
-          ref={circleRef}
-          width={CIRCLE_SIZE}
-          height={CIRCLE_SIZE}
-          fill={CIRCLE_COLOR}
-          shadowColor={CIRCLE_COLOR}
-          shadowBlur={CIRCLE_SIZE / 2}
-          shadowOffset={{ x: 0, y: 0 }}
-          shadowOpacity={1}
-        />
-      </Layer>
-    </Stage>
+      <Ball path={path} />
+    </Canvas>
   );
+};
+
+const Ball = ({ path }: { path: Step[] }) => {
+  const ballRef = useRef<THREE.Mesh>(null);
+
+  const { camera } = useThree();
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
+    const currentStepIndex = Math.max(
+      path.findLastIndex(({ note: { when } }) => time >= when),
+      0
+    );
+
+    const currentStep = path[currentStepIndex];
+    const nextStep = path[currentStepIndex + 1];
+
+    if (!ballRef.current) {
+      return;
+    }
+
+    updateCirclePosition({
+      circle: ballRef.current,
+      currentStep,
+      nextStep,
+      time,
+    });
+
+    updateCircleScale({
+      currentStep,
+      time,
+      circle: ballRef.current,
+    });
+
+    updateCameraPosition({
+      camera,
+      circle: ballRef.current,
+    });
+  });
+
+  return (
+    <mesh ref={ballRef}>
+      <sphereGeometry args={[CIRCLE_SIZE / 2, 32, 16]} />
+      <meshStandardMaterial color={CIRCLE_COLOR} />
+    </mesh>
+  );
+};
+
+const Blocks = ({
+  path,
+  getBlockColor,
+  vizType,
+}: {
+  path: Step[];
+  getBlockColor: GetBlockColor;
+  vizType: VizType;
+}) => {
+  const rectRefs = useRef<(THREE.Mesh | null)[]>([]);
+
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
+    const currentStepIndex = Math.max(
+      path.findLastIndex(({ note: { when } }) => time >= when),
+      0
+    );
+    const currentStep = path[currentStepIndex];
+
+    updateRects({
+      vizType,
+      rects: rectRefs.current,
+      path,
+      currentStepIndex,
+      currentStep,
+      getBlockColor,
+      animationState: { lastHandledBlockIndex: -1 },
+      time,
+      layer: null,
+    });
+  });
+
+  return path.map((step, index) => (
+    <mesh
+      key={step.note.when}
+      ref={(ref) => {
+        rectRefs.current[index] = ref;
+      }}
+      position={[
+        step.newDirection.x === step.directionOnHit.x
+          ? step.x
+          : getXOfStepInYAxis(
+              { directionOnHit: step.directionOnHit, x: step.x },
+              BLOCK_HEIGHT * 2
+            ),
+        step.newDirection.y === step.directionOnHit.y
+          ? step.y
+          : getYOfStepInXAxis(
+              { directionOnHit: step.directionOnHit, y: step.y },
+              BLOCK_HEIGHT * 2
+            ),
+        0,
+      ]}
+      scale={1}
+      // opacity={vizType === "TUNNEL" ? 0 : 1}
+      // shadowColor="white"
+      // shadowBlur={0}
+      // shadowOffset={{ x: 0, y: 0 }}
+      // shadowOpacity={0}
+    >
+      <boxGeometry
+        args={[
+          BLOCK_HEIGHT, // TODO: switch to  vizType === "TUNNEL" ? 0 : BLOCK_HEIGHT
+          BLOCK_HEIGHT,
+          BLOCK_HEIGHT,
+        ]}
+      />
+      <meshStandardMaterial
+        // emissiveIntensity={BLOCK_HEIGHT}
+        // emissive={getBlockColor({
+        //   x: step.x,
+        //   y: step.y,
+        //   index,
+        //   saturation: vizType === "TUNNEL" ? 100 : 0,
+        // })}
+        color={getBlockColor({
+          x: step.x,
+          y: step.y,
+          index,
+          saturation: vizType === "TUNNEL" ? 100 : 0,
+        })}
+      />
+    </mesh>
+  ));
 };
