@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import {
@@ -8,6 +9,8 @@ import {
   INITIAL_VIZ_TYPE,
   CIRCLE_COLOR,
   BLOCK_HEIGHT,
+  THREE_D_LOCAL_STORAGE_KEY,
+  DEFAULT_CAMERA_PROPS,
 } from "@/constants";
 import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
@@ -30,10 +33,17 @@ export const Viz = ({
   imageData?: ImageData;
   denseRegion: Region | undefined;
 }) => {
+  const [threeD] = useLocalStorage<boolean>(THREE_D_LOCAL_STORAGE_KEY);
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
+
+  const CameraComponent = threeD ? PerspectiveCamera : OrthographicCamera;
+
+  const cameraRef = useRef<
+    (THREE.OrthographicCamera & THREE.PerspectiveCamera) | null
+  >(null);
 
   const getBlockColor: GetBlockColor = useCallback(
     ({
@@ -68,8 +78,9 @@ export const Viz = ({
         "fixed inset-0 animate-fade-in",
         vizType === "TUNNEL" && "bg-[#202020]"
       )}
-      camera={{ fov: 75, far: 3000, position: [0, 0, 400] }}
     >
+      <CameraComponent makeDefault ref={cameraRef} {...DEFAULT_CAMERA_PROPS} />
+
       <ambientLight intensity={Math.PI / 2} />
       <spotLight
         position={[0, 0, 0]}
@@ -101,15 +112,21 @@ export const Viz = ({
         />
       )} */}
 
-      <Ball path={path} />
+      <Ball path={path} cameraRef={cameraRef} />
     </Canvas>
   );
 };
 
-const Ball = ({ path }: { path: Step[] }) => {
+const Ball = ({
+  path,
+  cameraRef,
+}: {
+  path: Step[];
+  cameraRef: React.RefObject<
+    (THREE.OrthographicCamera & THREE.PerspectiveCamera) | null
+  >;
+}) => {
   const ballRef = useRef<THREE.Mesh>(null);
-
-  const { camera } = useThree();
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -139,7 +156,7 @@ const Ball = ({ path }: { path: Step[] }) => {
     });
 
     updateCameraPosition({
-      camera,
+      camera: cameraRef.current,
       circle: ballRef.current,
     });
   });

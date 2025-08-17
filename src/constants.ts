@@ -21,12 +21,18 @@ export const BEATS_VOLUME_FACTOR = 0.1;
 export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
+export const DEFAULT_CAMERA_PROPS = {
+  position: [0, 0, 400],
+  far: 3000,
+  fov: 75,
+} as const;
 export const SPEED = SCALE * 25;
 export const CAMERA_FOLLOW_SMOOTHING = 0.2;
 
 // Viz type
 export const VIZ_TYPE_LOCAL_STORAGE_KEY = "vizType" as const;
 export const INITIAL_VIZ_TYPE: VizType = "STARS";
+export const THREE_D_LOCAL_STORAGE_KEY = "threeD" as const;
 
 // Circle & Block Animations
 export const BOUNCE_ANIMATION_HALF_TIME = 0.05;

@@ -17,7 +17,6 @@ import {
 import type { Step, VizType } from "@/types";
 // import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
-// import Konva from "konva";
 // import { range } from "es-toolkit";
 // import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
@@ -511,7 +510,7 @@ export const updateCameraPosition = ({
   camera,
   circle,
 }: {
-  camera: THREE.Camera;
+  camera: THREE.Camera | null;
   circle: THREE.Mesh | null;
 }) => {
   if (!camera || !circle) {
