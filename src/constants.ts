@@ -22,7 +22,7 @@ export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
 export const DEFAULT_CAMERA_PROPS = {
-  position: [0, 0, 400],
+  position: [0, 0, SCALE * 50],
   far: 3000,
   fov: 75,
 } as const;

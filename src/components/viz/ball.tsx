@@ -1,6 +1,11 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { OrthographicCamera, PerspectiveCamera, Mesh } from "three";
+import { Trail } from "@react-three/drei";
+import {
+  type OrthographicCamera,
+  type PerspectiveCamera,
+  type Mesh,
+} from "three";
 import { CIRCLE_SIZE, CIRCLE_COLOR } from "@/constants";
 import type { Step } from "@/types";
 import {
@@ -17,6 +22,7 @@ export const Ball = ({
   cameraRef: React.RefObject<(OrthographicCamera & PerspectiveCamera) | null>;
 }) => {
   const ballRef = useRef<Mesh>(null);
+  const trailHeadRef = useRef<Mesh>(null!);
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -34,6 +40,7 @@ export const Ball = ({
 
     updateCirclePosition({
       circle: ballRef.current,
+      trailHead: trailHeadRef.current,
       currentStep,
       nextStep,
       time,
@@ -52,9 +59,21 @@ export const Ball = ({
   });
 
   return (
-    <mesh ref={ballRef}>
-      <sphereGeometry args={[CIRCLE_SIZE / 2, 32, 16]} />
-      <meshStandardMaterial color={CIRCLE_COLOR} />
-    </mesh>
+    <>
+      <Trail
+        width={CIRCLE_SIZE * 12}
+        length={1}
+        color={CIRCLE_COLOR}
+        attenuation={(t) => t * t}
+        target={trailHeadRef}
+      />
+
+      <mesh ref={trailHeadRef} />
+
+      <mesh ref={ballRef}>
+        <sphereGeometry args={[CIRCLE_SIZE / 2]} />
+        <meshStandardMaterial color={CIRCLE_COLOR} toneMapped />
+      </mesh>
+    </>
   );
 };

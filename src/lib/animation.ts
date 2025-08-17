@@ -4,6 +4,7 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
+  CIRCLE_SIZE,
   // DEBUG_SONG_END,
   // IMAGE_REVEAL_SMOOTHING,
   // SPARK_DISTANCE,
@@ -32,82 +33,6 @@ export type GetBlockColor = (params: {
   index: number;
   saturation: number;
 }) => string;
-
-// export const handleAnimation = ({
-//   time,
-//   lastNoteTime,
-//   denseRegion,
-//   imageData,
-//   path,
-//   vizType,
-//   getBlockColor,
-//   animationState,
-//   konvaObjects,
-// }: {
-//   time: number;
-//   lastNoteTime: number;
-//   denseRegion: Region | undefined;
-//   imageData: ImageData | undefined;
-//   path: Step[];
-//   vizType: VizType;
-//   getBlockColor: GetBlockColor;
-//   animationState: AnimationState;
-//   konvaObjects: {
-//     layer: Konva.Layer | null;
-//     stage: Konva.Stage | null;
-//     image: Konva.Image | null;
-//     nearPartOfTrail: Konva.Circle | null;
-//     farPartOfTrail: Konva.Circle | null;
-//     circle: Konva.Circle | null;
-//     rects: (Konva.Rect | null)[] | null;
-//   };
-// }) => {
-//   if (time > lastNoteTime) {
-//     if (denseRegion && imageData && konvaObjects.stage) {
-//       zoomOut(
-//         konvaObjects.layer,
-//         denseRegion,
-//         konvaObjects.stage,
-//         konvaObjects.image
-//       );
-//     }
-//     return;
-//   }
-
-//   const currentStepIndex = Math.max(
-//     path.findLastIndex(({ note: { when } }) => time >= when),
-//     0
-//   );
-//   const currentStep = path[currentStepIndex];
-//   const nextStep = path[currentStepIndex + 1];
-
-//   updateTrailPosition(konvaObjects);
-
-//   updateCirclePosition({
-//     currentStep,
-//     nextStep,
-//     time,
-//     ...konvaObjects,
-//   });
-
-//   updateCameraPosition(konvaObjects);
-
-//   updateCircleScale({
-//     currentStep,
-//     time,
-//     ...konvaObjects,
-//   });
-
-//   updateRects({
-//     vizType,
-//     path,
-//     currentStepIndex,
-//     currentStep,
-//     getBlockColor,
-//     animationState,
-//     ...konvaObjects,
-//   });
-// };
 
 const getBlockFinalForm = ({
   currentStep,
@@ -456,54 +381,54 @@ export const updateCircleScale = ({
   circle?.scale.set(scale, scale, circle.scale.z);
 };
 
-// const updateTrailPosition = ({
-//   nearPartOfTrail,
-//   farPartOfTrail,
-//   circle,
-// }: {
-//   nearPartOfTrail: Konva.Circle | null;
-//   farPartOfTrail: Konva.Circle | null;
-//   circle: Konva.Circle | null;
-// }) => {
-//   farPartOfTrail?.x(nearPartOfTrail?.x());
-//   farPartOfTrail?.y(nearPartOfTrail?.y());
-
-//   nearPartOfTrail?.x(circle?.x());
-//   nearPartOfTrail?.y(circle?.y());
-// };
-
 export const updateCirclePosition = ({
   currentStep,
   nextStep,
   time,
   circle,
+  trailHead,
 }: {
   currentStep: Step;
   nextStep: Step | undefined;
   time: number;
   circle: THREE.Mesh | null;
+  trailHead: THREE.Mesh | null;
 }) => {
   if (!nextStep) {
     return;
   }
 
-  circle?.position.set(
-    lerp({
-      start: currentStep.x,
-      end: nextStep.x,
-      time,
-      timeOffset: currentStep.note.when,
-      endTime: nextStep.note.when,
-    }),
-    lerp({
-      start: currentStep.y,
-      end: nextStep.y,
-      time,
-      timeOffset: currentStep.note.when,
-      endTime: nextStep.note.when,
-    }),
-    circle.position.z
-  );
+  const x = lerp({
+    start: currentStep.x,
+    end: nextStep.x,
+    time,
+    timeOffset: currentStep.note.when,
+    endTime: nextStep.note.when,
+  });
+  const y = lerp({
+    start: currentStep.y,
+    end: nextStep.y,
+    time,
+    timeOffset: currentStep.note.when,
+    endTime: nextStep.note.when,
+  });
+
+  circle?.position.set(x, y, circle.position.z);
+
+  const trailHeadOffsetX =
+    Math.abs(nextStep.x - x) < CIRCLE_SIZE / 4
+      ? 0
+      : nextStep.x > currentStep.x
+      ? CIRCLE_SIZE / 2
+      : -CIRCLE_SIZE / 2;
+  const trailHeadOffsetY =
+    Math.abs(nextStep.y - y) < CIRCLE_SIZE / 4
+      ? 0
+      : nextStep.y > currentStep.y
+      ? CIRCLE_SIZE / 2
+      : -CIRCLE_SIZE / 2;
+
+  trailHead?.position.set(x + trailHeadOffsetX, y + trailHeadOffsetY, 0);
 };
 
 export const updateCameraPosition = ({
