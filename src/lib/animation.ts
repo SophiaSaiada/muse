@@ -6,23 +6,29 @@ import {
   CAMERA_FOLLOW_SMOOTHING,
   CIRCLE_SIZE,
   DEBUG_SONG_END,
-  // DEBUG_SONG_END,
-  // IMAGE_REVEAL_SMOOTHING,
+  IMAGE_REVEAL_SMOOTHING,
   SPARK_DISTANCE,
   SPARK_DURATION_MS,
   SPARK_OFFSETS,
   SPARK_RANDOM_FACTOR,
   SPARK_SIZE,
   STAR_COLOR_CHANGE_MAX_DURATION,
-  // ZOOM_OUT_PADDING_FACTOR,
+  ZOOM_OUT_PADDING_FACTOR,
 } from "@/constants";
 import type { Step, VizType } from "@/types";
-// import type { Region } from "@/types";
+import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
 import type * as THREE from "three";
-import { Color, CircleGeometry, Mesh, MeshBasicMaterial } from "three";
+import {
+  Color,
+  CircleGeometry,
+  Mesh,
+  MeshBasicMaterial,
+  PerspectiveCamera,
+  OrthographicCamera,
+} from "three";
 import type { RootState } from "@react-three/fiber";
 
 export type AnimationState = {
@@ -48,12 +54,14 @@ export const getCurrentStepAndTime = ({
   const time =
     state.clock.elapsedTime + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
 
+  const isAfterLastNote = time > lastNoteTime;
+
   const currentStepIndex = Math.max(
     path.findLastIndex(({ note: { when } }) => time >= when),
     0
   );
   const currentStep = path[currentStepIndex];
-  return { time, currentStepIndex, currentStep };
+  return { time, currentStepIndex, currentStep, isAfterLastNote };
 };
 
 const updateRect = ({
@@ -202,57 +210,75 @@ export const updateRects = ({
   }
 };
 
-// const zoomOut = (
-//   layer: Konva.Layer | null,
-//   denseRegion: Region,
-//   stage: Konva.Stage,
-//   imageRef: Konva.Image | null
-// ) => {
-//   if (!layer) {
-//     return;
-//   }
+const fadeInImage = (imageMaterial: MeshBasicMaterial | null | undefined) => {
+  if (imageMaterial) {
+    imageMaterial.opacity = smoothstep(
+      imageMaterial.opacity,
+      0.125,
+      IMAGE_REVEAL_SMOOTHING
+    );
+  }
+};
 
-//   const currentScaleX = layer.scaleX();
+export const zoomOut = (
+  camera: THREE.Camera,
+  denseRegion: Region,
+  size: { width: number; height: number },
+  imageMaterial: MeshBasicMaterial | null | undefined
+) => {
+  const actualWidth =
+    denseRegion.endX -
+    denseRegion.startX +
+    size.width * ZOOM_OUT_PADDING_FACTOR * 2;
+  const actualHeight =
+    denseRegion.endY -
+    denseRegion.startY +
+    size.height * ZOOM_OUT_PADDING_FACTOR * 2;
 
-//   const actualWidth = denseRegion.endX - denseRegion.startX;
-//   const actualHeight = denseRegion.endY - denseRegion.startY;
+  // TODO: fix in mobile
+  if (camera instanceof PerspectiveCamera) {
+    const fovHeight =
+      2 * Math.atan(actualHeight / (2 * camera.position.z)) * (180 / Math.PI);
+    const fovWidth =
+      2 * Math.atan(actualWidth / (2 * camera.position.z)) * (180 / Math.PI);
+    const desiredFov = Math.max(fovHeight, fovWidth);
 
-//   const desiredScale = Math.min(
-//     stage.height() /
-//       (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
-//     stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
-//   );
+    camera.fov = smoothstep(camera.fov, desiredFov, CAMERA_FOLLOW_SMOOTHING);
+    camera.updateProjectionMatrix();
 
-//   if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
-//     if (imageRef) {
-//       imageRef.opacity(
-//         smoothstep(imageRef.opacity(), 0.125, IMAGE_REVEAL_SMOOTHING)
-//       );
-//     }
+    if (Math.abs(desiredFov - camera.fov) < 0.001) {
+      fadeInImage(imageMaterial);
+      return;
+    }
+  } else if (camera instanceof OrthographicCamera) {
+    const desiredScale = Math.max(
+      actualWidth / size.width,
+      actualHeight / size.height
+    );
 
-//     return;
-//   }
+    const scale = smoothstep(
+      camera.scale.x,
+      desiredScale,
+      CAMERA_FOLLOW_SMOOTHING
+    );
+    camera.scale.set(scale, scale, camera.scale.z);
+    camera.updateProjectionMatrix();
 
-//   const newScale = smoothstep(
-//     currentScaleX,
-//     desiredScale,
-//     CAMERA_FOLLOW_SMOOTHING
-//   );
+    if (Math.abs(desiredScale - camera.scale.x) < 0.001) {
+      fadeInImage(imageMaterial);
+      return;
+    }
+  }
 
-//   layer.scale({ x: newScale, y: newScale });
+  const desiredX = (denseRegion.startX + denseRegion.endX) / 2;
+  const desiredY = (denseRegion.startY + denseRegion.endY) / 2;
 
-//   const desiredX =
-//     stage.width() / 2 -
-//     ((denseRegion.startX + denseRegion.endX) / 2) * newScale;
-//   const desiredY =
-//     stage.height() / 2 -
-//     ((denseRegion.startY + denseRegion.endY) / 2) * newScale;
-
-//   layer.position({
-//     x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
-//     y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
-//   });
-// };
+  camera.position.set(
+    smoothstep(camera.position.x, desiredX, CAMERA_FOLLOW_SMOOTHING),
+    smoothstep(camera.position.y, desiredY, CAMERA_FOLLOW_SMOOTHING),
+    camera.position.z
+  );
+};
 
 const displaySparks = ({
   currentStep,

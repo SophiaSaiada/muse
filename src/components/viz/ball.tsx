@@ -45,15 +45,17 @@ export const Ball = ({
   const { camera } = useThree();
 
   useFrame((state) => {
-    const { time, currentStepIndex, currentStep } = getCurrentStepAndTime({
-      state,
-      path,
-    });
-    const nextStep = path[currentStepIndex + 1];
+    const { time, currentStepIndex, currentStep, isAfterLastNote } =
+      getCurrentStepAndTime({
+        state,
+        path,
+      });
 
-    if (!ballRef.current) {
+    if (!ballRef.current || isAfterLastNote) {
       return;
     }
+
+    const nextStep = path[currentStepIndex + 1];
 
     updateCirclePosition({
       circle: ballRef.current,

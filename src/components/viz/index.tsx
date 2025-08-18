@@ -17,6 +17,7 @@ import { getBlockMappedColor } from "@/lib/image/color";
 import { type GetBlockColor } from "@/lib/animation";
 import { Ball } from "@/components/viz/ball";
 import { Blocks } from "@/components/viz/blocks";
+import { ZoomOutImage } from "@/components/viz/zoom-out-image";
 
 export const Viz = ({
   path,
@@ -92,15 +93,13 @@ export const Viz = ({
         <Bloom mipmapBlur luminanceThreshold={0.1} radius={0.5} />
       </EffectComposer>
 
-      {/* <Image
-        ref={imageRef}
-        image={imageData?.image}
-        width={actualWidth}
-        height={actualHeight}
-        x={denseRegion?.startX}
-        y={denseRegion?.startY}
-        opacity={0}
-      /> */}
+      {denseRegion && (
+        <ZoomOutImage
+          imageBitmap={imageData?.imageBitmap}
+          denseRegion={denseRegion}
+          path={path}
+        />
+      )}
 
       <Blocks path={path} getBlockColor={getBlockColor} vizType={vizType} />
 
