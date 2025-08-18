@@ -10,9 +10,36 @@ import {
   updateCircleScale,
 } from "@/lib/animation";
 
-export const Ball = ({ path, threeD }: { path: Step[]; threeD: boolean }) => {
+const getTrailWidthFactor = ({
+  threeD,
+  isLandscape,
+}: {
+  threeD: boolean;
+  isLandscape: boolean;
+}) => {
+  if (threeD) {
+    if (isLandscape) {
+      return 14;
+    }
+    return 8;
+  }
+
+  return 0.0175;
+};
+
+export const Ball = ({
+  path,
+  threeD,
+  isLandscape,
+}: {
+  path: Step[];
+  threeD: boolean;
+  isLandscape: boolean;
+}) => {
   const ballRef = useRef<Mesh>(null);
   const trailHeadRef = useRef<Mesh>(null!);
+
+  const trailWidth = CIRCLE_SIZE * getTrailWidthFactor({ threeD, isLandscape });
 
   const { camera } = useThree();
 
@@ -49,10 +76,11 @@ export const Ball = ({ path, threeD }: { path: Step[]; threeD: boolean }) => {
       circle: ballRef.current,
     });
   });
+
   return (
     <>
       <Trail
-        width={threeD ? CIRCLE_SIZE * 10 : CIRCLE_SIZE / 50}
+        width={trailWidth}
         length={1}
         color={CIRCLE_COLOR}
         attenuation={(t) => t * t}

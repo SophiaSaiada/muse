@@ -1,12 +1,14 @@
 import { useCallback } from "react";
 import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLocalStorage, useWindowSize } from "@uidotdev/usehooks";
 import {
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
   THREE_D_LOCAL_STORAGE_KEY,
   DEFAULT_CAMERA_PROPS,
+  CAMERA_Z_LANDSCAPE,
+  CAMERA_Z_PORTRAIT,
 } from "@/constants";
 import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
@@ -14,7 +16,6 @@ import { getBlockMappedColor } from "@/lib/image/color";
 import { type GetBlockColor } from "@/lib/animation";
 import { Ball } from "@/components/viz/ball";
 import { Blocks } from "@/components/viz/blocks";
-import { SyncCameraFov } from "@/components/viz/sync-camera-fov";
 
 export const Viz = ({
   path,
@@ -30,6 +31,9 @@ export const Viz = ({
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE
   );
+
+  const { width, height } = useWindowSize();
+  const isLandscape = width !== null && height !== null && width > height;
 
   const CameraComponent = threeD ? PerspectiveCamera : OrthographicCamera;
 
@@ -67,8 +71,11 @@ export const Viz = ({
         vizType === "TUNNEL" && "bg-[#202020]"
       )}
     >
-      <CameraComponent makeDefault {...DEFAULT_CAMERA_PROPS} />
-      <SyncCameraFov />
+      <CameraComponent
+        makeDefault
+        {...DEFAULT_CAMERA_PROPS}
+        position={[0, 0, isLandscape ? CAMERA_Z_LANDSCAPE : CAMERA_Z_PORTRAIT]}
+      />
 
       <ambientLight intensity={Math.PI / 2} />
       <spotLight
@@ -101,7 +108,7 @@ export const Viz = ({
         />
       )} */}
 
-      <Ball path={path} threeD={threeD} />
+      <Ball path={path} threeD={threeD} isLandscape={isLandscape} />
     </Canvas>
   );
 };

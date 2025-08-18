@@ -21,8 +21,9 @@ export const BEATS_VOLUME_FACTOR = 0.1;
 export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
+export const CAMERA_Z_LANDSCAPE = SCALE * 50;
+export const CAMERA_Z_PORTRAIT = SCALE * 35;
 export const DEFAULT_CAMERA_PROPS = {
-  position: [0, 0, SCALE * 50],
   far: 3000,
   fov: 75,
 } as const;
