@@ -14,6 +14,7 @@ import { getBlockMappedColor } from "@/lib/image/color";
 import { type GetBlockColor } from "@/lib/animation";
 import { Ball } from "@/components/viz/ball";
 import { Blocks } from "@/components/viz/blocks";
+import { SyncCameraFov } from "@/components/viz/sync-camera-fov";
 
 export const Viz = ({
   path,
@@ -67,6 +68,7 @@ export const Viz = ({
       )}
     >
       <CameraComponent makeDefault {...DEFAULT_CAMERA_PROPS} />
+      <SyncCameraFov />
 
       <ambientLight intensity={Math.PI / 2} />
       <spotLight
