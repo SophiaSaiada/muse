@@ -1,10 +1,6 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import type {
-  OrthographicCamera as OrthographicCameraType,
-  PerspectiveCamera as PerspectiveCameraType,
-} from "three";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import {
   VIZ_TYPE_LOCAL_STORAGE_KEY,
@@ -35,10 +31,6 @@ export const Viz = ({
   );
 
   const CameraComponent = threeD ? PerspectiveCamera : OrthographicCamera;
-
-  const cameraRef = useRef<
-    (OrthographicCameraType & PerspectiveCameraType) | null
-  >(null);
 
   const getBlockColor: GetBlockColor = useCallback(
     ({
@@ -74,7 +66,7 @@ export const Viz = ({
         vizType === "TUNNEL" && "bg-[#202020]"
       )}
     >
-      <CameraComponent makeDefault ref={cameraRef} {...DEFAULT_CAMERA_PROPS} />
+      <CameraComponent makeDefault {...DEFAULT_CAMERA_PROPS} />
 
       <ambientLight intensity={Math.PI / 2} />
       <spotLight
@@ -107,7 +99,7 @@ export const Viz = ({
         />
       )} */}
 
-      <Ball path={path} cameraRef={cameraRef} />
+      <Ball path={path} threeD={threeD} />
     </Canvas>
   );
 };

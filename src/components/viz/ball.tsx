@@ -1,11 +1,7 @@
 import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Trail } from "@react-three/drei";
-import {
-  type OrthographicCamera,
-  type PerspectiveCamera,
-  type Mesh,
-} from "three";
+import { type Mesh } from "three";
 import { CIRCLE_SIZE, CIRCLE_COLOR } from "@/constants";
 import type { Step } from "@/types";
 import {
@@ -14,15 +10,11 @@ import {
   updateCircleScale,
 } from "@/lib/animation";
 
-export const Ball = ({
-  path,
-  cameraRef,
-}: {
-  path: Step[];
-  cameraRef: React.RefObject<(OrthographicCamera & PerspectiveCamera) | null>;
-}) => {
+export const Ball = ({ path, threeD }: { path: Step[]; threeD: boolean }) => {
   const ballRef = useRef<Mesh>(null);
   const trailHeadRef = useRef<Mesh>(null!);
+
+  const { camera } = useThree();
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -53,15 +45,14 @@ export const Ball = ({
     });
 
     updateCameraPosition({
-      camera: cameraRef.current,
+      camera,
       circle: ballRef.current,
     });
   });
-
   return (
     <>
       <Trail
-        width={CIRCLE_SIZE * 12}
+        width={threeD ? CIRCLE_SIZE * 10 : CIRCLE_SIZE / 50}
         length={1}
         color={CIRCLE_COLOR}
         attenuation={(t) => t * t}
