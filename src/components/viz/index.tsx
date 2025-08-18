@@ -89,7 +89,7 @@ export const Viz = ({
       <pointLight position={[0, 0, 0]} decay={0} intensity={Math.PI / 2} />
 
       <EffectComposer>
-        <Bloom mipmapBlur luminanceThreshold={0.1} radius={0.7} />
+        <Bloom mipmapBlur luminanceThreshold={0.1} radius={0.5} />
       </EffectComposer>
 
       {/* <Image
