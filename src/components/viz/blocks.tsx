@@ -8,7 +8,7 @@ import {
   updateRects,
   type AnimationState,
   type GetBlockColor,
-  getCurrentStep,
+  getCurrentStepAndTime,
 } from "@/lib/animation";
 
 export const Blocks = ({
@@ -28,9 +28,10 @@ export const Blocks = ({
   });
 
   useFrame((state) => {
-    const time = state.clock.elapsedTime;
-
-    const { currentStepIndex, currentStep } = getCurrentStep({ path, time });
+    const { time, currentStepIndex, currentStep } = getCurrentStepAndTime({
+      state,
+      path,
+    });
 
     updateRects({
       vizType,

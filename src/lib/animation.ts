@@ -5,6 +5,7 @@ import {
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
   CIRCLE_SIZE,
+  DEBUG_SONG_END,
   // DEBUG_SONG_END,
   // IMAGE_REVEAL_SMOOTHING,
   SPARK_DISTANCE,
@@ -18,11 +19,11 @@ import {
 import type { Step, VizType } from "@/types";
 // import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
-// import { range } from "es-toolkit";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
 import type * as THREE from "three";
 import { Color, CircleGeometry, Mesh, MeshBasicMaterial } from "three";
+import type { RootState } from "@react-three/fiber";
 
 export type AnimationState = {
   lastHandledBlockIndex: number;
@@ -35,43 +36,41 @@ export type GetBlockColor = (params: {
   saturation: number;
 }) => string;
 
-export const getCurrentStep = ({
+export const getCurrentStepAndTime = ({
+  state,
   path,
-  time,
 }: {
+  state: RootState;
   path: Step[];
-  time: number;
 }) => {
+  const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
+
+  const time =
+    state.clock.elapsedTime + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
+
   const currentStepIndex = Math.max(
     path.findLastIndex(({ note: { when } }) => time >= when),
     0
   );
   const currentStep = path[currentStepIndex];
-  return { currentStepIndex, currentStep };
+  return { time, currentStepIndex, currentStep };
 };
 
-export const updateRects = ({
-  vizType,
-  rects,
-  // path,
-  currentStepIndex,
+const updateRect = ({
+  rect,
   currentStep,
   getBlockColor,
-  animationState,
-  scene,
+  index,
   time,
+  vizType,
 }: {
-  vizType: VizType;
-  rects: (THREE.Mesh | null)[] | null;
-  path: Step[];
-  currentStepIndex: number;
+  rect: THREE.Mesh | null | undefined;
   currentStep: Step;
   getBlockColor: GetBlockColor;
-  animationState: AnimationState;
-  scene: THREE.Scene | null;
+  index: number;
   time: number;
+  vizType: VizType;
 }) => {
-  const rect = rects?.[currentStepIndex];
   if (!rect) {
     return;
   }
@@ -93,7 +92,7 @@ export const updateRects = ({
   const color = getBlockColor({
     x: currentStep.x,
     y: currentStep.y,
-    index: currentStepIndex,
+    index,
     saturation: lerp({
       start: 0,
       end: 100,
@@ -137,6 +136,37 @@ export const updateRects = ({
       timeOffset,
     })
   );
+};
+
+export const updateRects = ({
+  vizType,
+  rects,
+  path,
+  currentStepIndex,
+  currentStep,
+  getBlockColor,
+  animationState,
+  scene,
+  time,
+}: {
+  vizType: VizType;
+  rects: (THREE.Mesh | null)[] | null;
+  path: Step[];
+  currentStepIndex: number;
+  currentStep: Step;
+  getBlockColor: GetBlockColor;
+  animationState: AnimationState;
+  scene: THREE.Scene | null;
+  time: number;
+}) => {
+  updateRect({
+    rect: rects?.[currentStepIndex],
+    currentStep,
+    getBlockColor,
+    index: currentStepIndex,
+    time,
+    vizType,
+  });
 
   if (animationState.lastHandledBlockIndex < currentStepIndex) {
     animationState.lastHandledBlockIndex = currentStepIndex;
@@ -158,18 +188,18 @@ export const updateRects = ({
     }
   }
 
-  // if (DEBUG_SONG_END) {
-  //   range(0, currentStepIndex).forEach((index) => {
-  //     rects?.[index]?.setAttrs(
-  //       getBlockFinalForm({
-  //         vizType,
-  //         currentStep: path[index],
-  //         index,
-  //         getBlockColor,
-  //       })
-  //     );
-  //   });
-  // }
+  if (DEBUG_SONG_END) {
+    path.slice(0, currentStepIndex).forEach((step, index) =>
+      updateRect({
+        rect: rects?.[index],
+        currentStep: step,
+        getBlockColor,
+        index,
+        time,
+        vizType,
+      })
+    );
+  }
 };
 
 // const zoomOut = (

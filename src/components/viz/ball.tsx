@@ -5,10 +5,10 @@ import { type Mesh, Color } from "three";
 import { CIRCLE_SIZE, CIRCLE_COLOR } from "@/constants";
 import type { Step } from "@/types";
 import {
+  getCurrentStepAndTime,
   updateCameraPosition,
   updateCirclePosition,
   updateCircleScale,
-  getCurrentStep,
 } from "@/lib/animation";
 
 const getTrailWidthFactor = ({
@@ -45,9 +45,10 @@ export const Ball = ({
   const { camera } = useThree();
 
   useFrame((state) => {
-    const time = state.clock.elapsedTime;
-
-    const { currentStepIndex, currentStep } = getCurrentStep({ path, time });
+    const { time, currentStepIndex, currentStep } = getCurrentStepAndTime({
+      state,
+      path,
+    });
     const nextStep = path[currentStepIndex + 1];
 
     if (!ballRef.current) {
