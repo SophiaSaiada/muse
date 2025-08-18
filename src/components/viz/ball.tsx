@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Trail } from "@react-three/drei";
-import { type Mesh } from "three";
+import { type Mesh, Color } from "three";
 import { CIRCLE_SIZE, CIRCLE_COLOR } from "@/constants";
 import type { Step } from "@/types";
 import {
@@ -82,7 +82,7 @@ export const Ball = ({
       <Trail
         width={trailWidth}
         length={1}
-        color={CIRCLE_COLOR}
+        color={new Color(CIRCLE_COLOR).multiplyScalar(1.5)}
         attenuation={(t) => t * t}
         target={trailHeadRef}
       />
@@ -91,7 +91,10 @@ export const Ball = ({
 
       <mesh ref={ballRef}>
         <sphereGeometry args={[CIRCLE_SIZE / 2]} />
-        <meshStandardMaterial color={CIRCLE_COLOR} toneMapped />
+        <meshBasicMaterial
+          color={new Color(CIRCLE_COLOR).multiplyScalar(4)}
+          toneMapped={false}
+        />
       </mesh>
     </>
   );
