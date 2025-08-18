@@ -8,6 +8,7 @@ import {
   updateCameraPosition,
   updateCirclePosition,
   updateCircleScale,
+  getCurrentStep,
 } from "@/lib/animation";
 
 const getTrailWidthFactor = ({
@@ -45,12 +46,8 @@ export const Ball = ({
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
-    const currentStepIndex = Math.max(
-      path.findLastIndex(({ note: { when } }) => time >= when),
-      0
-    );
 
-    const currentStep = path[currentStepIndex];
+    const { currentStepIndex, currentStep } = getCurrentStep({ path, time });
     const nextStep = path[currentStepIndex + 1];
 
     if (!ballRef.current) {

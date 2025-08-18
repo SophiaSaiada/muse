@@ -35,6 +35,21 @@ export type GetBlockColor = (params: {
   saturation: number;
 }) => string;
 
+export const getCurrentStep = ({
+  path,
+  time,
+}: {
+  path: Step[];
+  time: number;
+}) => {
+  const currentStepIndex = Math.max(
+    path.findLastIndex(({ note: { when } }) => time >= when),
+    0
+  );
+  const currentStep = path[currentStepIndex];
+  return { currentStepIndex, currentStep };
+};
+
 export const updateRects = ({
   vizType,
   rects,
