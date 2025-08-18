@@ -7,11 +7,11 @@ import {
   CIRCLE_SIZE,
   // DEBUG_SONG_END,
   // IMAGE_REVEAL_SMOOTHING,
-  // SPARK_DISTANCE,
-  // SPARK_DURATION,
-  // SPARK_OFFSETS,
-  // SPARK_RANDOM_FACTOR,
-  // SPARK_SIZE,
+  SPARK_DISTANCE,
+  SPARK_DURATION_MS,
+  SPARK_OFFSETS,
+  SPARK_RANDOM_FACTOR,
+  SPARK_SIZE,
   STAR_COLOR_CHANGE_MAX_DURATION,
   // ZOOM_OUT_PADDING_FACTOR,
 } from "@/constants";
@@ -19,9 +19,10 @@ import type { Step, VizType } from "@/types";
 // import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
 // import { range } from "es-toolkit";
-// import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
+import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
 import type * as THREE from "three";
+import { Color, CircleGeometry, Mesh, MeshBasicMaterial } from "three";
 
 export type AnimationState = {
   lastHandledBlockIndex: number;
@@ -34,61 +35,6 @@ export type GetBlockColor = (params: {
   saturation: number;
 }) => string;
 
-const getBlockFinalForm = ({
-  currentStep,
-  index,
-  getBlockColor,
-}: {
-  currentStep: Step;
-  index: number;
-  getBlockColor: GetBlockColor;
-}): {
-  width: number;
-  height: number;
-  fill: string;
-  offsetX: number;
-  offsetY: number;
-  opacity: number;
-  shadowColor: string;
-  shadowBlur: number;
-  shadowOpacity: number;
-} => {
-  const height =
-    currentStep.newDirection.x === currentStep.directionOnHit.x
-      ? BLOCK_HEIGHT
-      : BLOCK_WIDTH;
-  const width =
-    currentStep.newDirection.y === currentStep.directionOnHit.y
-      ? BLOCK_HEIGHT
-      : BLOCK_WIDTH;
-
-  const fill = getBlockColor({
-    x: currentStep.x,
-    y: currentStep.y,
-    index,
-    saturation: 100,
-  });
-
-  const offsetX = width / 2;
-  const offsetY = height / 2;
-
-  const shadowColor = fill;
-  const shadowBlur = BLOCK_WIDTH / 2;
-  const shadowOpacity = 1;
-
-  return {
-    width,
-    height,
-    fill,
-    offsetX,
-    offsetY,
-    opacity: 1,
-    shadowColor,
-    shadowBlur,
-    shadowOpacity,
-  };
-};
-
 export const updateRects = ({
   vizType,
   rects,
@@ -97,7 +43,7 @@ export const updateRects = ({
   currentStep,
   getBlockColor,
   animationState,
-  // layer,
+  scene,
   time,
 }: {
   vizType: VizType;
@@ -107,7 +53,7 @@ export const updateRects = ({
   currentStep: Step;
   getBlockColor: GetBlockColor;
   animationState: AnimationState;
-  layer: null;
+  scene: THREE.Scene | null;
   time: number;
 }) => {
   const rect = rects?.[currentStepIndex];
@@ -115,75 +61,86 @@ export const updateRects = ({
     return;
   }
 
+  const finalHeight =
+    currentStep.newDirection.x === currentStep.directionOnHit.x
+      ? BLOCK_HEIGHT
+      : BLOCK_WIDTH;
+  const finalWidth =
+    currentStep.newDirection.y === currentStep.directionOnHit.y
+      ? BLOCK_HEIGHT
+      : BLOCK_WIDTH;
+
+  const timeOffset = currentStep?.note.when ?? 0;
+
+  const endTime =
+    timeOffset + Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION);
+
+  const color = getBlockColor({
+    x: currentStep.x,
+    y: currentStep.y,
+    index: currentStepIndex,
+    saturation: lerp({
+      start: 0,
+      end: 100,
+      time,
+      timeOffset,
+      endTime,
+    }),
+  });
+
+  (rect.material as THREE.MeshStandardMaterial).color.set(color);
+
+  const newWidth =
+    vizType === "TUNNEL"
+      ? finalWidth
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: finalWidth,
+          time,
+          endTime,
+          timeOffset,
+        });
+  const newHeight =
+    vizType === "TUNNEL"
+      ? finalHeight
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: finalHeight,
+          time,
+          endTime,
+          timeOffset,
+        });
+
+  rect.scale.set(
+    newWidth / BLOCK_HEIGHT,
+    newHeight / BLOCK_HEIGHT,
+    lerp({
+      start: BLOCK_HEIGHT,
+      end: BLOCK_WIDTH,
+      time,
+      endTime,
+      timeOffset,
+    })
+  );
+
   if (animationState.lastHandledBlockIndex < currentStepIndex) {
     animationState.lastHandledBlockIndex = currentStepIndex;
 
-    const blockFinalForm = getBlockFinalForm({
-      currentStep,
-      index: currentStepIndex,
-      getBlockColor,
-    });
-
-    const timeOffset = currentStep?.note.when ?? 0;
-
-    const endTime =
-      timeOffset +
-      Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION);
-
-    (rect.material as THREE.MeshStandardMaterial).color.set(
-      getBlockColor({
-        x: currentStep.x,
-        y: currentStep.y,
-        index: currentStepIndex,
-        saturation: lerp({
-          start: 0,
-          end: 100,
-          time,
-          timeOffset,
-          endTime,
+    if (
+      currentStep.directionOnHit.x !== currentStep.newDirection.x ||
+      currentStep.directionOnHit.y !== currentStep.newDirection.y
+    ) {
+      displaySparks({
+        currentStep,
+        blockColor: getBlockColor({
+          x: currentStep.x,
+          y: currentStep.y,
+          index: currentStepIndex,
+          saturation: 100,
         }),
-      })
-    );
-    const newWidth =
-      vizType === "TUNNEL"
-        ? blockFinalForm.width
-        : lerp({
-            start: BLOCK_HEIGHT,
-            end: blockFinalForm.width,
-            time,
-            endTime,
-            timeOffset,
-          });
-    const newHeight =
-      vizType === "TUNNEL"
-        ? blockFinalForm.height
-        : lerp({
-            start: BLOCK_HEIGHT,
-            end: blockFinalForm.height,
-            time,
-            endTime,
-            timeOffset,
-          });
-
-    rect.scale.set(
-      newWidth / BLOCK_HEIGHT,
-      newHeight / BLOCK_HEIGHT,
-      lerp({
-        start: BLOCK_HEIGHT,
-        end: BLOCK_WIDTH,
-        time,
-        endTime,
-        timeOffset,
-      })
-    );
-    // rect.scale.set(newWidth, newHeight, 1);
-
-    // if (
-    //   currentStep.directionOnHit.x !== currentStep.newDirection.x ||
-    //   currentStep.directionOnHit.y !== currentStep.newDirection.y
-    // ) {
-    //   displaySparks({ currentStep, fill: blockFinalForm.fill, layer });
-    // }
+        scene,
+      });
+    }
   }
 
   // if (DEBUG_SONG_END) {
@@ -252,88 +209,127 @@ export const updateRects = ({
 //   });
 // };
 
-// const displaySparks = ({
-//   currentStep,
-//   fill,
-//   layer,
-// }: {
-//   currentStep: Step;
-//   fill: Konva.CircleConfig["fill"];
-//   layer: Konva.Layer;
-// }) => {
-//   const initialX =
-//     currentStep.newDirection.x === currentStep.directionOnHit.x
-//       ? currentStep.x
-//       : getXOfStepInYAxis(
-//           { directionOnHit: currentStep.directionOnHit, x: currentStep.x },
-//           BLOCK_HEIGHT * 3 + SPARK_SIZE
-//         );
+const displaySparks = ({
+  currentStep,
+  blockColor,
+  scene,
+}: {
+  currentStep: Step;
+  blockColor: string;
+  scene: THREE.Scene | null;
+}) => {
+  if (!scene) {
+    return;
+  }
 
-//   const initialY =
-//     currentStep.newDirection.y === currentStep.directionOnHit.y
-//       ? currentStep.y
-//       : getYOfStepInXAxis(
-//           { directionOnHit: currentStep.directionOnHit, y: currentStep.y },
-//           BLOCK_HEIGHT * 3 + SPARK_SIZE
-//         );
+  const color = new Color(blockColor).multiplyScalar(2);
 
-//   SPARK_OFFSETS.forEach((offset) => {
-//     const spark = new Konva.Circle({
-//       x: initialX,
-//       y: initialY,
-//       radius: SPARK_SIZE,
-//       scaleX: 1,
-//       scaleY: 1,
-//       fill,
-//       opacity: 1,
-//     });
-//     layer.add(spark);
+  const initialX =
+    currentStep.newDirection.x === currentStep.directionOnHit.x
+      ? currentStep.x
+      : getXOfStepInYAxis(
+          { directionOnHit: currentStep.directionOnHit, x: currentStep.x },
+          BLOCK_HEIGHT * 3 + SPARK_SIZE
+        );
 
-//     const finalX =
-//       currentStep.newDirection.x === currentStep.directionOnHit.x
-//         ? initialX + offset * BLOCK_WIDTH
-//         : getXOfStepInYAxis(
-//             {
-//               directionOnHit: currentStep.directionOnHit,
-//               x: initialX,
-//             },
-//             BLOCK_HEIGHT * 3 +
-//               SPARK_DISTANCE *
-//                 (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
-//           );
+  const initialY =
+    currentStep.newDirection.y === currentStep.directionOnHit.y
+      ? currentStep.y
+      : getYOfStepInXAxis(
+          { directionOnHit: currentStep.directionOnHit, y: currentStep.y },
+          BLOCK_HEIGHT * 3 + SPARK_SIZE
+        );
 
-//     const finalY =
-//       currentStep.newDirection.y === currentStep.directionOnHit.y
-//         ? initialY + offset * BLOCK_WIDTH
-//         : getYOfStepInXAxis(
-//             {
-//               directionOnHit: currentStep.directionOnHit,
-//               y: initialY,
-//             },
-//             BLOCK_HEIGHT * 3 +
-//               SPARK_DISTANCE *
-//                 (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
-//           );
+  SPARK_OFFSETS.forEach((offset) => {
+    const spark = new Mesh(
+      new CircleGeometry(SPARK_SIZE, 32),
+      new MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 1,
+      })
+    );
 
-//     const sparkTween = new Konva.Tween({
-//       node: spark,
-//       duration: SPARK_DURATION,
-//       x: finalX,
-//       y: finalY,
-//       scaleX: 0.25,
-//       scaleY: 0.25,
-//       rotation: Math.random() * 360,
-//       opacity: 0,
-//       easing: Konva.Easings.EaseOut,
-//       onFinish: () => {
-//         sparkTween.destroy();
-//         spark.destroy();
-//       },
-//     });
+    spark.position.set(initialX, initialY, 0);
+    scene.add(spark);
 
-//     sparkTween.play();
-//   });
-// };
+    const finalX =
+      currentStep.newDirection.x === currentStep.directionOnHit.x
+        ? initialX + offset * BLOCK_WIDTH
+        : getXOfStepInYAxis(
+            {
+              directionOnHit: currentStep.directionOnHit,
+              x: initialX,
+            },
+            BLOCK_HEIGHT * 3 +
+              SPARK_DISTANCE *
+                (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
+          );
+
+    const finalY =
+      currentStep.newDirection.y === currentStep.directionOnHit.y
+        ? initialY + offset * BLOCK_WIDTH
+        : getYOfStepInXAxis(
+            {
+              directionOnHit: currentStep.directionOnHit,
+              y: initialY,
+            },
+            BLOCK_HEIGHT * 3 +
+              SPARK_DISTANCE *
+                (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
+          );
+
+    const startTime = performance.now();
+    const endTime = startTime + SPARK_DURATION_MS;
+
+    const stepFrame = (time: number) => {
+      spark.position.set(
+        lerp({
+          start: initialX,
+          end: finalX,
+          time,
+          timeOffset: startTime,
+          endTime,
+        }),
+        lerp({
+          start: initialY,
+          end: finalY,
+          time,
+          timeOffset: startTime,
+          endTime,
+        }),
+        0
+      );
+
+      const scale = lerp({
+        start: 1,
+        end: 0.25,
+        time,
+        timeOffset: startTime,
+        endTime,
+      });
+      spark.scale.set(scale, scale, scale);
+
+      spark.material.opacity = lerp({
+        start: 1,
+        end: 0,
+        time,
+        timeOffset: startTime,
+        endTime,
+      });
+
+      if (time < endTime) {
+        requestAnimationFrame(stepFrame);
+      } else {
+        scene.remove(spark);
+        spark.geometry.dispose();
+        spark.material.dispose();
+      }
+    };
+
+    requestAnimationFrame(stepFrame);
+  });
+};
 
 function getCircleScale({
   currentStep,

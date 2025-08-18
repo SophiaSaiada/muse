@@ -1,10 +1,14 @@
 import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import type { Mesh } from "three";
 import { BLOCK_HEIGHT } from "@/constants";
 import type { Step, VizType } from "@/types";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
-import { updateRects, type GetBlockColor } from "@/lib/animation";
+import {
+  updateRects,
+  type AnimationState,
+  type GetBlockColor,
+} from "@/lib/animation";
 
 export const Blocks = ({
   path,
@@ -16,6 +20,11 @@ export const Blocks = ({
   vizType: VizType;
 }) => {
   const rectRefs = useRef<(Mesh | null)[]>([]);
+
+  const { scene } = useThree();
+  const animationState = useRef<AnimationState>({
+    lastHandledBlockIndex: -1,
+  });
 
   useFrame((state) => {
     const time = state.clock.elapsedTime;
@@ -32,9 +41,9 @@ export const Blocks = ({
       currentStepIndex,
       currentStep,
       getBlockColor,
-      animationState: { lastHandledBlockIndex: -1 },
+      animationState: animationState.current,
       time,
-      layer: null,
+      scene,
     });
   });
 
