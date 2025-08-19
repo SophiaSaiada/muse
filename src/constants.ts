@@ -21,12 +21,19 @@ export const BEATS_VOLUME_FACTOR = 0.1;
 export const SONG_DURATION_GRACE_PERIOD_SECONDS = 0.5;
 
 // Speed & Camera
+export const CAMERA_Z_LANDSCAPE = SCALE * 50;
+export const CAMERA_Z_PORTRAIT = SCALE * 35;
+export const DEFAULT_CAMERA_PROPS = {
+  far: 3000,
+  fov: 75,
+} as const;
 export const SPEED = SCALE * 25;
 export const CAMERA_FOLLOW_SMOOTHING = 0.2;
 
 // Viz type
 export const VIZ_TYPE_LOCAL_STORAGE_KEY = "vizType" as const;
 export const INITIAL_VIZ_TYPE: VizType = "STARS";
+export const THREE_D_LOCAL_STORAGE_KEY = "threeD" as const;
 
 // Circle & Block Animations
 export const BOUNCE_ANIMATION_HALF_TIME = 0.05;
@@ -40,7 +47,7 @@ export const BLOCK_HUE_CHANGE_OPEN_ANIMATION_INDEX_INTERVAL = 20;
 
 // Sparks Animation
 export const SPARK_DISTANCE = BLOCK_WIDTH * 2;
-export const SPARK_DURATION = 0.75;
+export const SPARK_DURATION_MS = 750;
 export const SPARK_OFFSETS = [-1, -0.3, 0, 0.6, 1];
 export const SPARK_RANDOM_FACTOR = 0.3;
 

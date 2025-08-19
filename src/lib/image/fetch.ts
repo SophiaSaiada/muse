@@ -3,6 +3,7 @@ import type { ImageData } from "@/types";
 export const fetchPNGImageData = async (imageUrl: string) => {
   const imageResponse = await fetch(imageUrl);
   const imageBlob = await imageResponse.blob();
+  const imageBitmap = await createImageBitmap(imageBlob);
 
   return new Promise<ImageData>((resolve) => {
     const img = new Image();
@@ -15,7 +16,7 @@ export const fetchPNGImageData = async (imageUrl: string) => {
           rgbaValues: [],
           imageWidth: 0,
           imageHeight: 0,
-          image: img,
+          imageBitmap,
         });
         return;
       }
@@ -40,7 +41,7 @@ export const fetchPNGImageData = async (imageUrl: string) => {
         rgbaValues,
         imageWidth: img.width,
         imageHeight: img.height,
-        image: img,
+        imageBitmap,
       });
     };
 

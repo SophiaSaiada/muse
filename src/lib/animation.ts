@@ -4,23 +4,32 @@ import {
   BOUNCE_ANIMATION_HALF_TIME,
   BOUNCE_ANIMATION_SCALE_FACTOR,
   CAMERA_FOLLOW_SMOOTHING,
+  CIRCLE_SIZE,
   DEBUG_SONG_END,
   IMAGE_REVEAL_SMOOTHING,
   SPARK_DISTANCE,
-  SPARK_DURATION,
+  SPARK_DURATION_MS,
   SPARK_OFFSETS,
   SPARK_RANDOM_FACTOR,
   SPARK_SIZE,
   STAR_COLOR_CHANGE_MAX_DURATION,
   ZOOM_OUT_PADDING_FACTOR,
 } from "@/constants";
-import type { ImageData, Step, VizType } from "@/types";
+import type { Step, VizType } from "@/types";
 import type { Region } from "@/types";
 import { smoothstep } from "@/lib/smoothstep";
-import Konva from "konva";
-import { range } from "es-toolkit";
 import { getXOfStepInYAxis, getYOfStepInXAxis } from "@/lib/tunnel";
 import { lerp } from "@/lib/utils";
+import type * as THREE from "three";
+import {
+  Color,
+  CircleGeometry,
+  Mesh,
+  MeshBasicMaterial,
+  PerspectiveCamera,
+  OrthographicCamera,
+} from "three";
+import type { RootState } from "@react-three/fiber";
 
 export type AnimationState = {
   lastHandledBlockIndex: number;
@@ -33,128 +42,111 @@ export type GetBlockColor = (params: {
   saturation: number;
 }) => string;
 
-export const handleAnimation = ({
-  time,
-  lastNoteTime,
-  denseRegion,
-  imageData,
+export const getCurrentStepAndTime = ({
+  state,
   path,
-  vizType,
-  getBlockColor,
-  animationState,
-  konvaObjects,
 }: {
-  time: number;
-  lastNoteTime: number;
-  denseRegion: Region | undefined;
-  imageData: ImageData | undefined;
+  state: RootState;
   path: Step[];
-  vizType: VizType;
-  getBlockColor: GetBlockColor;
-  animationState: AnimationState;
-  konvaObjects: {
-    layer: Konva.Layer | null;
-    stage: Konva.Stage | null;
-    image: Konva.Image | null;
-    nearPartOfTrail: Konva.Circle | null;
-    farPartOfTrail: Konva.Circle | null;
-    circle: Konva.Circle | null;
-    rects: (Konva.Rect | null)[] | null;
-  };
 }) => {
-  if (time > lastNoteTime) {
-    if (denseRegion && imageData && konvaObjects.stage) {
-      zoomOut(
-        konvaObjects.layer,
-        denseRegion,
-        konvaObjects.stage,
-        konvaObjects.image
-      );
-    }
-    return;
-  }
+  const lastNoteTime = Math.max(...path.map(({ note: { when } }) => when));
+
+  const time =
+    state.clock.elapsedTime + (DEBUG_SONG_END ? lastNoteTime - 1 : 0);
+
+  const isAfterLastNote = time > lastNoteTime;
 
   const currentStepIndex = Math.max(
     path.findLastIndex(({ note: { when } }) => time >= when),
     0
   );
   const currentStep = path[currentStepIndex];
-  const nextStep = path[currentStepIndex + 1];
-
-  updateTrailPosition(konvaObjects);
-
-  updateCirclePosition({
-    currentStep,
-    nextStep,
-    time,
-    ...konvaObjects,
-  });
-
-  updateCameraPosition(konvaObjects);
-
-  updateCircleScale({
-    currentStep,
-    time,
-    ...konvaObjects,
-  });
-
-  updateRects({
-    vizType,
-    path,
-    currentStepIndex,
-    currentStep,
-    getBlockColor,
-    animationState,
-    ...konvaObjects,
-  });
+  return { time, currentStepIndex, currentStep, isAfterLastNote };
 };
 
-const getBlockFinalForm = ({
-  vizType,
+const updateRect = ({
+  rect,
   currentStep,
-  index,
   getBlockColor,
+  index,
+  time,
+  vizType,
 }: {
-  vizType: VizType;
+  rect: THREE.Mesh | null | undefined;
   currentStep: Step;
-  index: number;
   getBlockColor: GetBlockColor;
-}): Konva.RectConfig => {
-  const form: Konva.RectConfig = {};
+  index: number;
+  time: number;
+  vizType: VizType;
+}) => {
+  if (!rect) {
+    return;
+  }
 
-  const height =
+  const finalHeight =
     currentStep.newDirection.x === currentStep.directionOnHit.x
       ? BLOCK_HEIGHT
       : BLOCK_WIDTH;
-  const width =
+  const finalWidth =
     currentStep.newDirection.y === currentStep.directionOnHit.y
       ? BLOCK_HEIGHT
       : BLOCK_WIDTH;
 
-  form.fill = getBlockColor({
+  const timeOffset = currentStep?.note.when ?? 0;
+
+  const endTime =
+    timeOffset + Math.min(currentStep.duration, STAR_COLOR_CHANGE_MAX_DURATION);
+
+  const color = getBlockColor({
     x: currentStep.x,
     y: currentStep.y,
     index,
-    saturation: 100,
+    saturation: lerp({
+      start: 0,
+      end: 100,
+      time,
+      timeOffset,
+      endTime,
+    }),
   });
 
-  form.width = width;
-  form.height = height;
-  form.offsetX = width / 2;
-  form.offsetY = height / 2;
+  (rect.material as THREE.MeshStandardMaterial).color.set(color);
 
-  if (vizType === "TUNNEL") {
-    form.opacity = 1;
-  }
+  const newWidth =
+    vizType === "TUNNEL"
+      ? finalWidth
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: finalWidth,
+          time,
+          endTime,
+          timeOffset,
+        });
+  const newHeight =
+    vizType === "TUNNEL"
+      ? finalHeight
+      : lerp({
+          start: BLOCK_HEIGHT,
+          end: finalHeight,
+          time,
+          endTime,
+          timeOffset,
+        });
 
-  form.shadowColor = form.fill;
-  form.shadowBlur = BLOCK_WIDTH / 2;
-  form.shadowOpacity = 1;
-
-  return form;
+  rect.scale.set(
+    newWidth / BLOCK_HEIGHT,
+    newHeight / BLOCK_HEIGHT,
+    lerp({
+      start: BLOCK_HEIGHT,
+      end: BLOCK_WIDTH,
+      time,
+      endTime,
+      timeOffset,
+    })
+  );
 };
 
-const updateRects = ({
+export const updateRects = ({
   vizType,
   rects,
   path,
@@ -162,131 +154,148 @@ const updateRects = ({
   currentStep,
   getBlockColor,
   animationState,
-  layer,
+  scene,
+  time,
 }: {
   vizType: VizType;
-  rects: (Konva.Rect | null)[] | null;
+  rects: (THREE.Mesh | null)[] | null;
   path: Step[];
   currentStepIndex: number;
   currentStep: Step;
   getBlockColor: GetBlockColor;
   animationState: AnimationState;
-  layer: Konva.Layer | null;
+  scene: THREE.Scene | null;
+  time: number;
 }) => {
-  const rect = rects?.[currentStepIndex];
-  if (!rect) {
-    return;
-  }
+  updateRect({
+    rect: rects?.[currentStepIndex],
+    currentStep,
+    getBlockColor,
+    index: currentStepIndex,
+    time,
+    vizType,
+  });
 
-  const animationDuration = Math.min(
-    currentStep.duration,
-    STAR_COLOR_CHANGE_MAX_DURATION
-  );
-
-  if (animationState.lastHandledBlockIndex < currentStepIndex && layer) {
+  if (animationState.lastHandledBlockIndex < currentStepIndex) {
     animationState.lastHandledBlockIndex = currentStepIndex;
-
-    const blockFinalForm = getBlockFinalForm({
-      vizType,
-      currentStep,
-      index: currentStepIndex,
-      getBlockColor,
-    });
-
-    const tween = new Konva.Tween({
-      node: rect,
-      duration: animationDuration,
-      ...blockFinalForm,
-      easing: Konva.Easings.EaseOut,
-      onFinish: () => {
-        tween.destroy();
-      },
-    });
-    tween.play();
 
     if (
       currentStep.directionOnHit.x !== currentStep.newDirection.x ||
       currentStep.directionOnHit.y !== currentStep.newDirection.y
     ) {
-      displaySparks({ currentStep, fill: blockFinalForm.fill, layer });
+      displaySparks({
+        currentStep,
+        blockColor: getBlockColor({
+          x: currentStep.x,
+          y: currentStep.y,
+          index: currentStepIndex,
+          saturation: 100,
+        }),
+        scene,
+      });
     }
   }
 
   if (DEBUG_SONG_END) {
-    range(0, currentStepIndex).forEach((index) => {
-      rects?.[index]?.setAttrs(
-        getBlockFinalForm({
-          vizType,
-          currentStep: path[index],
-          index,
-          getBlockColor,
-        })
-      );
-    });
+    path.slice(0, currentStepIndex).forEach((step, index) =>
+      updateRect({
+        rect: rects?.[index],
+        currentStep: step,
+        getBlockColor,
+        index,
+        time,
+        vizType,
+      })
+    );
   }
 };
 
-const zoomOut = (
-  layer: Konva.Layer | null,
-  denseRegion: Region,
-  stage: Konva.Stage,
-  imageRef: Konva.Image | null
-) => {
-  if (!layer) {
-    return;
+const fadeInImage = (imageMaterial: MeshBasicMaterial | null | undefined) => {
+  if (imageMaterial) {
+    imageMaterial.opacity = smoothstep(
+      imageMaterial.opacity,
+      0.125,
+      IMAGE_REVEAL_SMOOTHING
+    );
   }
+};
 
-  const currentScaleX = layer.scaleX();
+export const zoomOut = (
+  camera: THREE.Camera,
+  denseRegion: Region,
+  size: { width: number; height: number },
+  imageMaterial: MeshBasicMaterial | null | undefined
+) => {
+  const actualWidth =
+    denseRegion.endX -
+    denseRegion.startX +
+    size.width * ZOOM_OUT_PADDING_FACTOR * 2;
+  const actualHeight =
+    denseRegion.endY -
+    denseRegion.startY +
+    size.height * ZOOM_OUT_PADDING_FACTOR * 2;
 
-  const actualWidth = denseRegion.endX - denseRegion.startX;
-  const actualHeight = denseRegion.endY - denseRegion.startY;
+  if (camera instanceof PerspectiveCamera) {
+    const denseRegionSize = Math.max(actualHeight, actualWidth);
+    const fovFactor = size.width < size.height ? size.height / size.width : 1; // scene scale is determined by the height, so it'll be clipped only on portrait mode
 
-  const desiredScale = Math.min(
-    stage.height() /
-      (actualHeight + stage.height() * ZOOM_OUT_PADDING_FACTOR * 2),
-    stage.width() / (actualWidth + stage.width() * ZOOM_OUT_PADDING_FACTOR * 2)
-  );
+    const desiredFov = // https://stackoverflow.com/a/55009832
+      2 *
+      Math.atan((fovFactor * denseRegionSize) / (2 * camera.position.z)) *
+      (180 / Math.PI);
 
-  if (Math.abs(desiredScale - layer.scaleX()) < 0.001) {
-    if (imageRef) {
-      imageRef.opacity(
-        smoothstep(imageRef.opacity(), 0.125, IMAGE_REVEAL_SMOOTHING)
-      );
+    if (Math.abs(desiredFov - camera.fov) < 0.001) {
+      fadeInImage(imageMaterial);
+      return;
     }
 
-    return;
+    camera.fov = smoothstep(camera.fov, desiredFov, CAMERA_FOLLOW_SMOOTHING);
+    camera.updateProjectionMatrix();
+  } else if (camera instanceof OrthographicCamera) {
+    const desiredScale = Math.max(
+      actualWidth / size.width,
+      actualHeight / size.height
+    );
+
+    if (Math.abs(desiredScale - camera.scale.x) < 0.001) {
+      fadeInImage(imageMaterial);
+      return;
+    }
+
+    const scale = smoothstep(
+      camera.scale.x,
+      desiredScale,
+      CAMERA_FOLLOW_SMOOTHING
+    );
+    camera.scale.set(scale, scale, camera.scale.z);
+    camera.updateProjectionMatrix();
   }
 
-  const newScale = smoothstep(
-    currentScaleX,
-    desiredScale,
-    CAMERA_FOLLOW_SMOOTHING
+  const desiredX = (denseRegion.startX + denseRegion.endX) / 2;
+  const desiredY = (denseRegion.startY + denseRegion.endY) / 2;
+
+  camera.position.set(
+    smoothstep(camera.position.x, desiredX, CAMERA_FOLLOW_SMOOTHING),
+    smoothstep(camera.position.y, desiredY, CAMERA_FOLLOW_SMOOTHING),
+    camera.position.z
   );
-
-  layer.scale({ x: newScale, y: newScale });
-
-  const desiredX =
-    stage.width() / 2 -
-    ((denseRegion.startX + denseRegion.endX) / 2) * newScale;
-  const desiredY =
-    stage.height() / 2 -
-    ((denseRegion.startY + denseRegion.endY) / 2) * newScale;
-
-  layer.position({
-    x: smoothstep(layer.x(), desiredX, CAMERA_FOLLOW_SMOOTHING),
-    y: smoothstep(layer.y(), desiredY, CAMERA_FOLLOW_SMOOTHING),
-  });
 };
 
 const displaySparks = ({
   currentStep,
-  fill,
-  layer,
+  blockColor,
+  scene,
 }: {
   currentStep: Step;
-  fill: Konva.CircleConfig["fill"];
-  layer: Konva.Layer;
+  blockColor: string;
+  scene: THREE.Scene | null;
 }) => {
+  if (!scene) {
+    return;
+  }
+
+  const color = new Color(blockColor).multiplyScalar(2);
+
   const initialX =
     currentStep.newDirection.x === currentStep.directionOnHit.x
       ? currentStep.x
@@ -304,16 +313,17 @@ const displaySparks = ({
         );
 
   SPARK_OFFSETS.forEach((offset) => {
-    const spark = new Konva.Circle({
-      x: initialX,
-      y: initialY,
-      radius: SPARK_SIZE,
-      scaleX: 1,
-      scaleY: 1,
-      fill,
-      opacity: 1,
-    });
-    layer.add(spark);
+    const spark = new Mesh(
+      new CircleGeometry(SPARK_SIZE, 32),
+      new MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 1,
+      })
+    );
+
+    spark.position.set(initialX, initialY, 0);
+    scene.add(spark);
 
     const finalX =
       currentStep.newDirection.x === currentStep.directionOnHit.x
@@ -341,23 +351,55 @@ const displaySparks = ({
                 (1 - SPARK_RANDOM_FACTOR + Math.random() * SPARK_RANDOM_FACTOR)
           );
 
-    const sparkTween = new Konva.Tween({
-      node: spark,
-      duration: SPARK_DURATION,
-      x: finalX,
-      y: finalY,
-      scaleX: 0.25,
-      scaleY: 0.25,
-      rotation: Math.random() * 360,
-      opacity: 0,
-      easing: Konva.Easings.EaseOut,
-      onFinish: () => {
-        sparkTween.destroy();
-        spark.destroy();
-      },
-    });
+    const startTime = performance.now();
+    const endTime = startTime + SPARK_DURATION_MS;
 
-    sparkTween.play();
+    const stepFrame = (time: number) => {
+      spark.position.set(
+        lerp({
+          start: initialX,
+          end: finalX,
+          time,
+          timeOffset: startTime,
+          endTime,
+        }),
+        lerp({
+          start: initialY,
+          end: finalY,
+          time,
+          timeOffset: startTime,
+          endTime,
+        }),
+        0
+      );
+
+      const scale = lerp({
+        start: 1,
+        end: 0.25,
+        time,
+        timeOffset: startTime,
+        endTime,
+      });
+      spark.scale.set(scale, scale, scale);
+
+      spark.material.opacity = lerp({
+        start: 1,
+        end: 0,
+        time,
+        timeOffset: startTime,
+        endTime,
+      });
+
+      if (time < endTime) {
+        requestAnimationFrame(stepFrame);
+      } else {
+        scene.remove(spark);
+        spark.geometry.dispose();
+        spark.material.dispose();
+      }
+    };
+
+    requestAnimationFrame(stepFrame);
   });
 };
 
@@ -393,100 +435,89 @@ function getCircleScale({
   }
   return 1;
 }
-const updateCircleScale = ({
+
+export const updateCircleScale = ({
   currentStep,
   time,
   circle,
 }: {
   currentStep: Step;
   time: number;
-  circle: Konva.Circle | null;
+  circle: THREE.Mesh | null;
 }) => {
   const scale = getCircleScale({ currentStep, time });
-  circle?.scale({ x: scale, y: scale });
+  circle?.scale.set(scale, scale, circle.scale.z);
 };
 
-const updateTrailPosition = ({
-  nearPartOfTrail,
-  farPartOfTrail,
-  circle,
-}: {
-  nearPartOfTrail: Konva.Circle | null;
-  farPartOfTrail: Konva.Circle | null;
-  circle: Konva.Circle | null;
-}) => {
-  farPartOfTrail?.x(nearPartOfTrail?.x());
-  farPartOfTrail?.y(nearPartOfTrail?.y());
-
-  nearPartOfTrail?.x(circle?.x());
-  nearPartOfTrail?.y(circle?.y());
-};
-
-const updateCirclePosition = ({
+export const updateCirclePosition = ({
   currentStep,
   nextStep,
   time,
   circle,
+  trailHead,
 }: {
   currentStep: Step;
   nextStep: Step | undefined;
   time: number;
-  circle: Konva.Circle | null;
+  circle: THREE.Mesh | null;
+  trailHead: THREE.Mesh | null;
 }) => {
   if (!nextStep) {
     return;
   }
 
-  circle?.position({
-    x: lerp({
-      start: currentStep.x,
-      end: nextStep.x,
-      time,
-      timeOffset: currentStep.note.when,
-      endTime: nextStep.note.when,
-    }),
-    y: lerp({
-      start: currentStep.y,
-      end: nextStep.y,
-      time,
-      timeOffset: currentStep.note.when,
-      endTime: nextStep.note.when,
-    }),
+  const x = lerp({
+    start: currentStep.x,
+    end: nextStep.x,
+    time,
+    timeOffset: currentStep.note.when,
+    endTime: nextStep.note.when,
   });
+  const y = lerp({
+    start: currentStep.y,
+    end: nextStep.y,
+    time,
+    timeOffset: currentStep.note.when,
+    endTime: nextStep.note.when,
+  });
+
+  circle?.position.set(x, y, circle.position.z);
+
+  const trailHeadOffsetX =
+    Math.abs(nextStep.x - x) < CIRCLE_SIZE / 4
+      ? 0
+      : nextStep.x > currentStep.x
+      ? CIRCLE_SIZE / 2
+      : -CIRCLE_SIZE / 2;
+  const trailHeadOffsetY =
+    Math.abs(nextStep.y - y) < CIRCLE_SIZE / 4
+      ? 0
+      : nextStep.y > currentStep.y
+      ? CIRCLE_SIZE / 2
+      : -CIRCLE_SIZE / 2;
+
+  trailHead?.position.set(x + trailHeadOffsetX, y + trailHeadOffsetY, 0);
 };
 
-const updateCameraPosition = ({
-  layer,
+export const updateCameraPosition = ({
+  camera,
   circle,
-  stage,
 }: {
-  layer: Konva.Layer | null;
-  circle: Konva.Circle | null;
-  stage: Konva.Stage | null;
+  camera: THREE.Camera | null;
+  circle: THREE.Mesh | null;
 }) => {
-  if (!stage) {
+  if (!camera || !circle) {
     return;
   }
 
-  const width = stage.width();
-  const height = stage.height();
+  const desiredX = circle.position.x;
+  const desiredY = circle.position.y;
 
-  const containerXCenter = width / 2;
-  const containerYCenter = height / 2;
-
-  if (!layer || !circle) {
-    return;
-  }
-
-  const desiredX = containerXCenter - circle.x();
-  const desiredY = containerYCenter - circle.y();
-
-  const currentX = layer.x();
-  const currentY = layer.y();
+  const currentX = camera.position.x;
+  const currentY = camera.position.y;
 
   const newX = smoothstep(currentX, desiredX, CAMERA_FOLLOW_SMOOTHING);
   const newY = smoothstep(currentY, desiredY, CAMERA_FOLLOW_SMOOTHING);
 
-  layer.x(newX);
-  layer.y(newY);
+  camera.position.set(newX, newY, camera.position.z);
 };

@@ -40,7 +40,7 @@ export const getBlockMappedColor = ({
   const mappedX =
     ((x - (denseRegion?.startX ?? 0)) / actualWidth) * imageData.imageWidth;
   const mappedY =
-    ((y - (denseRegion?.startY ?? 0)) / actualHeight) * imageData.imageHeight;
+    (((denseRegion?.endY ?? 0) - y) / actualHeight) * imageData.imageHeight;
 
   const mappedIndex =
     Math.floor(mappedX) + Math.floor(mappedY) * imageData.imageWidth;
