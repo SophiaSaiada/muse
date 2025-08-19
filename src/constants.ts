@@ -97,7 +97,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
   {
     id: "Golden",
     displayName: "K-Pop Demon Hunters - Golden",
-    artwork: "/artworks/golden.jpg",
+    artwork: "/artworks/golden.png",
     source: "e",
   },
   {
