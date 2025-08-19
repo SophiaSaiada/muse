@@ -235,26 +235,32 @@ export const zoomOut = (
     denseRegion.startY +
     size.height * ZOOM_OUT_PADDING_FACTOR * 2;
 
-  // TODO: fix in mobile
   if (camera instanceof PerspectiveCamera) {
-    const fovHeight =
-      2 * Math.atan(actualHeight / (2 * camera.position.z)) * (180 / Math.PI);
-    const fovWidth =
-      2 * Math.atan(actualWidth / (2 * camera.position.z)) * (180 / Math.PI);
-    const desiredFov = Math.max(fovHeight, fovWidth);
+    const denseRegionSize = Math.max(actualHeight, actualWidth);
+    const fovFactor = size.width < size.height ? size.height / size.width : 1; // scene scale is determined by the height, so it'll be clipped only on portrait mode
 
-    camera.fov = smoothstep(camera.fov, desiredFov, CAMERA_FOLLOW_SMOOTHING);
-    camera.updateProjectionMatrix();
+    const desiredFov = // https://stackoverflow.com/a/55009832
+      2 *
+      Math.atan((fovFactor * denseRegionSize) / (2 * camera.position.z)) *
+      (180 / Math.PI);
 
     if (Math.abs(desiredFov - camera.fov) < 0.001) {
       fadeInImage(imageMaterial);
       return;
     }
+
+    camera.fov = smoothstep(camera.fov, desiredFov, CAMERA_FOLLOW_SMOOTHING);
+    camera.updateProjectionMatrix();
   } else if (camera instanceof OrthographicCamera) {
     const desiredScale = Math.max(
       actualWidth / size.width,
       actualHeight / size.height
     );
+
+    if (Math.abs(desiredScale - camera.scale.x) < 0.001) {
+      fadeInImage(imageMaterial);
+      return;
+    }
 
     const scale = smoothstep(
       camera.scale.x,
@@ -263,11 +269,6 @@ export const zoomOut = (
     );
     camera.scale.set(scale, scale, camera.scale.z);
     camera.updateProjectionMatrix();
-
-    if (Math.abs(desiredScale - camera.scale.x) < 0.001) {
-      fadeInImage(imageMaterial);
-      return;
-    }
   }
 
   const desiredX = (denseRegion.startX + denseRegion.endX) / 2;
