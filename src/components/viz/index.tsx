@@ -18,6 +18,7 @@ import { type GetBlockColor } from "@/lib/animation";
 import { Ball } from "@/components/viz/ball";
 import { Blocks } from "@/components/viz/blocks";
 import { ZoomOutImage } from "@/components/viz/zoom-out-image";
+import { Tunnel } from "@/components/tunnel";
 
 export const Viz = ({
   path,
@@ -100,6 +101,8 @@ export const Viz = ({
           path={path}
         />
       )}
+
+      <Tunnel path={path} />
 
       <Blocks path={path} getBlockColor={getBlockColor} vizType={vizType} />
 
