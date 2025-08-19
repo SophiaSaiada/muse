@@ -462,7 +462,7 @@ export const updateCirclePosition = ({
   circle: THREE.Mesh | null;
   trailHead: THREE.Mesh | null;
 }) => {
-  if (!nextStep) {
+  if (!nextStep || !circle) {
     return;
   }
 
@@ -481,7 +481,16 @@ export const updateCirclePosition = ({
     endTime: nextStep.note.when,
   });
 
-  circle?.position.set(x, y, circle.position.z);
+  circle.position.set(x, y, circle.position.z);
+
+  circle.rotation.x = smoothstep(
+    circle.rotation.x,
+    (Math.PI / 4) * Math.sign(currentStep.newDirection.x) * -1,
+    CAMERA_FOLLOW_SMOOTHING
+  );
+  circle.rotation.y =
+    (Math.PI / 4) * Math.sign(currentStep.newDirection.y) * -1;
+  circle.rotation.z += Math.PI / 60;
 
   const trailHeadOffsetX =
     Math.abs(nextStep.x - x) < CIRCLE_SIZE / 4

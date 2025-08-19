@@ -91,7 +91,7 @@ export const Ball = ({
 
       <mesh ref={ballRef}>
         <sphereGeometry args={[CIRCLE_SIZE / 2]} />
-        <meshBasicMaterial
+        <meshStandardMaterial
           color={new Color(CIRCLE_COLOR).multiplyScalar(4)}
           toneMapped={false}
         />
