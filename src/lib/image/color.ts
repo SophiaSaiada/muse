@@ -11,6 +11,8 @@ const BLUE_HUE_LIGHTNESS_ADDITION = 10;
 const hslToString = ({ h, s, l }: { h: number; s: number; l: number }) =>
   `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
 
+const DEFAULT_COLOR = hslToString({ h: 0, s: 0, l: DEFAULT_LIGHTNESS });
+
 export const getBlockMappedColor = ({
   imageData,
   index,
@@ -30,17 +32,26 @@ export const getBlockMappedColor = ({
     return getBlockColorByIndex({ index, saturation });
   }
 
-  const actualWidth = denseRegion?.endX
+  if (
+    x < denseRegion.startX ||
+    denseRegion.endX < x ||
+    y < denseRegion.startY ||
+    denseRegion.endY < y
+  ) {
+    return DEFAULT_COLOR;
+  }
+
+  const actualWidth = denseRegion.endX
     ? denseRegion.endX - denseRegion.startX
     : 0;
-  const actualHeight = denseRegion?.endY
+  const actualHeight = denseRegion.endY
     ? denseRegion.endY - denseRegion.startY
     : 0;
 
   const mappedX =
-    ((x - (denseRegion?.startX ?? 0)) / actualWidth) * imageData.imageWidth;
+    ((x - denseRegion.startX) / actualWidth) * imageData.imageWidth;
   const mappedY =
-    (((denseRegion?.endY ?? 0) - y) / actualHeight) * imageData.imageHeight;
+    ((denseRegion.endY - y) / actualHeight) * imageData.imageHeight;
 
   const mappedIndex =
     Math.floor(mappedX) + Math.floor(mappedY) * imageData.imageWidth;
@@ -48,7 +59,7 @@ export const getBlockMappedColor = ({
   const rgba = imageData.rgbaValues[mappedIndex];
   const hsl = rgba && rgbToHsl(rgba);
   if (!rgba || rgba.a === 0 || hsl.s < 0.3 || hsl.l < 0.3) {
-    return hslToString({ h: 0, s: 0, l: DEFAULT_LIGHTNESS });
+    return DEFAULT_COLOR;
   }
 
   return hslToString({
