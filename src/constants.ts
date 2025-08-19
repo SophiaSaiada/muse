@@ -100,4 +100,10 @@ export const MIDI_FILES: MidiFileWithName[] = [
     artwork: "/artworks/golden.jpg",
     source: "e",
   },
+  {
+    id: "MyLittlePony",
+    displayName: "My Little Pony",
+    artwork: "/artworks/mlp.png",
+    source: "e",
+  },
 ];
