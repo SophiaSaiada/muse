@@ -21,6 +21,7 @@ import { trimSong } from "@/lib/trim-song";
 import { adjustBeats } from "@/lib/adjust-beats";
 import { fetchPNGImageData } from "@/lib/image/fetch";
 import { fetchSong } from "@/lib/midi/fetch";
+import { loadTextures } from "@/lib/texture";
 
 export const SongRoute = () => {
   const [vizType] = useLocalStorage<VizType>(
@@ -54,16 +55,17 @@ export const SongRoute = () => {
       };
 
       const player = new MIDIPlayer();
-      const [, { path, denseRegion }] = await Promise.all([
+      const [, { path, denseRegion }, textures] = await Promise.all([
         player.preloadInstruments(song),
         calculatePath({
           song,
           speed: SPEED,
           vizType: vizType ?? "STARS",
         }),
+        loadTextures(),
       ]);
 
-      return { path, player, denseRegion, song, imageData };
+      return { path, player, denseRegion, song, imageData, textures };
     },
     {
       errorRetryCount: 0,
@@ -107,6 +109,7 @@ export const SongRoute = () => {
       path={data.path}
       imageData={data.imageData}
       denseRegion={data.denseRegion}
+      textures={data.textures}
     />
   ) : (
     <PlayScreen

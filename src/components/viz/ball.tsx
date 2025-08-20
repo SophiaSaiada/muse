@@ -10,6 +10,7 @@ import {
   updateCirclePosition,
   updateCircleScale,
 } from "@/lib/animation";
+import type { Textures } from "@/lib/texture";
 
 const getTrailWidthFactor = ({
   threeD,
@@ -32,10 +33,12 @@ export const Ball = ({
   path,
   threeD,
   isLandscape,
+  textures,
 }: {
   path: Step[];
   threeD: boolean;
   isLandscape: boolean;
+  textures: Textures["ball"];
 }) => {
   const ballRef = useRef<Mesh>(null);
   const trailHeadRef = useRef<Mesh>(null!);
@@ -94,6 +97,8 @@ export const Ball = ({
         <meshStandardMaterial
           color={new Color(CIRCLE_COLOR).multiplyScalar(4)}
           toneMapped={false}
+          map={textures.map}
+          displacementMap={textures.displacementMap}
         />
       </mesh>
     </>

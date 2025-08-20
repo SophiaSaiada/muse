@@ -490,7 +490,7 @@ export const updateCirclePosition = ({
   );
   circle.rotation.y =
     (Math.PI / 4) * Math.sign(currentStep.newDirection.y) * -1;
-  circle.rotation.z += Math.PI / 60;
+  circle.rotation.z += Math.PI / 15;
 
   const trailHeadOffsetX =
     Math.abs(nextStep.x - x) < CIRCLE_SIZE / 4

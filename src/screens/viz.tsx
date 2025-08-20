@@ -1,18 +1,9 @@
-import type { ImageData, Region, Step } from "@/types";
 import { Footer } from "@/components/footer";
-import { Viz } from "@/components/viz";
+import { Viz, type VizProps } from "@/components/viz";
 
-export const VizScreen = ({
-  path,
-  imageData,
-  denseRegion,
-}: {
-  path: Step[];
-  imageData?: ImageData;
-  denseRegion: Region | undefined;
-}) => (
+export const VizScreen = (props: VizProps) => (
   <>
-    <Viz path={path} imageData={imageData} denseRegion={denseRegion} />
+    <Viz {...props} />
     <Footer />
   </>
 );

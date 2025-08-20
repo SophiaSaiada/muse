@@ -19,16 +19,16 @@ import { Ball } from "@/components/viz/ball";
 import { Blocks } from "@/components/viz/blocks";
 import { ZoomOutImage } from "@/components/viz/zoom-out-image";
 import { Tunnel } from "@/components/tunnel";
+import type { Textures } from "@/lib/texture";
 
-export const Viz = ({
-  path,
-  imageData,
-  denseRegion,
-}: {
+export type VizProps = {
   path: Step[];
   imageData?: ImageData;
   denseRegion: Region | undefined;
-}) => {
+  textures: Textures;
+};
+
+export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
   const [threeD] = useLocalStorage<boolean>(THREE_D_LOCAL_STORAGE_KEY);
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
@@ -115,7 +115,12 @@ export const Viz = ({
         />
       )} */}
 
-      <Ball path={path} threeD={threeD} isLandscape={isLandscape} />
+      <Ball
+        path={path}
+        threeD={threeD}
+        isLandscape={isLandscape}
+        textures={textures.ball}
+      />
     </Canvas>
   );
 };
