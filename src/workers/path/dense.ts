@@ -8,6 +8,8 @@ const DIRECTIONS = [
   { x: 1, y: -1 },
 ];
 
+type Point = { x: number; y: number };
+
 const rotateDirection = (direction: Direction, clockwise: boolean) => {
   const directionIndex = DIRECTIONS.findIndex(
     ({ x, y }) => x === Math.sign(direction.x) && y === Math.sign(direction.y)
@@ -28,7 +30,7 @@ const LOG_INDEXES = [] as number[];
 const MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK = BLOCK_WIDTH * 1.2;
 
 const getDirection = (
-  path: [number, number][],
+  path: Point[],
   lastChosenDirection: Direction,
   duration: number
 ) => {
@@ -136,8 +138,8 @@ const sortDirectionsByDistanceFromOrigin = ({
   counterClockwiseDirection,
   duration,
 }: {
-  clockwisePoint: { x: number; y: number };
-  counterClockwisePoint: { x: number; y: number };
+  clockwisePoint: Point;
+  counterClockwisePoint: Point;
   clockwiseDirection: Direction;
   counterClockwiseDirection: Direction;
   duration: number;
@@ -195,7 +197,7 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
     try {
       const duration = note.when - (notes[index - 1]?.when ?? 0);
       const allPossibleDirections = getDirection(
-        path.map(({ x, y }) => [x, y]),
+        path,
         previousPoint.directionOnHit,
         duration
       );
@@ -238,7 +240,7 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
 
       const directionOnHit = possibleDirections[0];
       const { x, y } = applyDirectionOnPoint(
-        [previousPoint.x, previousPoint.y],
+        previousPoint,
         directionOnHit,
         duration
       );
@@ -273,14 +275,14 @@ const getDistanceOfPointFromSegment = ({
   segmentStart,
   segmentEnd,
 }: {
-  point: [number, number];
-  segmentStart: [number, number];
-  segmentEnd: [number, number];
+  point: Point;
+  segmentStart: Point;
+  segmentEnd: Point;
 }) => {
   // Explanation: https://stackoverflow.com/a/6853926
-  const [x1, y1] = segmentStart;
-  const [x2, y2] = segmentEnd;
-  const [x0, y0] = point;
+  const { x: x1, y: y1 } = segmentStart;
+  const { x: x2, y: y2 } = segmentEnd;
+  const { x: x0, y: y0 } = point;
 
   const A = x0 - x1;
   const B = y0 - y1;
@@ -296,11 +298,7 @@ const getDistanceOfPointFromSegment = ({
   return Math.hypot(x0 - projX, y0 - projY);
 };
 
-const isPointOnPath = (
-  point: [number, number],
-  path: [number, number][],
-  maxDistance: number
-) =>
+const isPointOnPath = (point: Point, path: Point[], maxDistance: number) =>
   path.some(
     (pointOnPath, index) =>
       index !== 0 &&
@@ -317,20 +315,20 @@ const isDirectionPossible = ({
   newPoint,
   shouldLog,
 }: {
-  path: [number, number][];
-  previousPoint: [number, number];
-  newPoint: { x: number; y: number };
+  path: Point[];
+  previousPoint: Point;
+  newPoint: Point;
   shouldLog: boolean;
 }) => {
   const blocksCloseToNewPoint = path.filter((point) => {
-    if (point[0] === previousPoint[0] && point[1] === previousPoint[1]) {
+    if (point.x === previousPoint.x && point.y === previousPoint.y) {
       return false;
     }
 
     // Explanation: https://stackoverflow.com/a/6853926
-    const [x1, y1] = previousPoint;
+    const { x: x1, y: y1 } = previousPoint;
     const { x: x2, y: y2 } = newPoint;
-    const [x0, y0] = point;
+    const { x: x0, y: y0 } = point;
 
     const A = x0 - x1;
     const B = y0 - y1;
@@ -361,7 +359,7 @@ const isDirectionPossible = ({
   }
 
   const newPointIsOnPath = isPointOnPath(
-    [newPoint.x, newPoint.y],
+    newPoint,
     path,
     MINIMUM_DISTANCE_BETWEEN_PATH_AND_BLOCK
   );
@@ -384,41 +382,41 @@ const sortDirectionsByBalanceScore = ({
   path,
   shouldLog,
 }: {
-  previousPoint: [number, number];
+  previousPoint: Point;
   clockwiseDirection: Direction;
   counterClockwiseDirection: Direction;
-  path: [number, number][];
+  path: Point[];
   shouldLog: boolean;
 }) => {
   const isPreviousPointInLeftToRightAxis =
-    (previousPoint[0] < 0 && previousPoint[1] < 0) ||
-    (previousPoint[0] > 0 && previousPoint[1] > 0);
+    (previousPoint.x < 0 && previousPoint.y < 0) ||
+    (previousPoint.x > 0 && previousPoint.y > 0);
 
-  const isPointInClockwiseHalf = (point: [number, number]) => {
+  const isPointInClockwiseHalf = (point: Point) => {
     if (isPreviousPointInLeftToRightAxis) {
       return (
         (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
-        point[1] > -point[0]
+        point.y > -point.x
       );
     }
 
     return (
       (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-      point[1] < point[0]
+      point.y < point.x
     );
   };
 
-  const isPointInCounterClockwiseHalf = (point: [number, number]) => {
+  const isPointInCounterClockwiseHalf = (point: Point) => {
     if (isPreviousPointInLeftToRightAxis) {
       return (
         (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
-        point[1] < -point[0]
+        point.y < -point.x
       );
     }
 
     return (
       (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-      point[1] > point[0]
+      point.y > point.x
     );
   };
 
@@ -439,7 +437,7 @@ const sortDirectionsByBalanceScore = ({
     : [counterClockwiseDirection, clockwiseDirection];
 };
 
-const getPointDistanceFromOrigin = (point: { x: number; y: number }) =>
+const getPointDistanceFromOrigin = (point: Point) =>
   Math.hypot(point.x, point.y);
 
 const getPathWithNewDirections = (path: Omit<Step, "newDirection">[]) =>
@@ -449,12 +447,12 @@ const getPathWithNewDirections = (path: Omit<Step, "newDirection">[]) =>
   }, [] as Step[]);
 
 const applyDirectionOnPoint = (
-  previousPoint: [number, number],
-  direction: { x: number; y: number },
+  previousPoint: Point,
+  direction: Direction,
   duration: number
 ) => ({
-  x: previousPoint[0] + direction.x * duration,
-  y: previousPoint[1] + direction.y * duration,
+  x: previousPoint.x + direction.x * duration,
+  y: previousPoint.y + direction.y * duration,
 });
 
 const findDenseRegion = (path: Omit<Step, "newDirection">[]) => {
