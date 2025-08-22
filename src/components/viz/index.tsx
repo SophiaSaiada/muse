@@ -102,7 +102,7 @@ export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
         />
       )}
 
-      <Tunnel path={path} />
+      {vizType === "TUNNEL" && <Tunnel path={path} />}
 
       <Blocks path={path} getBlockColor={getBlockColor} vizType={vizType} />
 
