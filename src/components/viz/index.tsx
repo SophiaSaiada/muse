@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { Line, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
-import { useLocalStorage, useWindowSize } from "@uidotdev/usehooks";
+import { useLocalStorage } from "@uidotdev/usehooks";
 import {
   VIZ_TYPE_LOCAL_STORAGE_KEY,
   INITIAL_VIZ_TYPE,
@@ -29,6 +29,7 @@ export type VizProps = {
   denseRegion: Region | undefined;
   textures: Textures;
   ballColor: string;
+  windowSize: { width: number; height: number };
 };
 
 export const Viz = ({
@@ -37,6 +38,7 @@ export const Viz = ({
   denseRegion,
   textures,
   ballColor,
+  windowSize,
 }: VizProps) => {
   const [threeD] = useLocalStorage<boolean>(THREE_D_LOCAL_STORAGE_KEY);
   const [vizType] = useLocalStorage<VizType>(
@@ -44,8 +46,7 @@ export const Viz = ({
     INITIAL_VIZ_TYPE
   );
 
-  const { width, height } = useWindowSize();
-  const isLandscape = width !== null && height !== null && width > height;
+  const isLandscape = windowSize.width > windowSize.height;
 
   const CameraComponent = threeD ? PerspectiveCamera : OrthographicCamera;
 
@@ -79,7 +80,7 @@ export const Viz = ({
         height: "100vh",
       }}
       className={cn(
-        "fixed inset-0 animate-fade-in",
+        "fixed inset-0 animate-fade-in duration-700 delay-300 opacity-0",
         vizType === "TUNNEL" && "bg-[#202020]"
       )}
     >

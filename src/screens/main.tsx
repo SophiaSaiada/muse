@@ -54,7 +54,7 @@ export const MainScreen = () => {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-8 min-h-dvh justify-center items-start max-w-lg m-auto">
+    <div className="flex flex-col gap-3 p-8 min-h-dvh justify-center items-start max-w-lg m-auto animate-fade-in">
       <SiteName className="text-5xl mb-1" />
 
       <SearchBox setSearch={setSearch} initialValue={search} />

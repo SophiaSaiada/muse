@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLocalStorage, useWindowSize } from "@uidotdev/usehooks";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import {
   INITIAL_VIZ_TYPE,
@@ -33,6 +33,8 @@ export const SongRoute = () => {
   const navigate = useNavigate();
 
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const windowSize = useWindowSize();
 
   const selectedFile = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
@@ -115,9 +117,24 @@ export const SongRoute = () => {
     });
   };
 
-  return data && !isLoading && !isValidating && isPlaying && data.player ? (
-    <VizScreen {...data} />
-  ) : (
+  if (
+    data &&
+    !isLoading &&
+    !isValidating &&
+    isPlaying &&
+    data.player &&
+    windowSize.width &&
+    windowSize.height
+  ) {
+    const notNullWindowSize = {
+      width: windowSize.width,
+      height: windowSize.height,
+    };
+
+    return <VizScreen {...data} windowSize={notNullWindowSize} />;
+  }
+
+  return (
     <PlayScreen
       displayName={selectedFile?.displayName}
       onClickPlay={
