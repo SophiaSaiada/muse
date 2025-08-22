@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
+import { Line, OrthographicCamera, PerspectiveCamera } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import { useLocalStorage, useWindowSize } from "@uidotdev/usehooks";
@@ -10,6 +10,9 @@ import {
   DEFAULT_CAMERA_PROPS,
   CAMERA_Z_LANDSCAPE,
   CAMERA_Z_PORTRAIT,
+  SHOW_PATH,
+  CIRCLE_COLOR,
+  SCALE,
 } from "@/constants";
 import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
@@ -106,14 +109,18 @@ export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
 
       <Blocks path={path} getBlockColor={getBlockColor} vizType={vizType} />
 
-      {/* {SHOW_PATH && (
-        <Path
-          data={"M 0 0 " + path.map(({ x, y }) => `L ${x} ${y}`).join(" ")}
-          stroke={CIRCLE_COLOR}
-          opacity={0.75}
-          strokeWidth={1}
+      {SHOW_PATH && (
+        <Line
+          points={path.map((point) => [point.x, point.y, 0])}
+          color={CIRCLE_COLOR}
+          dashSize={SCALE / 2}
+          gapSize={SCALE * 3}
+          opacity={0.5}
+          transparent
+          linewidth={SCALE / 2}
+          dashed
         />
-      )} */}
+      )}
 
       <Ball
         path={path}
