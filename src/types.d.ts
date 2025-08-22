@@ -52,6 +52,7 @@ export type MidiFile = {
 
 export type MidiFileWithName = MidiFile & {
   displayName?: string;
+  ballColor?: string;
 };
 
 export type VizType = "TUNNEL" | "STARS";

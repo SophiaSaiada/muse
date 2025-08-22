@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Trail } from "@react-three/drei";
 import { type Mesh, Color } from "three";
-import { CIRCLE_SIZE, CIRCLE_COLOR } from "@/constants";
+import { CIRCLE_SIZE } from "@/constants";
 import type { Step } from "@/types";
 import {
   getCurrentStepAndTime,
@@ -34,11 +34,13 @@ export const Ball = ({
   threeD,
   isLandscape,
   textures,
+  ballColor,
 }: {
   path: Step[];
   threeD: boolean;
   isLandscape: boolean;
   textures: Textures["ball"];
+  ballColor: string;
 }) => {
   const ballRef = useRef<Mesh>(null);
   const trailHeadRef = useRef<Mesh>(null!);
@@ -85,7 +87,7 @@ export const Ball = ({
       <Trail
         width={trailWidth}
         length={1}
-        color={new Color(CIRCLE_COLOR).multiplyScalar(1.5)}
+        color={new Color(ballColor).multiplyScalar(1.5)}
         attenuation={(t) => t * t}
         target={trailHeadRef}
       />
@@ -95,7 +97,7 @@ export const Ball = ({
       <mesh ref={ballRef}>
         <sphereGeometry args={[CIRCLE_SIZE / 2]} />
         <meshStandardMaterial
-          color={new Color(CIRCLE_COLOR).multiplyScalar(4)}
+          color={new Color(ballColor).multiplyScalar(4)}
           toneMapped={false}
           map={textures.map}
           displacementMap={textures.displacementMap}

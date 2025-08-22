@@ -11,7 +11,6 @@ import {
   CAMERA_Z_LANDSCAPE,
   CAMERA_Z_PORTRAIT,
   SHOW_PATH,
-  CIRCLE_COLOR,
   SCALE,
 } from "@/constants";
 import { cn } from "@/lib/utils";
@@ -29,9 +28,16 @@ export type VizProps = {
   imageData?: ImageData;
   denseRegion: Region | undefined;
   textures: Textures;
+  ballColor: string;
 };
 
-export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
+export const Viz = ({
+  path,
+  imageData,
+  denseRegion,
+  textures,
+  ballColor,
+}: VizProps) => {
   const [threeD] = useLocalStorage<boolean>(THREE_D_LOCAL_STORAGE_KEY);
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
@@ -112,7 +118,7 @@ export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
       {SHOW_PATH && (
         <Line
           points={path.map((point) => [point.x, point.y, 0])}
-          color={CIRCLE_COLOR}
+          color={ballColor}
           dashSize={SCALE / 2}
           gapSize={SCALE * 3}
           opacity={0.5}
@@ -127,6 +133,7 @@ export const Viz = ({ path, imageData, denseRegion, textures }: VizProps) => {
         threeD={threeD}
         isLandscape={isLandscape}
         textures={textures.ball}
+        ballColor={ballColor}
       />
     </Canvas>
   );

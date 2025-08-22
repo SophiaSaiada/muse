@@ -72,6 +72,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
     displayName: "Frozen - Let it Go",
     source: "e",
     artwork: "/artworks/frozen.png",
+    ballColor: "#48C3E1",
   },
   { id: "GravityFalls", displayName: "Gravity Falls", source: "e" },
   {
@@ -93,6 +94,7 @@ export const MIDI_FILES: MidiFileWithName[] = [
     id: "WeDontTalkAboutBruno",
     displayName: "Encanto - We Don't Talk About Bruno",
     source: "e",
+    ballColor: "#66ED45",
   },
   {
     id: "Golden",

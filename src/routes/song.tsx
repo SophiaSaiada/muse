@@ -6,6 +6,7 @@ import { useLocalStorage } from "@uidotdev/usehooks";
 import { useSelectedFile } from "@/hooks/useSelectedFile";
 import {
   INITIAL_VIZ_TYPE,
+  CIRCLE_COLOR,
   MUTE,
   SONG_DURATION_GRACE_PERIOD_SECONDS,
   SPEED,
@@ -36,8 +37,10 @@ export const SongRoute = () => {
   const selectedFile = useSelectedFile();
   const selectedFileUrl = selectedFile && getFileUrl(selectedFile);
   const { data, isLoading, isValidating } = useSWR(
-    selectedFileUrl && vizType ? { selectedFileUrl, vizType } : null,
-    async ({ selectedFileUrl, vizType }) => {
+    selectedFileUrl && vizType
+      ? { selectedFile, selectedFileUrl, vizType }
+      : null,
+    async ({ selectedFile, selectedFileUrl, vizType }) => {
       const [imageData, rawSong] = await Promise.all([
         selectedFile?.artwork
           ? fetchPNGImageData(selectedFile.artwork)
@@ -65,7 +68,15 @@ export const SongRoute = () => {
         loadTextures(),
       ]);
 
-      return { path, player, denseRegion, song, imageData, textures };
+      return {
+        path,
+        player,
+        denseRegion,
+        song,
+        imageData,
+        textures,
+        ballColor: selectedFile?.ballColor ?? CIRCLE_COLOR,
+      };
     },
     {
       errorRetryCount: 0,
@@ -105,12 +116,7 @@ export const SongRoute = () => {
   };
 
   return data && !isLoading && !isValidating && isPlaying && data.player ? (
-    <VizScreen
-      path={data.path}
-      imageData={data.imageData}
-      denseRegion={data.denseRegion}
-      textures={data.textures}
-    />
+    <VizScreen {...data} />
   ) : (
     <PlayScreen
       displayName={selectedFile?.displayName}
