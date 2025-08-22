@@ -180,7 +180,8 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
   const backtrackingStack: number[] = [];
   let skipFirstDirection = false;
 
-  let loopStepsCount = 0;
+  let loopStepsCount = 0,
+    backtrackingCount = 0;
   for (let index = 1; index < notes.length; index++) {
     loopStepsCount++;
     if (loopStepsCount > MAXIMUM_LOOP_STEPS) {
@@ -231,6 +232,7 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
         path = path.slice(0, lastIndexWithTwoOptions);
         index = lastIndexWithTwoOptions - 1;
         skipFirstDirection = true;
+        backtrackingCount++;
         continue;
       }
 
@@ -254,9 +256,9 @@ export const generateDensePath = (notes: NoteOrBeat[], speed: number) => {
 
   if (LOG_INDEXES.length) {
     console.log("Completed dense path generation", {
-      notes,
-      speed,
-      path,
+      loopStepsCount,
+      backtrackingCount,
+      notesCount: notes.length,
     });
   }
 
