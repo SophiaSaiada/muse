@@ -114,7 +114,6 @@ const getDirection = (
   }
 
   const directionsSortedByBalanceScore = sortDirectionsByBalanceScore({
-    previousPoint,
     clockwiseDirection,
     counterClockwiseDirection,
     path,
@@ -378,54 +377,30 @@ const isDirectionPossible = ({
 };
 
 const sortDirectionsByBalanceScore = ({
-  previousPoint,
   clockwiseDirection,
   counterClockwiseDirection,
   path,
   shouldLog,
 }: {
-  previousPoint: Point;
   clockwiseDirection: Direction;
   counterClockwiseDirection: Direction;
   path: Point[];
   shouldLog: boolean;
 }) => {
-  const isPreviousPointInLeftToRightAxis =
-    (previousPoint.x < 0 && previousPoint.y < 0) ||
-    (previousPoint.x > 0 && previousPoint.y > 0);
+  const isGraterEnough = (a: number, b: number) => a > b + 0.1;
 
-  const isPointInClockwiseHalf = (point: Point) => {
-    if (isPreviousPointInLeftToRightAxis) {
-      return (
-        (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
-        point.y > -point.x
-      );
-    }
+  const isInSameHalf = (referencePoint: Point) => (point: Point) =>
+    (isGraterEnough(referencePoint.x, referencePoint.y) &&
+      isGraterEnough(point.x, point.y)) ||
+    (isGraterEnough(referencePoint.y, referencePoint.x) &&
+      isGraterEnough(point.y, point.x));
 
-    return (
-      (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-      point.y < point.x
-    );
-  };
-
-  const isPointInCounterClockwiseHalf = (point: Point) => {
-    if (isPreviousPointInLeftToRightAxis) {
-      return (
-        (clockwiseDirection.x > 0 && clockwiseDirection.y < 0) ===
-        point.y < -point.x
-      );
-    }
-
-    return (
-      (clockwiseDirection.x > 0 && clockwiseDirection.y > 0) ===
-      point.y > point.x
-    );
-  };
-
-  const stepsInClockwiseDirection = path.filter(isPointInClockwiseHalf).length;
+  const stepsInClockwiseDirection = path.filter(
+    isInSameHalf(clockwiseDirection)
+  );
   const stepsInCounterClockwiseDirection = path.filter(
-    isPointInCounterClockwiseHalf
-  ).length;
+    isInSameHalf(counterClockwiseDirection)
+  );
 
   if (shouldLog) {
     console.log("steps in clockwise and counter clockwise directions", {
@@ -434,7 +409,8 @@ const sortDirectionsByBalanceScore = ({
     });
   }
 
-  return stepsInClockwiseDirection < stepsInCounterClockwiseDirection
+  return stepsInClockwiseDirection.length <
+    stepsInCounterClockwiseDirection.length
     ? [clockwiseDirection, counterClockwiseDirection]
     : [counterClockwiseDirection, clockwiseDirection];
 };
