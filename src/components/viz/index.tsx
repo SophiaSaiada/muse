@@ -12,6 +12,7 @@ import {
   CAMERA_Z_PORTRAIT,
   SHOW_PATH,
   SCALE,
+  THREE_D_LOCAL_STORAGE_DEFAULT_VALUE,
 } from "@/constants";
 import { cn } from "@/lib/utils";
 import type { ImageData, Region, Step, VizType } from "@/types";
@@ -40,7 +41,10 @@ export const Viz = ({
   ballColor,
   windowSize,
 }: VizProps) => {
-  const [threeD] = useLocalStorage<boolean>(THREE_D_LOCAL_STORAGE_KEY);
+  const [threeD] = useLocalStorage(
+    THREE_D_LOCAL_STORAGE_KEY,
+    THREE_D_LOCAL_STORAGE_DEFAULT_VALUE
+  );
   const [vizType] = useLocalStorage<VizType>(
     VIZ_TYPE_LOCAL_STORAGE_KEY,
     INITIAL_VIZ_TYPE

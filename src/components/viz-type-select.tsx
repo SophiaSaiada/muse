@@ -1,6 +1,7 @@
 import { useLocalStorage } from "@uidotdev/usehooks";
 import {
   INITIAL_VIZ_TYPE,
+  THREE_D_LOCAL_STORAGE_DEFAULT_VALUE,
   THREE_D_LOCAL_STORAGE_KEY,
   VIZ_TYPE_LOCAL_STORAGE_KEY,
 } from "@/constants";
@@ -23,7 +24,8 @@ export const VizTypeSelect = () => {
   );
 
   const [threeD, setThreeD] = useLocalStorage<boolean>(
-    THREE_D_LOCAL_STORAGE_KEY
+    THREE_D_LOCAL_STORAGE_KEY,
+    THREE_D_LOCAL_STORAGE_DEFAULT_VALUE
   );
 
   const onValueChange = (value: string): void => {

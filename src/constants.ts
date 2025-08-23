@@ -34,6 +34,7 @@ export const CAMERA_FOLLOW_SMOOTHING = 0.2;
 export const VIZ_TYPE_LOCAL_STORAGE_KEY = "vizType" as const;
 export const INITIAL_VIZ_TYPE: VizType = "STARS";
 export const THREE_D_LOCAL_STORAGE_KEY = "threeD" as const;
+export const THREE_D_LOCAL_STORAGE_DEFAULT_VALUE = true;
 
 // Circle & Block Animations
 export const BOUNCE_ANIMATION_HALF_TIME = 0.05;
