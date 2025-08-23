@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import "@/main.css";
 import { Toaster } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router";
@@ -15,5 +16,6 @@ createRoot(document.getElementById("root")!).render(
       </Routes>
     </BrowserRouter>
     <Toaster />
+    <Analytics />
   </StrictMode>
 );
